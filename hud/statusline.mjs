@@ -268,41 +268,48 @@ const contextBar = (percent, width = 10) => {
 };
 
 // 이월/당겨쓰기 기반 색상 (5시간, 주간 공통)
-// - 회색: 이월분 사용 중 (여유)
-// - 초록: 현재 할당량 사용 중 (정상)
-// - 노랑: 다음 구간 절반까지 당겨씀 (주의)
-// - 주황: 다음 구간 절반 초과 (경고)
-// - 빨강: 그 다음 구간까지 당겨씀 (위험)
-const getAllocationColor = (usedPercent, elapsed, totalPeriods) => {
+// 남은 시간 비례로 구간을 4등분 (분 단위 정밀도)
+// level: 0=이월, 1=초록, 2=노랑, 3=주황, 4=빨강
+const getAllocationLevel = (usedPercent, elapsed, totalPeriods) => {
   const allocation = 100 / totalPeriods;
   const cumulative = allocation * elapsed;
+  const remaining = allocation * (totalPeriods - elapsed);
 
-  if (usedPercent < cumulative)         return null;           // 이월분 (기대치 미만 = 여유)
-  if (usedPercent < cumulative + allocation * 0.5) return TN.green;  // 현재 구간
-  if (usedPercent < cumulative + allocation * 0.5) return TN.amber;  // 다음 절반
-  if (usedPercent < cumulative + allocation) return TN.coral;  // 다음 구간
-  return TN.coral;                                              // 초과
+  if (usedPercent < cumulative)                      return 0; // 이월분
+  if (usedPercent < cumulative + remaining * (1/4))  return 1; // 초록
+  if (usedPercent < cumulative + remaining * (2/4))  return 2; // 노랑
+  if (usedPercent < cumulative + remaining * (3/4))  return 3; // 주황
+  return 4;                                                     // 빨강
 };
+
+const LEVEL_STYLES = [
+  null,                                          // 0: 이월 (무색)
+  { fg: TN.green.fg, bold: false },              // 1: 초록
+  { fg: TN.amber.fg, bold: false },              // 2: 노랑
+  { fg: TN.coral.fg, bold: false },              // 3: 주황
+  { fg: TN.coral.fg, bold: true },               // 4: 빨강 (bold)
+];
 
 const colorAllocationPercent = (displayPercent, rawPercent, elapsed, totalPeriods) => {
   const pctStr = `${displayPercent}%`;
-  const color = getAllocationColor(rawPercent, elapsed, totalPeriods);
-  if (!color) return pctStr;
-  if (color === TN.coral) return `${BOLD}${color.fg}${pctStr}${RST}`;
-  return `${color.fg}${pctStr}${RST}`;
+  const level = getAllocationLevel(rawPercent, elapsed, totalPeriods);
+  const style = LEVEL_STYLES[level];
+  if (!style) return pctStr;
+  return `${style.bold ? BOLD : ''}${style.fg}${pctStr}${RST}`;
 };
 
-// 이월/당겨쓰기 기반 프로그레스 바 (기존 색상 로직 유지)
+// 이월/당겨쓰기 기반 프로그레스 바
 const allocationBar = (usedPercent, elapsed, totalPeriods, width = 8) => {
   const filled = Math.round((usedPercent / 100) * width);
   const empty = width - filled;
-  const color = getAllocationColor(usedPercent, elapsed, totalPeriods);
+  const level = getAllocationLevel(usedPercent, elapsed, totalPeriods);
+  const style = LEVEL_STYLES[level];
 
   const filledStr = '█'.repeat(filled);
   const emptyStr = '░'.repeat(empty);
 
-  if (!color) return `${filledStr}${dim(emptyStr)}`;
-  return `${color.fg}${filledStr}${RST}${dim(emptyStr)}`;
+  if (!style) return `${filledStr}${dim(emptyStr)}`;
+  return `${style.bold ? BOLD : ''}${style.fg}${filledStr}${RST}${dim(emptyStr)}`;
 };
 
 // 세션 시간 색상: 경과 시간에 따른 색상
