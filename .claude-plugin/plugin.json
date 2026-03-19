@@ -1,0 +1,17 @@
+{
+  "name": "hs-claude-kit",
+  "version": "1.0.0",
+  "description": "Tokyo Night powerline statusline + essential skills for Claude Code",
+  "author": {
+    "name": "heeseon"
+  },
+  "license": "MIT",
+  "keywords": [
+    "claude-code",
+    "statusline",
+    "tokyo-night",
+    "powerline",
+    "skills"
+  ],
+  "skills": "./skills/"
+}
