@@ -1,12 +1,12 @@
 {
-  "name": "hs-claude-kit",
+  "name": "claude-kit",
   "description": "Tokyo Night powerline statusline with CShip-style progress bars + essential skills (interview, edit, explain)",
   "owner": {
     "name": "heeseon"
   },
   "plugins": [
     {
-      "name": "hs-claude-kit",
+      "name": "claude-kit",
       "description": "Powerline statusline (Tokyo Night theme) + interview, edit, explain skills",
       "version": "1.0.0",
       "source": "./",

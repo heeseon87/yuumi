@@ -18,7 +18,7 @@ const CLAUDE_DIR = process.env.CLAUDE_CONFIG_DIR || join(homedir(), '.claude');
 const HUD_DIR = join(CLAUDE_DIR, 'hud');
 const SETTINGS_FILE = join(CLAUDE_DIR, 'settings.json');
 
-console.log('[hs-claude-kit] Running post-install setup...');
+console.log('[claude-kit] Running post-install setup...');
 
 // 1. Create HUD directory
 if (!existsSync(HUD_DIR)) {
@@ -32,7 +32,7 @@ for (const file of hudFiles) {
   const dest = join(HUD_DIR, file);
   if (existsSync(src)) {
     copyFileSync(src, dest);
-    console.log(`[hs-claude-kit] Installed ${file}`);
+    console.log(`[claude-kit] Installed ${file}`);
   }
 }
 
@@ -57,12 +57,12 @@ try {
   };
 
   writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2));
-  console.log('[hs-claude-kit] Configured statusLine in settings.json');
+  console.log('[claude-kit] Configured statusLine in settings.json');
 } catch (e) {
-  console.log('[hs-claude-kit] Warning: Could not configure settings.json:', e.message);
+  console.log('[claude-kit] Warning: Could not configure settings.json:', e.message);
 }
 
-console.log('[hs-claude-kit] Setup complete!');
+console.log('[claude-kit] Setup complete!');
 console.log('');
 console.log('  Statusline: Tokyo Night powerline theme');
 console.log('  Skills:     /interview, /edit, /explain');
