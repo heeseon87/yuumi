@@ -6,8 +6,8 @@
  * Line 2: 5h:X% | wk:X% | session:Xm | ctx:X%
  */
 
-import { execSync } from 'node:child_process';
-import { existsSync, readFileSync, openSync, readSync, closeSync } from 'node:fs';
+import { execSync, spawn } from 'node:child_process';
+import { existsSync, readFileSync, writeFileSync, openSync, readSync, closeSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { basename, join } from 'node:path';
 
@@ -58,7 +58,8 @@ function getGitBranch(stdin) {
     const branch = execSync('git rev-parse --abbrev-ref HEAD', {
       cwd,
       encoding: 'utf8',
-      stdio: ['pipe', 'pipe', 'pipe']
+      stdio: ['pipe', 'pipe', 'pipe'],
+      timeout: 500,
     }).trim();
     // 긴 브랜치명 줄이기
     if (branch.length > 20) {
@@ -78,6 +79,55 @@ function getContextPercent(stdin) {
   return 0;
 }
 
+
+// ============================================================================
+// Version Check (1시간 캐시)
+// ============================================================================
+
+const VERSION_CACHE_PATH = join(homedir(), '.claude', '.claude-code-latest-version.json');
+const VERSION_CHECK_INTERVAL_MS = 60 * 60 * 1000; // 1시간
+
+function getLatestVersion() {
+  let cachedVersion = null;
+
+  try {
+    if (existsSync(VERSION_CACHE_PATH)) {
+      const cache = JSON.parse(readFileSync(VERSION_CACHE_PATH, 'utf-8'));
+      cachedVersion = cache.version;
+      if (Date.now() - cache.timestamp < VERSION_CHECK_INTERVAL_MS) {
+        return cachedVersion; // 신선한 캐시
+      }
+    }
+  } catch {}
+
+  // 만료된 캐시가 있으면 즉시 반환, 백그라운드에서 갱신 (블로킹 없음)
+  try {
+    const child = spawn('npm', ['view', '@anthropic-ai/claude-code', 'version'], {
+      stdio: ['ignore', 'pipe', 'ignore'],
+      timeout: 3000,
+    });
+    let stdout = '';
+    child.stdout.on('data', (d) => { stdout += d; });
+    child.on('close', (code) => {
+      if (code === 0 && stdout.trim()) {
+        try { writeFileSync(VERSION_CACHE_PATH, JSON.stringify({ version: stdout.trim(), timestamp: Date.now() })); } catch {}
+      }
+    });
+  } catch {}
+
+  return cachedVersion; // 이전 캐시값 반환 (없으면 null)
+}
+
+function isOutdated(current, latest) {
+  if (!current || !latest) return false;
+  const c = current.split('.').map(Number);
+  const l = latest.split('.').map(Number);
+  for (let i = 0; i < 3; i++) {
+    if ((c[i] || 0) < (l[i] || 0)) return true;
+    if ((c[i] || 0) > (l[i] || 0)) return false;
+  }
+  return false;
+}
 
 // ============================================================================
 // Formatting Helpers
@@ -238,26 +288,24 @@ const colorPercent = (percent) => {
   const pctStr = `${percent}%`;
   if (percent >= 70) return red(pctStr);
   if (percent >= 40) return yellow(pctStr);
-  return `${TN.cyan.fg}${pctStr}${RST}`;
+  return cyan(pctStr);
 };
 
-// CShip 스타일 context progress bar: [████████░░] 32%
-const contextBar = (percent, width = 10) => {
+// 프로그레스 바 공통 헬퍼
+const makeBar = (percent, colorFg, width = 10) => {
   const filled = Math.round((percent / 100) * width);
   const empty = width - filled;
+  return `${colorFg}${'█'.repeat(filled)}${RST}${dim('░'.repeat(empty))}`;
+};
 
-  // 바 색상: CShip Tokyo Night threshold 기준
+// CShip 스타일 context progress bar
+const contextBar = (percent, width = 10) => {
   let barColorFg;
   if (percent >= 70) barColorFg = TN.coral.fg;
   else if (percent >= 40) barColorFg = TN.amber.fg;
   else barColorFg = TN.cyan.fg;
 
-  const filledStr = '█'.repeat(filled);
-  const emptyStr = '░'.repeat(empty);
-  const bar = `${barColorFg}${filledStr}${RST}${dim(emptyStr)}`;
-  const pct = colorPercent(percent);
-
-  return `${barColorFg}\uF1C0${RST} ${bar} ${pct}`;
+  return `${barColorFg}\uF1C0${RST} ${makeBar(percent, barColorFg, width)} ${colorPercent(percent)}`;
 };
 
 // 이월/당겨쓰기 기반 색상 (5시간, 주간 공통)
@@ -284,7 +332,7 @@ const LEVEL_STYLES = [
 ];
 
 const colorAllocationPercent = (displayPercent, rawPercent, elapsed, totalPeriods) => {
-  const pctStr = `${displayPercent}%`;
+  const pctStr = `${Math.floor(displayPercent)}%`;
   const level = getAllocationLevel(rawPercent, elapsed, totalPeriods);
   const style = LEVEL_STYLES[level];
   if (!style) return pctStr;
@@ -293,16 +341,10 @@ const colorAllocationPercent = (displayPercent, rawPercent, elapsed, totalPeriod
 
 // 이월/당겨쓰기 기반 프로그레스 바
 const allocationBar = (usedPercent, elapsed, totalPeriods, width = 8) => {
-  const filled = Math.round((usedPercent / 100) * width);
-  const empty = width - filled;
   const level = getAllocationLevel(usedPercent, elapsed, totalPeriods);
   const style = LEVEL_STYLES[level];
-
-  const filledStr = '█'.repeat(filled);
-  const emptyStr = '░'.repeat(empty);
-
-  if (!style) return `${filledStr}${dim(emptyStr)}`;
-  return `${style.bold ? BOLD : ''}${style.fg}${filledStr}${RST}${dim(emptyStr)}`;
+  const colorFg = style ? `${style.bold ? BOLD : ''}${style.fg}` : '';
+  return makeBar(usedPercent, colorFg, width);
 };
 
 // 세션 시간 색상: 경과 시간에 따른 색상
@@ -333,8 +375,14 @@ async function main() {
     // ── Line 1: Model  Directory  Branch (powerline 세그먼트) ──
     const segments = [];
 
+    const version = stdin.version || '';
+    const latest = getLatestVersion();
+    const outdated = isOutdated(version, latest);
+    const versionText = outdated ? `${version} \u21E1` : version;  // ⇡ 업데이트 있음
+    segments.push({ text: versionText, color: outdated ? TN.amber : TN.lavender });
+
     const modelName = getModelName(stdin);
-    segments.push({ text: `\uF2DB ${modelName}`, color: TN.blue });          //  microchip (CShip)
+    segments.push({ text: `\uF2DB ${modelName}`, color: TN.blue });
 
     const dirName = getDirName(stdin);
     segments.push({ text: `\uF07B ${dirName}`, color: TN.green });          //  folder
