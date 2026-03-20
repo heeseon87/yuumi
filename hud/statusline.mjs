@@ -382,7 +382,11 @@ async function main() {
     segments.push({ text: versionText, color: outdated ? TN.amber : TN.lavender });
 
     const modelName = getModelName(stdin);
-    segments.push({ text: `\uF2DB ${modelName}`, color: TN.blue });
+    const ctxSize = stdin.context_window?.context_window_size;
+    const ctxLabel = ctxSize
+      ? (ctxSize >= 1000000 ? `${Math.floor(ctxSize / 1000000)}M` : `${Math.floor(ctxSize / 1000)}k`)
+      : '';
+    segments.push({ text: `\uF2DB ${modelName}${ctxLabel ? `(${ctxLabel})` : ''}`, color: TN.blue });
 
     const dirName = getDirName(stdin);
     segments.push({ text: `\uF07B ${dirName}`, color: TN.green });          //  folder
