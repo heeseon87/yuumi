@@ -105,6 +105,7 @@ function getLatestVersion() {
     const child = spawn('npm', ['view', '@anthropic-ai/claude-code', 'version'], {
       stdio: ['ignore', 'pipe', 'ignore'],
       timeout: 3000,
+      shell: true,
     });
     let stdout = '';
     child.stdout.on('data', (d) => { stdout += d; });
