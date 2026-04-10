@@ -71,6 +71,50 @@ function getGitBranch(stdin) {
   }
 }
 
+function getInputMethod() {
+  const os = process.platform;
+  try {
+    if (os === 'darwin') {
+      const out = execSync(
+        `defaults read "${homedir()}/Library/Preferences/com.apple.HIToolbox.plist" AppleSelectedInputSources`,
+        { encoding: 'utf-8', timeout: 500, stdio: ['pipe', 'pipe', 'pipe'] }
+      );
+      return /han|korean/i.test(out) ? '가' : 'A';
+    }
+    if (os === 'linux') {
+      // fcitx5 → fcitx4 → ibus 순서로 시도
+      for (const [remoteCmd, nameCmd] of [
+        ['fcitx5-remote', 'fcitx5-remote -n'],
+        ['fcitx-remote', 'fcitx-remote -n'],
+      ]) {
+        try {
+          const state = execSync(remoteCmd, { encoding: 'utf-8', timeout: 500, stdio: ['pipe', 'pipe', 'pipe'] }).trim();
+          if (state === '1') return 'A';  // 직접 입력 (영문)
+          if (state === '2') {
+            const name = execSync(nameCmd, { encoding: 'utf-8', timeout: 500, stdio: ['pipe', 'pipe', 'pipe'] }).trim();
+            return /hangul|korean/i.test(name) ? '가' : 'A';
+          }
+        } catch {}
+      }
+      try {
+        const engine = execSync('ibus engine', { encoding: 'utf-8', timeout: 500, stdio: ['pipe', 'pipe', 'pipe'] }).trim();
+        return /hangul/i.test(engine) ? '가' : 'A';
+      } catch {}
+      return null;
+    }
+    if (os === 'win32') {
+      // PowerShell 기반 — 레이아웃만 감지 (IME 내부 한/영 상태는 미지원)
+      const script = 'Add-Type -AssemblyName System.Windows.Forms;[System.Windows.Forms.InputLanguage]::CurrentInputLanguage.Culture.Name';
+      const result = execSync(
+        `powershell -NoProfile -NoLogo -Command "${script}"`,
+        { encoding: 'utf-8', timeout: 1500, stdio: ['pipe', 'pipe', 'pipe'] }
+      ).trim();
+      return result === 'ko-KR' ? '가' : 'A';
+    }
+  } catch {}
+  return null;
+}
+
 function getContextPercent(stdin) {
   const nativePercent = stdin.context_window?.used_percentage;
   if (typeof nativePercent === 'number' && !Number.isNaN(nativePercent)) {
@@ -244,6 +288,7 @@ const TN = {
   cyan:    { fg: fg(125, 207, 255), bg: bg(125, 207, 255) },  // #7dcfff
   amber:   { fg: fg(224, 175, 104), bg: bg(224, 175, 104) },  // #e0af68
   coral:   { fg: fg(247, 118, 142), bg: bg(247, 118, 142) },  // #f7768e
+  teal:    { fg: fg(115, 218, 202), bg: bg(115, 218, 202) },  // #73daca
   lavender:{ fg: fg(169, 177, 214), bg: bg(169, 177, 214) },  // #a9b1d6
   dark:    { fg: fg(26, 27, 38) },                              // #1a1b26
 };
@@ -375,6 +420,11 @@ async function main() {
 
     // ── Line 1: Model  Directory  Branch (powerline 세그먼트) ──
     const segments = [];
+
+    const ime = getInputMethod();
+    if (ime) {
+      segments.push({ text: `\uF11C ${ime}`, color: ime === '가' ? TN.coral : TN.teal });
+    }
 
     const version = stdin.version || '';
     const latest = getLatestVersion();
