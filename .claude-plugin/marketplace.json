@@ -9,7 +9,7 @@
     {
       "name": "claude-kit",
       "description": "Powerline statusline (Tokyo Night theme) + interview, edit, explain skills",
-      "version": "1.2.3",
+      "version": "1.2.4",
       "author": {
         "name": "heeseon"
       },
@@ -19,5 +19,5 @@
       "tags": ["statusline", "hud", "theme", "skills", "tokyo-night"]
     }
   ],
-  "version": "1.2.3"
+  "version": "1.2.4"
 }
