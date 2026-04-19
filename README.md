@@ -1,35 +1,41 @@
 # claude-kit
 
-## Install
+Tokyo Night powerline statusline + essential skills for Claude Code. Works on macOS, Linux, and Windows.
+
+## Prerequisites
+
+[Node.js](https://nodejs.org/) 18 or newer in PATH. On Windows the standard installer (`C:\Program Files\nodejs`) is recommended; nvm-windows / fnm / volta also work.
+
+## Install (one-time)
 
 ```
 /plugin marketplace add heeseon87/claude-kit
 /plugin install claude-kit@hs
-```
-
-Restart Claude Code, then:
-
-```
 /claude-kit:setup
 ```
 
-## Platform support
+Then restart Claude Code once. The statusline appears at the bottom of the screen.
 
-Works on macOS, Linux, and Windows. On Windows, setup also generates `~/.claude/hud/statusline.cmd` — a thin wrapper that invokes node with the `.mjs` (since Windows can't execute `.mjs` directly via PATHEXT/shebang). The wrapper prefers `%ProgramFiles%\nodejs\node.exe` and falls back to the node binary that ran setup.
+## Update
 
-**Re-run `/claude-kit:setup` after:**
-- Switching node installations (uninstalling/reinstalling, changing version managers)
-- Updating the plugin to a new version
+```
+/plugin marketplace update hs
+/plugin update claude-kit@hs
+```
+
+That's it — **no manual setup re-run is needed**. A `SessionStart` hook installed by the initial setup automatically syncs HUD files with the latest plugin version every time you start a session.
+
+## Platform notes
+
+On Windows, setup also generates `~/.claude/hud/statusline.cmd` — a thin wrapper that invokes node with the `.mjs`, since Windows can't execute `.mjs` directly via PATHEXT/shebang. The wrapper prefers `%ProgramFiles%\nodejs\node.exe` and falls back to the node binary that ran setup. If you switch node installations (e.g., uninstall the system node, then install via fnm), re-run `/claude-kit:setup` once to regenerate the wrapper with the new node path.
 
 ## Troubleshooting
-
-If the statusline stops working (e.g. after switching node version managers, or on Windows after a node path change):
 
 ```
 /claude-kit:doctor
 ```
 
-This checks node availability, file permissions, settings.json configuration, and the `.cmd` wrapper on Windows, then auto-fixes any issues found.
+Checks node availability, HUD file presence, settings.json configuration, the SessionStart hook, and the wrapper's node path on Windows — auto-fixes anything fixable.
 
 ## Nerd Font Setup
 

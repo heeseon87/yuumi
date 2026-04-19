@@ -59,6 +59,15 @@ Common problems:
 | Wrong extension on Unix | Path ends with `.cmd` on macOS/Linux | Run setup |
 | Path doesn't exist | File pointed at by command is missing | Run setup |
 
+### 4b. Check SessionStart auto-sync hook (1.3.0+)
+
+claude-kit registers a `SessionStart` hook so HUD files refresh automatically every session — no manual setup re-run needed after `/plugin update`. Verify:
+
+- `settings.hooks.SessionStart` exists (array)
+- Exactly one entry's command contains `claude-kit` (the auto-sync walker)
+
+Missing or duplicated → run setup. The setup is idempotent and only adds/replaces the claude-kit entry, leaving any other tools' SessionStart hooks intact.
+
 ### 5. Verify the statusline actually runs
 
 Spawn the configured command exactly the way Claude Code does (with stdin) and inspect the output:

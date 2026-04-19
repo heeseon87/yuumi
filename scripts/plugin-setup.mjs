@@ -1,12 +1,23 @@
 #!/usr/bin/env node
 /**
- * Claude Kit - Post-Install Setup
+ * Claude Kit - Setup & Sync
  *
- * Configures Tokyo Night powerline statusline when plugin is installed.
- * Backs up existing HUD files and settings before overwriting.
+ * Two modes:
+ *   default   (/claude-kit:setup) — verbose, backs up, prints summary
+ *   --quiet   (SessionStart hook) — silent unless changes, no backups
+ *
+ * What it does:
+ *   1. Sync ~/.claude/hud/statusline.mjs from the latest plugin source (marketplaces > cache)
+ *   2. Generate ~/.claude/hud/statusline.cmd on Windows (with detected node path)
+ *   3. Write settings.json statusLine + SessionStart hook (preserving other hooks)
+ *
+ * Architecture: settings.json points at stable ~/.claude/hud/ paths (not at
+ * volatile marketplaces dir, which Claude Code can wipe on git-pull failure).
+ * The SessionStart hook re-runs this script in --quiet mode every session,
+ * so users never need to manually re-run setup after a plugin update.
  */
 
-import { existsSync, mkdirSync, writeFileSync, readFileSync, copyFileSync, chmodSync, symlinkSync, unlinkSync, lstatSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync, readFileSync, copyFileSync, chmodSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -20,10 +31,13 @@ const HUD_DIR = join(CLAUDE_DIR, 'hud');
 const BACKUP_DIR = join(HUD_DIR, 'backup');
 const SETTINGS_FILE = join(CLAUDE_DIR, 'settings.json');
 
+const QUIET = process.argv.includes('--quiet');
+const log = QUIET ? () => {} : (...a) => console.log(...a);
+
 const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
 
-// marketplace 소스 경로 탐색 (자동 업데이트되는 디렉토리)
-// Windows의 backslash 경로도 인식하도록 정규화 후 매칭
+// Prefer marketplaces dir (auto-updated on /plugin marketplace update),
+// fall back to the cache dir we were invoked from (Windows backslashes normalized).
 function getSourceRoot() {
   const normalized = PLUGIN_ROOT.replace(/\\/g, '/');
   if (normalized.includes('/marketplaces/')) return PLUGIN_ROOT;
@@ -35,24 +49,8 @@ function getSourceRoot() {
   return PLUGIN_ROOT;
 }
 
-// Windows의 symlink는 관리자 권한 또는 개발자 모드를 요구. 실패 시 copy로 폴백.
-function linkOrCopy(src, dest) {
-  try {
-    symlinkSync(src, dest);
-    return 'linked';
-  } catch (e) {
-    if (e.code === 'EPERM' || e.code === 'EACCES') {
-      copyFileSync(src, dest);
-      return 'copied';
-    }
-    throw e;
-  }
-}
-
-// Windows는 .mjs를 직접 실행할 수 없음 (PATHEXT에 없음, shebang 무시).
-// node 절대경로를 호출하는 .cmd 래퍼를 생성해 settings.json에서 그걸 참조.
-// node 경로: 표준 인스톨러(%ProgramFiles%\nodejs\node.exe) → 환경변수로 참조 (마이너 버전 업그레이드 자동 추적)
-//            없으면 → 지금 실행 중인 node의 절대경로 (nvm-windows/fnm/volta 케이스)
+// Standard installer location stays valid across node minor upgrades; for
+// nvm-windows/fnm/volta fall back to the absolute path of the running node.
 function resolveWindowsNodeRef() {
   const programFiles = process.env.ProgramFiles || 'C:\\Program Files';
   if (existsSync(join(programFiles, 'nodejs', 'node.exe'))) {
@@ -62,94 +60,110 @@ function resolveWindowsNodeRef() {
 }
 
 function backup(filePath) {
+  if (QUIET) return;
   if (!existsSync(filePath)) return;
   mkdirSync(BACKUP_DIR, { recursive: true });
   const name = basename(filePath);
   const backupPath = join(BACKUP_DIR, `${name}.${timestamp}.bak`);
   copyFileSync(filePath, backupPath);
-  console.log(`[claude-kit] Backed up ${name} → backup/${name}.${timestamp}.bak`);
+  log(`[claude-kit] Backed up ${name} → backup/${name}.${timestamp}.bak`);
 }
 
-console.log('[claude-kit] Running post-install setup...');
+function filesEqual(a, b) {
+  if (!existsSync(a) || !existsSync(b)) return false;
+  return readFileSync(a).equals(readFileSync(b));
+}
 
-// 1. Create HUD directory
+// SessionStart hook command — finds the latest plugin-setup.mjs in cache (SemVer
+// descending) and re-runs it in --quiet mode. Stale 1.x.x dirs are skipped.
+// Single line so it round-trips through JSON without surprises.
+const HOOK_COMMAND = `node -e "var p=require('path'),fs=require('fs'),h=require('os').homedir(),c=p.join(h,'.claude/plugins/cache'),r=[];function w(d){try{for(var e of fs.readdirSync(d,{withFileTypes:true})){var f=p.join(d,e.name);if(e.isDirectory())w(f);else if(e.name=='plugin-setup.mjs'&&f.includes('claude-kit')){var v=p.basename(p.dirname(p.dirname(f)));if(/^[0-9]+\\.[0-9]+\\.[0-9]+$/.test(v))r.push([v,f])}}}catch(_){}}w(c);if(!r.length)process.exit(0);r.sort(function(a,b){var x=a[0].split('.').map(Number),y=b[0].split('.').map(Number);for(var i=0;i<3;i++)if(x[i]!==y[i])return y[i]-x[i];return 0});require('child_process').execFile(process.execPath,[r[0][1],'--quiet'],function(){})"`;
+
+let changed = 0;
+
+log('[claude-kit] Running setup...');
+
+// 1. Ensure HUD dir
 mkdirSync(HUD_DIR, { recursive: true });
 
-// 2. Symlink HUD files (marketplace 소스를 직접 참조 → 자동 업데이트 반영)
-// Windows에서 symlink가 막히면 copy로 폴백 (이 경우 자동 업데이트는 안 되므로 재실행 안내)
+// 2. Sync statusline.mjs (only writes if content differs)
 const sourceRoot = getSourceRoot();
-const hudFiles = ['statusline.mjs'];
-const copiedFiles = [];
-for (const file of hudFiles) {
-  const src = join(sourceRoot, 'hud', file);
-  const dest = join(HUD_DIR, file);
-  if (existsSync(src)) {
-    try {
-      const stat = lstatSync(dest);
-      if (!stat.isSymbolicLink()) backup(dest);
-      unlinkSync(dest);
-    } catch {} // dest가 없으면 무시
-    const action = linkOrCopy(src, dest);
-    if (action === 'copied') copiedFiles.push(file);
-    console.log(`[claude-kit] ${action === 'linked' ? 'Linked' : 'Copied'} ${file} → ${action === 'linked' ? src : dest}`);
-  }
+const srcMjs = join(sourceRoot, 'hud', 'statusline.mjs');
+const destMjs = join(HUD_DIR, 'statusline.mjs');
+
+if (existsSync(srcMjs) && !filesEqual(srcMjs, destMjs)) {
+  backup(destMjs);
+  copyFileSync(srcMjs, destMjs);
+  try { chmodSync(destMjs, 0o755); } catch { /* Windows */ }
+  changed++;
+  log(`[claude-kit] Updated ${destMjs}`);
 }
 
-// Make executable (source for symlink target, dest for copy)
-try {
-  chmodSync(join(sourceRoot, 'hud', 'statusline.mjs'), 0o755);
-} catch { /* Windows doesn't need this */ }
-for (const file of copiedFiles) {
-  try {
-    chmodSync(join(HUD_DIR, file), 0o755);
-  } catch { /* Windows doesn't need this */ }
-}
-
-// 3. Windows에서는 .cmd 래퍼 생성 (Unix는 shebang으로 충분)
-let statusLineEntryPath;
+// 3. Windows .cmd wrapper (regenerated when content differs — node path may have moved)
+let statusLineEntryPath = destMjs;
 if (process.platform === 'win32') {
   const cmdPath = join(HUD_DIR, 'statusline.cmd');
   const nodeRef = resolveWindowsNodeRef();
-  // CRLF for batch file convention; %~dp0 = wrapper's own directory; %* passes args through
   const cmdContent = `@echo off\r\n${nodeRef} "%~dp0statusline.mjs" %*\r\n`;
-  if (existsSync(cmdPath)) backup(cmdPath);
-  writeFileSync(cmdPath, cmdContent);
-  console.log(`[claude-kit] Wrote ${cmdPath} (node ref: ${nodeRef})`);
+  const current = existsSync(cmdPath) ? readFileSync(cmdPath, 'utf-8') : null;
+  if (current !== cmdContent) {
+    backup(cmdPath);
+    writeFileSync(cmdPath, cmdContent);
+    changed++;
+    log(`[claude-kit] Updated ${cmdPath} (node ref: ${nodeRef})`);
+  }
   statusLineEntryPath = cmdPath;
-} else {
-  statusLineEntryPath = join(HUD_DIR, 'statusline.mjs');
 }
 
-// 4. Backup & configure settings.json
+// 4. settings.json: statusLine + SessionStart hook (only writes if shape differs)
 try {
   let settings = {};
   if (existsSync(SETTINGS_FILE)) {
-    backup(SETTINGS_FILE);
     settings = JSON.parse(readFileSync(SETTINGS_FILE, 'utf-8'));
   }
 
-  settings.statusLine = {
+  const desiredStatusLine = {
     type: 'command',
     command: `"${statusLineEntryPath}"`,
     refreshInterval: 1
   };
+  const desiredHookEntry = {
+    hooks: [{ type: 'command', command: HOOK_COMMAND }]
+  };
 
-  writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2));
-  console.log('[claude-kit] Configured statusLine in settings.json');
+  // Find existing claude-kit entry by marker, replace in place; else append.
+  // Preserves other tools' SessionStart hooks.
+  settings.hooks = settings.hooks || {};
+  const arr = settings.hooks.SessionStart = settings.hooks.SessionStart || [];
+  const idx = arr.findIndex(e => e?.hooks?.some(h => typeof h?.command === 'string' && h.command.includes('claude-kit')));
+  const before = JSON.stringify({ statusLine: settings.statusLine, hookEntry: idx >= 0 ? arr[idx] : null });
+
+  settings.statusLine = desiredStatusLine;
+  if (idx >= 0) arr[idx] = desiredHookEntry;
+  else arr.push(desiredHookEntry);
+
+  const after = JSON.stringify({ statusLine: settings.statusLine, hookEntry: idx >= 0 ? arr[idx] : arr[arr.length - 1] });
+
+  if (before !== after) {
+    backup(SETTINGS_FILE);
+    writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2));
+    changed++;
+    log('[claude-kit] Updated settings.json (statusLine + SessionStart hook)');
+  }
 } catch (e) {
-  console.log('[claude-kit] Warning: Could not configure settings.json:', e.message);
+  if (!QUIET) console.log('[claude-kit] Warning: settings.json update failed —', e.message);
 }
 
-console.log('[claude-kit] Setup complete!');
-console.log('');
-console.log('  Statusline: Tokyo Night powerline theme');
-console.log('  Skills:     /interview, /edit, /explain, /doctor');
-console.log(`  Backups:    ~/.claude/hud/backup/*${timestamp}.bak`);
-console.log('');
-if (copiedFiles.length > 0) {
-  console.log('  Note: HUD files were copied (symlink unavailable on this system).');
-  console.log('        Re-run /claude-kit:setup after plugin updates to refresh.');
-  console.log('');
+if (!QUIET) {
+  log('');
+  log(`[claude-kit] ${changed === 0 ? 'Already up to date.' : `${changed} item(s) updated.`}`);
+  log('');
+  log('  Statusline: Tokyo Night powerline theme');
+  log('  Skills:     /interview, /edit, /explain, /doctor');
+  log('  Auto-sync:  SessionStart hook keeps HUD synced with the installed plugin version');
+  log('');
+  log('  Restart Claude Code to apply changes.');
+  if (changed > 0) {
+    log(`  Backups:    ~/.claude/hud/backup/*${timestamp}.bak`);
+  }
 }
-console.log('  Restart Claude Code to see the new statusline.');
-console.log('  To restore: copy the .bak files back to their original names.');
