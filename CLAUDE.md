@@ -8,7 +8,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - A Tokyo Night powerline statusline — `hud/statusline.mjs`
 - A post-install setup script — `scripts/plugin-setup.mjs` (invoked via `/claude-kit:setup`)
-- Six slash commands under `skills/<name>/SKILL.md` — `setup`, `doctor`, `interview`, `edit`, `explain`, `implement`
+- Seven slash commands under `skills/<name>/SKILL.md` — `setup`, `doctor`, `interview`, `edit`, `explain`, `explain-code`, `implement`
+- A bundled `references/html-effectiveness/` directory — official Anthropic HTML samples (Apache 2.0, see `references/html-effectiveness/ATTRIBUTION.md`) used as stylistic ground truth by the `explain` and `explain-code` skills.
 
 There is no build, lint, or test pipeline. The repo is a flat collection of `.mjs` files and `SKILL.md` prompts that Claude Code reads directly.
 

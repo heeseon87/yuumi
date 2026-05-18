@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>claude-kit:explain HTML화 — Implementation Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@100..900&display=swap" rel="stylesheet">
+<style>
+	:root {
+		--ivory: #FAF9F5;
+		--slate: #141413;
+		--clay: #D97757;
+		--oat: #E3DACC;
+		--gray-150: #F0EEE6;
+		--gray-300: #D1CFC5;
+		--gray-500: #87867F;
+		--gray-700: #3D3D3A;
+		--serif: 'Hahmlet', ui-serif, Georgia, 'Times New Roman', serif;
+		--sans:  'Hahmlet', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+		--mono:  Monaco, ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+	}
+	* { box-sizing: border-box; margin: 0; padding: 0; }
+	body {
+		background: var(--ivory);
+		color: var(--gray-700);
+		font-family: var(--serif);
+		font-size: 19px;
+		line-height: 1.75;
+		padding: 72px 24px 120px;
+		-webkit-font-smoothing: antialiased;
+	}
+	.container { max-width: 740px; margin: 0 auto; }
+	.eyebrow {
+		font-family: var(--sans);
+		font-size: 12px;
+		font-weight: 500;
+		letter-spacing: 0.16em;
+		text-transform: uppercase;
+		color: var(--clay);
+		margin-bottom: 24px;
+	}
+	h1 {
+		font-family: var(--serif);
+		font-weight: 500;
+		font-size: 48px;
+		line-height: 1.1;
+		color: var(--slate);
+		margin-bottom: 20px;
+		letter-spacing: -0.02em;
+	}
+	.lede {
+		font-size: 22px;
+		line-height: 1.5;
+		color: var(--gray-700);
+		font-style: italic;
+		margin-bottom: 56px;
+	}
+	h2 {
+		font-family: var(--serif);
+		font-weight: 500;
+		font-size: 28px;
+		line-height: 1.2;
+		color: var(--slate);
+		margin: 64px 0 18px;
+	}
+	h2 .num {
+		font-style: italic;
+		color: var(--clay);
+		font-size: 0.55em;
+		margin-right: 12px;
+		vertical-align: 0.4em;
+	}
+	h3 {
+		font-family: var(--serif);
+		font-weight: 500;
+		font-size: 19px;
+		color: var(--slate);
+		margin: 28px 0 10px;
+	}
+	p { margin-bottom: 18px; }
+	a { color: var(--clay); text-decoration: underline; text-underline-offset: 3px; }
+	strong { color: var(--slate); font-weight: 600; }
+	code {
+		font-family: var(--mono);
+		font-size: 0.86em;
+		color: var(--clay);
+		background: rgba(217,119,87,0.08);
+		padding: 2px 6px;
+		border-radius: 4px;
+	}
+	pre {
+		background: var(--slate);
+		color: var(--ivory);
+		font-family: var(--mono);
+		font-size: 13.5px;
+		line-height: 1.65;
+		padding: 22px 26px;
+		border-radius: 6px;
+		overflow-x: auto;
+		margin: 24px 0;
+	}
+	pre code { background: transparent; color: inherit; padding: 0; font-size: inherit; }
+	.note {
+		margin: 28px 0;
+		padding: 4px 0 4px 22px;
+		border-left: 2px solid var(--clay);
+	}
+	.note-label {
+		font-family: var(--serif);
+		font-style: italic;
+		font-size: 14px;
+		color: var(--clay);
+		margin-bottom: 6px;
+	}
+	.aside {
+		margin: 28px 0;
+		padding: 4px 0 4px 22px;
+		border-left: 2px solid var(--gray-300);
+		color: var(--gray-700);
+	}
+	.aside-label {
+		font-family: var(--serif);
+		font-style: italic;
+		font-size: 14px;
+		color: var(--slate);
+		margin-bottom: 6px;
+	}
+	table {
+		width: 100%;
+		border-collapse: collapse;
+		font-size: 16px;
+		margin: 24px 0;
+	}
+	thead th {
+		border-top: 1px solid var(--gray-300);
+		border-bottom: 1px solid var(--gray-300);
+		font-family: var(--sans);
+		font-size: 11px;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		color: var(--gray-500);
+		padding: 10px 12px 10px 0;
+		text-align: left;
+	}
+	td { padding: 12px 12px 12px 0; border-bottom: 1px solid var(--gray-150); vertical-align: top; }
+	td:last-child, th:last-child { padding-right: 0; }
+	td code { font-size: 13px; }
+	.status {
+		display: inline-block;
+		font-family: var(--sans);
+		font-size: 11px;
+		font-weight: 600;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		padding: 2px 8px;
+		border-radius: 3px;
+	}
+	.status.done { background: rgba(120,140,93,0.15); color: #4a5a3b; }
+	.status.open { background: rgba(217,119,87,0.15); color: var(--clay); }
+	.status.decided { background: var(--gray-150); color: var(--gray-700); }
+	ul { padding-left: 22px; margin-bottom: 18px; }
+	li { margin-bottom: 8px; }
+	.ornament { text-align: center; color: var(--clay); margin: 56px 0; letter-spacing: 0.5em; opacity: 0.7; font-style: italic; }
+</style>
+</head>
+<body>
+<div class="container">
+
+	<p class="eyebrow">claude-kit · implementation notes</p>
+	<h1>explain 스킬을 HTML 아티팩트로 대체</h1>
+	<p class="lede">기존 텍스트 기반 explain을 두 갈래의 Anthropic 디자인 HTML 아티팩트로 분리한다 — 일반 explain(에세이)과 explain-code(기술 문서).</p>
+
+	<h2><span class="num">01</span>스펙 해석</h2>
+
+	<p>사용자 명령어: <code>/claude-kit:implement claude-kit에는 내가 만든 스킬들이 있어. 그 중에 explain을 html을 만드는 스킬로 대체할거야. 근데 A, B가 있다고 했으니 B를 기본 explain으로 대체하고 A버전을 explain-code로 만들거야.</code></p>
+
+	<p>이전 세션의 맥락에서 두 스타일이 식별되어 있었다:</p>
+
+	<ul>
+		<li><strong>A — 기술 문서(tech-doc) 스타일</strong>: 1080px 2컬럼 grid + 280px sticky sidebar(Key files, Gotchas), sans 15px 본문, 흰 카드, callstack walkthrough, 펼침 코드. 출처: 공식 갤러리 <code>04-code-understanding.html</code> 류.</li>
+		<li><strong>B — 장문 에세이(essay) 스타일</strong>: 740px 단일 컬럼, serif 19px 본문, 드롭캡·푸트노트·인사이트 블록, 큰 헤딩, 학술 톤. 출처: <code>tracing-thoughts-language-model</code> 류 research blog.</li>
+	</ul>
+
+	<p>사용자의 매핑: <strong>B → 기본 <code>explain</code></strong>, <strong>A → <code>explain-code</code></strong>. 일반 explain은 어떤 대상이든 에세이로 풀어내고, code-specific일 때만 tech-doc 사이드바 패턴을 쓴다는 자연스러운 분리.</p>
+
+	<h2><span class="num">02</span>주요 결정</h2>
+
+	<div class="t-wrap"><table>
+		<thead><tr><th style="width:22%">영역</th><th style="width:18%">상태</th><th>결정</th></tr></thead>
+		<tbody>
+			<tr>
+				<td>스킬 분리 명명</td>
+				<td><span class="status decided">DECIDED</span></td>
+				<td><code>explain</code>(B/에세이), <code>explain-code</code>(A/tech-doc). 사용자 지시 그대로. <code>explain-essay</code> 같은 후보 대신 generic <code>explain</code>이 에세이를 받는다 — "기본 explain은 자유로운 에세이"라는 위계.</td>
+			</tr>
+			<tr>
+				<td>SKILL.md 길이</td>
+				<td><span class="status decided">DECIDED</span></td>
+				<td>다른 스킬(현 explain 10줄)보다 *훨씬* 길어진다. 디자인 토큰, 폰트, 레이아웃, 패턴, 시각 요소 정책, 함정 등을 모두 임베드. 이유: SKILL.md가 곧 prompt이고, 새 세션에서 이 한 파일만으로 6-iteration 수준 결과물이 나와야 함.</td>
+			</tr>
+			<tr>
+				<td>외부 갤러리 — plugin에 동봉</td>
+				<td><span class="status decided">REVISED</span></td>
+				<td>당초 "self-contained 위해 갤러리 참조 안 함"이었으나 사용자 요청으로 <strong>뒤집음</strong>. 갤러리는 Apache 2.0 라이선스, claude-kit은 MIT — 호환됨. 1차 5개 → 2차 <strong>전체 20개 + index.html + LICENSE + README.md + ATTRIBUTION.md</strong>를 <code>references/html-effectiveness/</code>에 동봉(총 452KB). 두 차례 확장: 처음엔 내가 본 5개만 → 사용자가 "다른 파일들은?" → 전체 복사. ATTRIBUTION.md에 파일별 용도 매핑. 특히 <code>16-implementation-plan.html</code>은 implement 스킬에 직접 관련되어 누락하면 안 됐던 핵심.</td>
+			</tr>
+			<tr>
+				<td>한글 폰트 정책</td>
+				<td><span class="status decided">DECIDED</span></td>
+				<td>두 스킬 모두 동일: Hahmlet (Google Fonts variable) for serif+sans, Monaco for mono. <code>unicode-range</code>로 한글만 Hahmlet, Latin은 시스템 폰트. Noto Sans KR·Nanum Gothic Coding은 명시적으로 제외.</td>
+			</tr>
+			<tr>
+				<td>시각 요소 정책</td>
+				<td><span class="status decided">DECIDED</span></td>
+				<td>SVG는 둘 다 허용하되 "본문 보강, 대체 금지" 원칙. 애니메이션은 한 곳만, <code>getTotalLength()</code> 기반. <code>prefers-reduced-motion</code> 처리 필수.</td>
+			</tr>
+			<tr>
+				<td>출력 파일 이름</td>
+				<td><span class="status decided">DECIDED</span></td>
+				<td><code>&lt;target-slug&gt;-explained.html</code> 패턴. 현재 디렉터리에 저장 후 <code>open</code>으로 브라우저에 띄움.</td>
+			</tr>
+			<tr>
+				<td>버전 범프</td>
+				<td><span class="status decided">DECIDED</span></td>
+				<td>1.3.1 → 1.3.2 → 1.3.3 → 1.3.4. 각각 patch bump (스킬 형식 변경 → references 동봉 → implement essay 테마 적용). API surface는 그대로(스킬 이름·인자 동일), 모두 내부 변경.</td>
+			</tr>
+			<tr>
+				<td>implement 스킬도 essay 테마</td>
+				<td><span class="status decided">DECIDED</span></td>
+				<td>사용자 후속 요청: implement가 만드는 implementation-notes.html도 explain의 essay 테마(폰트 포함)와 일치하도록. <code>skills/implement/SKILL.md</code>에 핵심 토큰(색·폰트·tableNote/Aside/badge 패턴)을 임베드, 세부 패턴은 explain SKILL.md와 references에 위임 (DRY). 이번 노트 파일 자체가 그 결과의 *현물 견본*이기도 함.</td>
+			</tr>
+		</tbody>
+	</table></div>
+
+	<h2><span class="num">03</span>스펙에서 의도적으로 벗어난 곳</h2>
+
+	<div class="note">
+		<div class="note-label">Deviation 1 — SKILL.md 분량</div>
+		<p>기존 explain SKILL.md는 11줄. 새 explain은 ~120줄, explain-code는 ~170줄. <strong>왜</strong>: 디자인 시스템을 prompt에 임베드해야 첫 빌드에 좋은 결과가 나옴. 짧은 prompt는 6-iteration의 함정에 다시 빠짐. 사용자가 이 세션에서 명확히 "한 번에 완성"을 원했음.</p>
+	</div>
+
+	<div class="note">
+		<div class="note-label">Deviation 2 — 출력 형식: 마크다운 → HTML</div>
+		<p>기존 explain은 chat 응답으로 마크다운을 출력. 새 버전은 HTML 파일을 디스크에 쓰고 브라우저로 열어줌. <strong>왜</strong>: 사용자의 명시적 요청 — "마크다운이 아니라 html로 만들어지길". 부작용으로 conversation 안에서 즉시 읽기는 어려워지지만, 시각적으로 풍부한 아티팩트를 얻음.</p>
+	</div>
+
+	<div class="aside">
+		<div class="aside-label">Correction — v1 초안의 실수</div>
+		<p>1차 초안에서 기존 explain의 <strong>콘텐츠 지침을 거의 버리고 디자인 시스템만 임베드</strong>한 SKILL.md를 작성했음. 사용자가 즉시 지적: "기존의 explain에 있던 내용을 완전히 버린건가? 내가 바란건 기존의 explain의 내용을 마크다운이 아니라 html로 만들어지길 바란거고 테마는 앤트로픽의 테마를 사용하길 바랬던거였어." <strong>수정</strong>: 두 SKILL.md 모두 기존 explain의 콘텐츠 지침("architecture, structure, why decisions, lessons, bugs, pitfalls, how good engineers think, analogies, anecdotes, very engaging, not boring textbook")을 <em>그대로 보존</em>하고, 그 아래에 <em>How to render</em> 섹션을 분리해서 디자인 시스템을 얹는 구조로 재작성. 콘텐츠 = 무엇을 말할까, 렌더 = 어떻게 보여줄까 — 두 관심사 분리.</p>
+	</div>
+
+	<h2><span class="num">04</span>고려한 대안과 기각 이유</h2>
+
+	<h3>대안 A: 단일 스킬 + 모드 플래그</h3>
+	<p><code>explain --mode=essay|tech</code> 식으로 한 스킬에 옵션. <strong>기각</strong>: 사용자가 명시적으로 분리를 요청. argument 해석도 더 단순해짐 (target 하나만 받음).</p>
+
+	<h3>대안 B: 외부 템플릿 파일 import</h3>
+	<p>SKILL.md를 짧게 유지하고 <code>templates/essay.html</code>, <code>templates/tech-doc.html</code>을 디스크에 두는 방식. <strong>기각</strong>: claude-kit은 SKILL.md 단일 파일 구조. 추가 파일은 setup 스크립트 변경 필요. 또 stylesheet 임베드도 단일 파일이 더 robust.</p>
+
+	<h3>대안 C: HTML 안에 React/JSX</h3>
+	<p>인터랙티브 컴포넌트(탭, 토글)를 더 쉽게 쓰려고. <strong>기각</strong>: 갤러리 사례 모두 vanilla HTML+CSS+JS. zero-deps 원칙 유지. <code>&lt;details&gt;</code> 같은 native HTML 패턴으로 충분.</p>
+
+	<h2><span class="num">05</span>오픈 퀘스천</h2>
+
+	<div class="note">
+		<div class="note-label">Open 1 — explain-code 외 도메인 특화 분기?</div>
+		<p>"코드"외에 다른 도메인(시스템 아키텍처, 데이터 모델, API 명세 등)에도 tech-doc 스타일이 적용될까? 일단 explain-code 하나로 두되, 필요하면 후속 세션에서 explain-system 등 추가 분기 가능. <strong>지금은 보류</strong>.</p>
+	</div>
+
+	<div class="note">
+		<div class="note-label">Open 2 — 다국어 페일오버</div>
+		<p>현재 디자인은 한글+영어 혼용을 가정. 일본어/중국어 컨텐츠에서 Hahmlet은 fallback이 어색할 수 있음. <strong>현재 스코프 밖</strong> — 사용자가 한국어 환경.</p>
+	</div>
+
+	<div class="note">
+		<div class="note-label">Open 3 — 이미지/스크린샷 처리</div>
+		<p>target이 외부 URL이거나 스크린샷 분석이 필요한 경우, agent가 browser/curl을 통해 fetch 해야 함. SKILL.md에 이 흐름을 자세히 적지는 않음 — agent의 일반 능력에 위임. <strong>관찰만</strong>.</p>
+	</div>
+
+	<div class="ornament">· · ·</div>
+
+	<p style="color:var(--gray-500); font-style:italic; font-size:14px; text-align:center;">
+		이 노트는 구현이 끝난 시점의 스냅샷. 후속 세션에서 분기 필요 시 업데이트.
+	</p>
+
+</div>
+</body>
+</html>
