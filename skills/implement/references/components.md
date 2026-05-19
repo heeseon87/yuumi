@@ -12,7 +12,7 @@ Read this when you have a question like *"I want to convey X — what fits?"* �
 Serif headings, sized for hierarchy. `<h2>` can take an italic number prefix via `<span class="num">01</span>` when you want academic-essay numbering, but bare headings are equally valid.
 
 ### `<p>` — body paragraph
-Standard prose. 19px sans-serif at line-height 1.75 — book-like density.
+Standard prose. 19px Hahmlet (serif) at line-height 1.75 — book-like density. Korean and English share the same family, so mixed-language paragraphs stay visually unified.
 
 ### `.body-start` — drop-cap paragraph
 A first letter set in large serif accent. Use it **once per document**, on the paragraph where you want to mark "the real prose starts here." More than once dilutes the effect.
@@ -40,7 +40,7 @@ Small uppercase tracked label, accent-deep colored. Often used above an `<h1>` f
 Italic serif sentence after the title. The headline insight — written so a reader who reads *only* this line still walks away with the point. The page's job is to expand on this; if your lede doesn't already give the gist, rewrite it.
 
 ### `.byline`
-Small sans-serif line for context (subject path, file location, date). Use when readers benefit from knowing "where this lives in the codebase." Skip for conceptual explanations.
+Small Hahmlet line (13px, tracked) for context (subject path, file location, date). Use when readers benefit from knowing "where this lives in the codebase." Skip for conceptual explanations.
 
 ---
 

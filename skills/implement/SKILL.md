@@ -37,7 +37,7 @@ The file is updated *as you work*, not at the end. The user may open it mid-impl
 
 ## Output: Anthropic-style HTML artifact
 
-A self-contained `implementation-notes.html` file using the same visual language as `claude-kit:explain` — cream background, coral accent, serif headings, sans-serif body. The visual identity is shared so the user sees a consistent look across our skills.
+A self-contained `implementation-notes.html` file using the same visual language as `claude-kit:explain` — cream background, coral accent, Hahmlet serif typography, JetBrains Mono for code. The visual identity is shared so the user sees a consistent look across our skills.
 
 What's *not* shared with explain is the *content structure*. There's no fixed template for what comes first or what the section headings should be. Design the structure for this specific implementation: how many decisions there are, how clustered they are, whether they group naturally by domain, by file, by phase. **You decide.**
 

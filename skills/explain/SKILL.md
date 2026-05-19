@@ -26,7 +26,7 @@ If a reader has to re-read a paragraph, you've already lost. If they get stuck a
 
 3. **Design the page structure yourself.** Do NOT follow a fixed template. The structure you choose should serve *this specific target*. Some explanations are best as a single long essay. Others as a sequence of numbered acts. Others as a single chart with prose around it. There is no canonical section list — there is the structure this particular target needs.
 
-4. **Render as an Anthropic-style HTML artifact.** A self-contained `.html` file in the project's current working directory, opened in the browser. The visual language is fixed (cream background, coral accent, serif headings, sans-serif body, generous whitespace); the *content structure* is yours to invent each time.
+4. **Render as an Anthropic-style HTML artifact.** A self-contained `.html` file in the project's current working directory, opened in the browser. The visual language is fixed (cream background, coral accent, Hahmlet serif typography throughout, JetBrains Mono for code, generous whitespace); the *content structure* is yours to invent each time.
 
 5. **Open in browser.** `open {slug}-explained.html` on macOS. Tell the user the file path. Don't re-explain the contents in chat — the artifact is the deliverable.
 
