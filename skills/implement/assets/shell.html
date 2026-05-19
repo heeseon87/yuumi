@@ -1,0 +1,672 @@
+<!--
+	Anthropic-style Explainer Shell
+	-------------------------------
+	A blank canvas with the visual language baked in. The body is intentionally empty —
+	you, the agent, design the page structure based on the target you're explaining.
+
+	HOW TO USE:
+	1. Copy this file to <slug>-explained.html in the current working directory.
+	2. Set <html lang="..."> and <title> based on the target.
+	3. Write your content inside <div class="container">. There is no prescribed order
+	   of sections — design what serves the reader.
+	4. Use components from references/components.md as a catalog (not a checklist).
+	5. The animation script at the bottom is opt-in: it only activates if you add an
+	   SVG figure with id="parallelFig" and paths with class="parallel-line".
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Explainer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400;1,8..60,500&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+	:root {
+		--bg: #F5F4ED;
+		--bg-deep: #EFEDE4;
+		--text: #191917;
+		--text-dim: #4D483F;
+		--text-faint: #8B8377;
+		--rule: #D8D2C2;
+		--rule-strong: #B8B1A1;
+		--accent: #CC785C;
+		--accent-deep: #A75A40;
+		--accent-soft: #ECC9B7;
+		--accent-pale: #F2DDD0;
+		--code-bg: #1F1D1A;
+		--code-fg: #EBE7DA;
+		--code-dim: #948D7F;
+	}
+
+	* { box-sizing: border-box; }
+	html { background: var(--bg); }
+
+	body {
+		margin: 0;
+		padding: 0;
+		background: var(--bg);
+		color: var(--text);
+		font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+		font-size: 19px;
+		line-height: 1.75;
+		font-weight: 400;
+		letter-spacing: -0.003em;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
+
+	::selection { background: var(--accent-soft); color: var(--text); }
+
+	.container {
+		max-width: 760px;
+		margin: 0 auto;
+		padding: 88px 28px 140px;
+	}
+
+	/* ── Typographic primitives ── */
+
+	.eyebrow {
+		font-family: 'Inter', sans-serif;
+		font-size: 12px;
+		font-weight: 500;
+		letter-spacing: 0.16em;
+		text-transform: uppercase;
+		color: var(--accent-deep);
+		margin: 0 0 28px;
+	}
+
+	h1 {
+		font-family: 'Source Serif 4', Georgia, serif;
+		font-weight: 500;
+		font-size: 60px;
+		line-height: 1.05;
+		letter-spacing: -0.022em;
+		margin: 0 0 28px;
+		color: var(--text);
+	}
+
+	.lede {
+		font-family: 'Source Serif 4', Georgia, serif;
+		font-size: 24px;
+		line-height: 1.45;
+		color: var(--text-dim);
+		font-weight: 400;
+		font-style: italic;
+		margin: 0 0 12px;
+	}
+
+	.byline {
+		font-family: 'Inter', sans-serif;
+		font-size: 13px;
+		color: var(--text-faint);
+		letter-spacing: 0.04em;
+		margin-bottom: 64px;
+	}
+	.byline strong { color: var(--text-dim); font-weight: 500; }
+
+	h2 {
+		font-family: 'Source Serif 4', Georgia, serif;
+		font-weight: 500;
+		font-size: 30px;
+		line-height: 1.2;
+		letter-spacing: -0.012em;
+		margin: 80px 0 24px;
+		color: var(--text);
+	}
+	h2 .num {
+		font-style: italic;
+		font-weight: 400;
+		color: var(--accent-deep);
+		font-size: 0.6em;
+		margin-right: 14px;
+		vertical-align: 0.35em;
+		letter-spacing: 0.02em;
+	}
+
+	h3 {
+		font-family: 'Source Serif 4', Georgia, serif;
+		font-weight: 500;
+		font-size: 22px;
+		line-height: 1.3;
+		margin: 44px 0 14px;
+		color: var(--text);
+	}
+
+	p { margin: 0 0 22px; }
+	p + p { margin-top: -2px; }
+
+	.body-start::first-letter {
+		font-family: 'Source Serif 4', Georgia, serif;
+		font-weight: 500;
+		float: left;
+		font-size: 62px;
+		line-height: 0.92;
+		padding: 6px 10px 0 0;
+		color: var(--accent-deep);
+	}
+
+	a {
+		color: var(--accent-deep);
+		text-decoration: underline;
+		text-underline-offset: 3px;
+		text-decoration-thickness: 1px;
+		text-decoration-color: var(--accent-soft);
+		transition: text-decoration-color 120ms ease;
+	}
+	a:hover { text-decoration-color: var(--accent-deep); }
+
+	strong { font-weight: 600; color: var(--text); }
+	em { font-style: italic; }
+
+	code {
+		font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
+		font-size: 0.85em;
+		color: var(--accent-deep);
+		background: transparent;
+		padding: 0;
+		font-weight: 500;
+	}
+
+	pre {
+		background: var(--code-bg);
+		color: var(--code-fg);
+		padding: 24px 28px;
+		border-radius: 4px;
+		overflow-x: auto;
+		font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
+		font-size: 13.5px;
+		line-height: 1.65;
+		margin: 32px -8px;
+	}
+
+	pre code {
+		background: transparent;
+		color: var(--code-fg);
+		padding: 0;
+		border-radius: 0;
+		font-weight: 400;
+	}
+
+	.k { color: #D88A66; }      /* keyword */
+	.s { color: #E8B888; }      /* string */
+	.c { color: var(--code-dim); font-style: italic; } /* comment */
+	.fn { color: #E8B888; }     /* function name */
+	.n { color: var(--code-fg); } /* normal identifier */
+
+	.hr-soft { border: none; border-top: 1px solid var(--rule); margin: 56px 0; }
+
+	.ornament {
+		text-align: center;
+		color: var(--accent-deep);
+		font-family: 'Source Serif 4', Georgia, serif;
+		font-style: italic;
+		font-size: 16px;
+		letter-spacing: 0.5em;
+		margin: 72px 0;
+		opacity: 0.7;
+	}
+
+	/* ── Optional components — use when the meaning calls for it ── */
+
+	/* Metadata block — borderless dl */
+	.meta {
+		border-top: 1px solid var(--rule-strong);
+		border-bottom: 1px solid var(--rule-strong);
+		padding: 22px 0;
+		margin: 36px 0;
+		display: grid;
+		grid-template-columns: 110px 1fr;
+		row-gap: 14px;
+		column-gap: 28px;
+		font-size: 15px;
+	}
+	.meta dt {
+		font-family: 'Inter', sans-serif;
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		font-size: 11px;
+		font-weight: 600;
+		color: var(--text-faint);
+		padding-top: 4px;
+	}
+	.meta dd { margin: 0; font-size: 15px; color: var(--text); line-height: 1.5; }
+	.meta dd code { font-size: 13.5px; }
+
+	.method-tag {
+		display: inline-block;
+		background: var(--text);
+		color: var(--bg);
+		font-family: 'JetBrains Mono', monospace;
+		font-size: 11px;
+		font-weight: 600;
+		padding: 3px 8px;
+		border-radius: 3px;
+		letter-spacing: 0.06em;
+		margin-right: 10px;
+		vertical-align: 1px;
+	}
+
+	/* Figures (used for SVG diagrams or images) */
+	figure { margin: 44px -8px; padding: 0; }
+	figure svg { display: block; width: 100%; height: auto; max-width: 100%; }
+	figcaption {
+		font-family: 'Source Serif 4', Georgia, serif;
+		font-style: italic;
+		font-size: 14.5px;
+		line-height: 1.5;
+		color: var(--text-dim);
+		margin-top: 16px;
+		padding: 0 24px;
+		text-align: center;
+	}
+	figcaption .fig-num {
+		font-weight: 500;
+		color: var(--accent-deep);
+		font-style: normal;
+		font-family: 'Inter', sans-serif;
+		font-size: 11px;
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		margin-right: 8px;
+	}
+
+	/* Text styles for SVG content */
+	.svg-text { font-family: 'Source Serif 4', Georgia, serif; fill: var(--text); font-size: 13px; }
+	.svg-text-italic { font-family: 'Source Serif 4', Georgia, serif; font-style: italic; fill: var(--accent-deep); font-size: 12px; }
+	.svg-text-mono { font-family: 'JetBrains Mono', monospace; fill: var(--text); font-size: 11.5px; }
+	.svg-text-dim { font-family: 'Inter', sans-serif; fill: var(--text-faint); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; }
+
+	/* Step list with hanging italic numerals */
+	.steps { margin: 40px 0; padding: 0; list-style: none; counter-reset: step; }
+	.steps > li {
+		counter-increment: step;
+		position: relative;
+		padding: 10px 0 10px 60px;
+		min-height: 30px;
+	}
+	.steps > li::before {
+		content: counter(step, decimal-leading-zero);
+		position: absolute;
+		left: 0;
+		top: 12px;
+		font-family: 'Source Serif 4', Georgia, serif;
+		font-style: italic;
+		font-size: 15px;
+		color: var(--accent-deep);
+	}
+	.steps > li::after {
+		content: "";
+		position: absolute;
+		left: 32px;
+		top: 36px;
+		bottom: -4px;
+		width: 1px;
+		background: var(--rule);
+	}
+	.steps > li:last-child::after { display: none; }
+	.steps .step-title { font-size: 16px; color: var(--text); font-weight: 500; line-height: 1.45; }
+	.steps .step-desc { font-size: 15px; color: var(--text-dim); margin-top: 4px; line-height: 1.6; }
+	.steps .step-desc code { font-size: 13.5px; }
+
+	/* Nested sub-group with accent left rail */
+	.nest {
+		margin: 14px 0 14px 60px;
+		padding: 8px 0 8px 22px;
+		border-left: 2px solid var(--accent);
+		position: relative;
+	}
+	.nest[data-label]::before {
+		content: attr(data-label);
+		position: absolute;
+		top: -8px;
+		left: 18px;
+		background: var(--bg);
+		padding: 0 8px;
+		font-family: 'Inter', sans-serif;
+		font-size: 10px;
+		font-weight: 600;
+		letter-spacing: 0.16em;
+		color: var(--accent-deep);
+	}
+	.nest ol { list-style: none; padding: 8px 0 4px; margin: 0; counter-reset: substep; }
+	.nest ol li {
+		counter-increment: substep;
+		padding: 8px 0 8px 40px;
+		position: relative;
+		font-size: 16px;
+		line-height: 1.55;
+	}
+	.nest ol li::before {
+		content: counter(substep, upper-alpha);
+		position: absolute;
+		left: 0;
+		top: 9px;
+		font-family: 'Source Serif 4', Georgia, serif;
+		font-style: italic;
+		color: var(--accent-deep);
+		font-size: 14px;
+	}
+	.nest ol li strong { font-weight: 600; }
+	.nest ol li .desc { display: block; color: var(--text-dim); font-size: 14.5px; margin-top: 2px; line-height: 1.6; }
+	.nest ol li .desc code { font-size: 13px; }
+
+	/* Callout — minimal left-accent */
+	.callout {
+		margin: 36px 0;
+		padding: 4px 0 4px 22px;
+		border-left: 2px solid var(--accent);
+	}
+	.callout-label {
+		font-family: 'Source Serif 4', Georgia, serif;
+		font-style: italic;
+		font-size: 14px;
+		color: var(--accent-deep);
+		font-weight: 500;
+		margin-bottom: 6px;
+	}
+	.callout ul { margin: 0; padding: 0; list-style: none; }
+	.callout li {
+		font-size: 16.5px;
+		line-height: 1.65;
+		color: var(--text);
+		padding: 4px 0 4px 18px;
+		position: relative;
+	}
+	.callout li::before { content: "—"; position: absolute; left: 0; color: var(--accent); }
+
+	/* Aside — softer, for cautions or side notes */
+	.aside {
+		margin: 36px 0;
+		padding: 4px 0 4px 22px;
+		border-left: 2px solid var(--rule-strong);
+		font-size: 16.5px;
+		color: var(--text-dim);
+		line-height: 1.65;
+	}
+	.aside-label {
+		font-family: 'Source Serif 4', Georgia, serif;
+		font-style: italic;
+		font-size: 14px;
+		color: var(--text);
+		font-weight: 500;
+		margin-bottom: 6px;
+	}
+
+	/* Pull quote */
+	blockquote {
+		margin: 44px -10px;
+		padding: 6px 0 6px 32px;
+		font-family: 'Source Serif 4', Georgia, serif;
+		font-size: 24px;
+		line-height: 1.4;
+		color: var(--text);
+		font-style: italic;
+		font-weight: 400;
+		position: relative;
+	}
+	blockquote::before {
+		content: "\201C";
+		position: absolute;
+		left: -6px;
+		top: 8px;
+		font-size: 56px;
+		color: var(--accent);
+		line-height: 0.5;
+		font-family: 'Source Serif 4', Georgia, serif;
+		font-style: normal;
+	}
+
+	/* Hairline table */
+	.t-wrap { overflow-x: auto; margin: 32px 0; }
+	table { width: 100%; border-collapse: collapse; font-size: 15.5px; background: transparent; }
+	th, td {
+		text-align: left;
+		padding: 14px 14px 14px 0;
+		border-bottom: 1px solid var(--rule);
+		vertical-align: top;
+		line-height: 1.55;
+	}
+	thead th {
+		border-top: 1px solid var(--rule-strong);
+		border-bottom: 1px solid var(--rule-strong);
+		font-family: 'Inter', sans-serif;
+		font-weight: 600;
+		font-size: 11px;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		color: var(--text-faint);
+		padding-top: 10px;
+		padding-bottom: 10px;
+	}
+	td:last-child, th:last-child { padding-right: 0; }
+	td code { font-size: 13.5px; }
+
+	/* Lessons / takeaway block — inline tagged title + dim body */
+	.lesson { margin: 30px 0; padding: 0; }
+	.lesson-tag {
+		display: inline-block;
+		font-family: 'Source Serif 4', Georgia, serif;
+		font-style: italic;
+		font-size: 13px;
+		color: var(--accent-deep);
+		margin-right: 8px;
+	}
+	.lesson-title {
+		display: inline;
+		font-family: 'Source Serif 4', Georgia, serif;
+		font-weight: 500;
+		font-size: 19px;
+		color: var(--text);
+	}
+	.lesson-body {
+		font-size: 17px;
+		color: var(--text-dim);
+		line-height: 1.7;
+		margin-top: 8px;
+	}
+
+	/* Footnotes block */
+	.footnotes {
+		margin-top: 96px;
+		padding-top: 32px;
+		border-top: 1px solid var(--rule-strong);
+		font-size: 14px;
+		color: var(--text-dim);
+		line-height: 1.65;
+	}
+	.footnotes ol { padding-left: 22px; margin: 0; }
+	.footnotes li { margin-bottom: 10px; padding-left: 6px; }
+	.footnotes code { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: var(--text-dim); }
+	sup a {
+		text-decoration: none;
+		color: var(--accent-deep);
+		font-size: 0.75em;
+		font-weight: 500;
+		padding: 0 1px;
+	}
+
+	/* Path tree — two-column grid (handles CJK alignment robustly) */
+	.tree {
+		background: var(--bg-deep);
+		border: 1px solid var(--rule);
+		border-radius: 4px;
+		padding: 22px 28px;
+		margin: 32px 0;
+		display: grid;
+		grid-template-columns: max-content 1fr;
+		column-gap: 32px;
+		row-gap: 4px;
+		overflow-x: auto;
+	}
+	.tree .path {
+		font-family: 'JetBrains Mono', monospace;
+		font-size: 13px;
+		line-height: 1.85;
+		color: var(--text);
+		white-space: pre;
+	}
+	.tree .path .dir { color: var(--accent-deep); font-weight: 500; }
+	.tree .path .var { color: var(--accent-deep); font-style: italic; }
+	.tree .path .branch { color: var(--text-faint); }
+	.tree .note {
+		font-family: 'Source Serif 4', Georgia, serif;
+		font-style: italic;
+		font-size: 13.5px;
+		color: var(--text-faint);
+		align-self: center;
+		white-space: nowrap;
+	}
+	.tree .note:not(:empty)::before {
+		content: "— ";
+		color: var(--rule-strong);
+		font-style: normal;
+		margin-right: 2px;
+	}
+
+	/* Replay button for animations */
+	.replay {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		background: transparent;
+		border: 1px solid var(--rule-strong);
+		color: var(--text-dim);
+		padding: 6px 14px;
+		font-family: 'Inter', sans-serif;
+		font-size: 12px;
+		letter-spacing: 0.04em;
+		border-radius: 999px;
+		cursor: pointer;
+		margin-top: 12px;
+		transition: all 150ms ease;
+	}
+	.replay:hover { border-color: var(--accent); color: var(--accent-deep); }
+	.replay svg { width: 12px; height: 12px; }
+
+	/* SVG animation primitives (JS at bottom controls dasharray) */
+	.parallel-line { opacity: 0; }
+	.parallel-line.ready { opacity: 1; }
+
+	@keyframes pulseDot {
+		0%, 100% { opacity: 0.3; r: 3; }
+		50%      { opacity: 1; r: 4.5; }
+	}
+	.pulse { animation: pulseDot 1.6s ease-in-out infinite; }
+
+	@media (prefers-reduced-motion: reduce) {
+		.parallel-line {
+			stroke-dashoffset: 0 !important;
+			transition: none !important;
+			opacity: 1 !important;
+		}
+		.pulse { animation: none; opacity: 1; }
+	}
+
+	@media (max-width: 640px) {
+		.container { padding: 56px 22px 96px; }
+		h1 { font-size: 42px; }
+		.lede { font-size: 20px; }
+		h2 { font-size: 26px; }
+		body { font-size: 17.5px; }
+		.meta { grid-template-columns: 1fr; }
+		.meta dt { padding-top: 0; }
+		.steps > li { padding-left: 44px; }
+		.steps > li::after { left: 22px; }
+		.nest { margin-left: 44px; }
+		blockquote { font-size: 20px; }
+		figure { margin: 36px -22px; }
+		figcaption { padding: 0 22px; }
+	}
+</style>
+</head>
+<body>
+<div class="container">
+
+	<!-- The body is intentionally empty.
+	     Design your own structure based on what the target needs.
+	     Pull components from references/components.md as a catalog.
+	     Open this file's CSS above to know what classes are available. -->
+
+</div>
+
+<!-- Animation controller — only runs if you add an SVG figure with id="parallelFig".
+     The IIFE auto-plays once when the figure enters the viewport, and exposes
+     window.replayParallel() for an optional replay button.
+     If you don't add such a figure, this script is a no-op. -->
+<script>
+	(function () {
+		const fig = document.getElementById('parallelFig');
+		if (!fig) return;
+		const fanouts = Array.from(fig.querySelectorAll('.parallel-line.fanout'));
+		const joins = Array.from(fig.querySelectorAll('.parallel-line.join'));
+		const awaitNode = fig.querySelector('#awaitNode');
+		const commitArrow = fig.querySelector('#commitArrow');
+		const commitLabel = fig.querySelector('#commitLabel');
+		const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+		function prime(lines) {
+			return lines.map((line) => {
+				const len = line.getTotalLength();
+				line.style.strokeDasharray = len;
+				line.style.strokeDashoffset = reducedMotion ? 0 : len;
+				line.classList.add('ready');
+				return len;
+			});
+		}
+		const fanLens = prime(fanouts);
+		const joinLens = prime(joins);
+
+		function animate() {
+			if (reducedMotion) return;
+			fanouts.forEach((line, i) => { line.style.transition = 'none'; line.style.strokeDashoffset = fanLens[i]; });
+			joins.forEach((line, i) => { line.style.transition = 'none'; line.style.strokeDashoffset = joinLens[i]; });
+			if (awaitNode) {
+				awaitNode.style.transition = 'none';
+				awaitNode.setAttribute('stroke', 'var(--rule-strong)');
+				awaitNode.setAttribute('stroke-dasharray', '3 3');
+			}
+			if (commitArrow) { commitArrow.style.transition = 'none'; commitArrow.style.opacity = '0'; }
+			if (commitLabel) { commitLabel.style.transition = 'none'; commitLabel.style.opacity = '0'; }
+			void fig.getBoundingClientRect();
+
+			fanouts.forEach((line, i) => {
+				const delay = 0.05 + i * 0.12;
+				line.style.transition = 'stroke-dashoffset 0.7s ease-out ' + delay + 's';
+				line.style.strokeDashoffset = '0';
+			});
+			joins.forEach((line, i) => {
+				const delay = 0.85 + i * 0.1;
+				line.style.transition = 'stroke-dashoffset 0.55s ease-out ' + delay + 's';
+				line.style.strokeDashoffset = '0';
+			});
+
+			const allDoneAt = (joins.length ? (0.85 + (joins.length - 1) * 0.1 + 0.55) : 1.5);
+			if (awaitNode) {
+				setTimeout(() => {
+					awaitNode.style.transition = 'stroke 0.35s ease-out';
+					awaitNode.setAttribute('stroke', 'var(--accent)');
+					awaitNode.setAttribute('stroke-dasharray', '0');
+				}, allDoneAt * 1000);
+			}
+			if (commitArrow || commitLabel) {
+				setTimeout(() => {
+					if (commitArrow) { commitArrow.style.transition = 'opacity 0.35s ease-out'; commitArrow.style.opacity = '1'; }
+					if (commitLabel) { commitLabel.style.transition = 'opacity 0.35s ease-out'; commitLabel.style.opacity = '1'; }
+				}, (allDoneAt + 0.25) * 1000);
+			}
+		}
+
+		const observer = new IntersectionObserver((entries) => {
+			entries.forEach((entry) => {
+				if (entry.isIntersecting) { animate(); observer.unobserve(entry.target); }
+			});
+		}, { threshold: 0.35 });
+		observer.observe(fig);
+
+		window.replayParallel = animate;
+	})();
+</script>
+</body>
+</html>
