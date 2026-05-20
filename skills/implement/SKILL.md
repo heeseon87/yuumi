@@ -37,7 +37,7 @@ The file is updated *as you work*, not at the end. The user may open it mid-impl
 
 ## Output: Anthropic-style HTML artifact
 
-A self-contained `implementation-notes.html` file using the same visual language as `claude-kit:explain` — cream background, coral accent, Hahmlet serif typography, JetBrains Mono for code. The visual identity is shared so the user sees a consistent look across our skills.
+A self-contained `implementation-notes.html` file using the shared `claude-kit:pretty` visual language — warm parchment background, clay accent, Hahmlet/serif editorial typography, JetBrains Mono for code, generous whitespace. The visual identity is centralized in `pretty` so explain, implement, and standalone design artifacts do not drift.
 
 What's *not* shared with explain is the *content structure*. There's no fixed template for what comes first or what the section headings should be. Design the structure for this specific implementation: how many decisions there are, how clustered they are, whether they group naturally by domain, by file, by phase. **You decide.**
 
@@ -57,9 +57,9 @@ These are heuristics. The right structure depends on the spec you're implementin
 
 The visual language is provided as a palette of materials:
 
-- **`assets/shell.html`** — the empty starting file. Copy this to `implementation-notes.html`, then write your content into the body container. Contains the design tokens, fonts, and every component's CSS, but no prescribed content sections.
-- **`references/components.md`** — a catalog of what each visual component is *for*. Use this when you ask "I want to convey X — what fits?" — not to answer "what should come next?"
-- **`references/svg-patterns.md`** — diagram patterns if a relationship is hard to express in prose (rare in implementation notes, but useful for architecture decisions or trade-off matrices).
+- **`../pretty/assets/shell.html`** — the empty starting file. Copy this to `implementation-notes.html`, then write your content into the body container. Contains the design tokens, fonts, and every component's CSS, but no prescribed content sections.
+- **`../pretty/references/components.md`** — a catalog of what each visual component is *for*. Use this when you ask "I want to convey X — what fits?" — not to answer "what should come next?"
+- **`../pretty/references/svg-patterns.md`** — diagram patterns if a relationship is hard to express in prose (rare in implementation notes, but useful for architecture decisions or trade-off matrices).
 
 Read these when you have a specific question, not as a checklist.
 
@@ -69,11 +69,15 @@ The `claude-kit:explain` skill is essayist: engaging, literary, with analogies a
 
 - Short sentences.
 - Active voice, first-person plural ("we chose X") or imperative is fine.
-- Code references in inline `<code>` rather than block excerpts (unless the code is the decision).
+- Code references in inline `<code>` rather than block excerpts unless the code itself is the decision. When a block is necessary, use the standard code block component from `pretty`.
 - Pull quotes (`<blockquote>`) sparingly, only when one sentence really captures the change.
 - Drop caps (`.body-start`) usually skip — they're for essays, not logs.
 
-The visual style is the same as explain; the *prose voice* is not.
+The visual style comes from `pretty`; the *prose voice* is still terse implementation logging, not explain's essay voice.
+
+## Similarity gate
+
+After writing `implementation-notes.html`, run `node skills/pretty/scripts/anthropic-similarity.mjs implementation-notes.html`. Treat `maxScore >= 95` as the quality bar for the shared Anthropic-style presentation. If it misses, fix the HTML/CSS usage before finishing.
 
 ## Anti-patterns
 
@@ -87,6 +91,6 @@ The visual style is the same as explain; the *prose voice* is not.
 
 ## When you're done
 
-Tell the user: "Implementation done. Notes in `implementation-notes.html` — N open questions waiting for you." The notes file *is* the deliverable, alongside the code. Don't recap entries in chat — they're in the file.
+Tell the user: "Implementation done. Notes in `implementation-notes.html` — N open questions waiting for you. Similarity maxScore: S." The notes file *is* the deliverable, alongside the code. Don't recap entries in chat — they're in the file.
 
 If there are open questions, name how many. That's the one piece of state the user needs in chat to know if action is required from them.

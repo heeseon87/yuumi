@@ -26,9 +26,9 @@ If a reader has to re-read a paragraph, you've already lost. If they get stuck a
 
 3. **Design the page structure yourself.** Do NOT follow a fixed template. The structure you choose should serve *this specific target*. Some explanations are best as a single long essay. Others as a sequence of numbered acts. Others as a single chart with prose around it. There is no canonical section list — there is the structure this particular target needs.
 
-4. **Render as an Anthropic-style HTML artifact.** A self-contained `.html` file in the project's current working directory, opened in the browser. The visual language is fixed (cream background, coral accent, Hahmlet serif typography throughout, JetBrains Mono for code, generous whitespace); the *content structure* is yours to invent each time.
+4. **Render with `claude-kit:pretty`.** A self-contained `.html` file in the project's current working directory. Use the shared pretty assets (`../pretty/assets/shell.html`, `../pretty/references/components.md`, `../pretty/references/svg-patterns.md`) for the fixed Anthropic-style visual language; the *content structure* is yours to invent each time.
 
-5. **Open in browser.** `open {slug}-explained.html` on macOS. Tell the user the file path. Don't re-explain the contents in chat — the artifact is the deliverable.
+5. **Measure, then open in browser.** Run `node skills/pretty/scripts/anthropic-similarity.mjs {slug}-explained.html`; if it misses `maxScore >= 95`, fix the artifact first. Then `open {slug}-explained.html` on macOS. Tell the user the file path. Don't re-explain the contents in chat — the artifact is the deliverable.
 
 ## How to design the structure (no template — a way of thinking)
 
@@ -47,9 +47,9 @@ These are heuristics, not rules. Some explanations open with a quote, some with 
 
 The Anthropic visual style is a **palette of materials**, not a recipe. You should know what's available and reach for what fits.
 
-- **`assets/shell.html`** — the empty starting file. Copy this to `<slug>-explained.html`, then write your content into the body. It contains the design tokens, fonts, and every component's CSS, but no prescribed content sections.
-- **`references/components.md`** — a catalog of what each visual component is *for*. Use this to answer "I want to convey X — what component fits?" Not to answer "what should come next in my doc?" (That's your call.)
-- **`references/svg-patterns.md`** — diagram patterns you can drop in when a relationship is hard to express in prose. Includes battle-tested traps to avoid in SVG animations.
+- **`../pretty/assets/shell.html`** — the empty starting file. Copy this to `<slug>-explained.html`, then write your content into the body. It contains the design tokens, fonts, and every component's CSS, but no prescribed content sections.
+- **`../pretty/references/components.md`** — a catalog of what each visual component is *for*. Use this to answer "I want to convey X — what component fits?" Not to answer "what should come next in my doc?" (That's your call.)
+- **`../pretty/references/svg-patterns.md`** — diagram patterns you can drop in when a relationship is hard to express in prose. Includes battle-tested traps to avoid in SVG animations.
 
 These are reference materials, not a workflow. Read them when you have a specific question, not before you've thought about the target.
 
@@ -63,6 +63,10 @@ What's *changed* is that the structure is no longer prescribed. The original ski
 
 Save as `<topic-slug>-explained.html` in the current working directory. Use kebab-case slugs derived from what the target actually is — not from how the user phrased their request. Open with the OS default browser after writing.
 
+## Similarity gate
+
+If the explanation is meant to carry the Anthropic visual language, run `node skills/pretty/scripts/anthropic-similarity.mjs <slug>-explained.html` after writing. Treat `maxScore >= 95` as the quality bar. If it misses, fix the artifact before opening it.
+
 ## Anti-patterns
 
 - **Don't follow the visual order of a section template you've seen before.** Decide the structure for *this* target. The shell file deliberately has no content sections inside it.
@@ -74,4 +78,4 @@ Save as `<topic-slug>-explained.html` in the current working directory. Use keba
 
 ## When you're done
 
-Tell the user: "Saved to `<path>` and opened in your browser." Don't recap the content in chat — let them read.
+Tell the user: "Saved to `<path>`, similarity maxScore: S, and opened in your browser." Don't recap the content in chat — let them read.

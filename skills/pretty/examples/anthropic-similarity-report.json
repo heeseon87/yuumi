@@ -1,0 +1,119 @@
+{
+  "artifact": "/Users/heeseon/github/claude-kit/skills/pretty/examples/temp-page.html",
+  "maxScore": 98,
+  "bestProfile": "claude.com product/platform profile",
+  "passed95": true,
+  "results": [
+    {
+      "profile": "claude.com product/platform profile",
+      "score": 98,
+      "breakdown": {
+        "palette": 33,
+        "typography": 20,
+        "layout": 15,
+        "components": 20,
+        "restraint": 10
+      },
+      "evidence": {
+        "palette": {
+          "score": 33,
+          "exact": 15,
+          "near": 0,
+          "misses": [],
+          "colorsFound": 21,
+          "warmDiscipline": 0.714
+        },
+        "typography": [
+          "serif-family",
+          "mono-family",
+          "body-family-or-cjk-substitute",
+          "hero-scale",
+          "tight-heading-leading",
+          "medium-weight-headings",
+          "readable-body-size",
+          "generous-body-leading"
+        ],
+        "layout": [
+          "anthropic-container-width",
+          "large-top-padding",
+          "section-breathing-room",
+          "rounded-scale",
+          "mobile-breakpoint"
+        ],
+        "components": [
+          "lede",
+          "metadata-block",
+          "clay-rail-callout",
+          "quiet-aside",
+          "ordered-step-list",
+          "figure",
+          "line-art-svg",
+          "code-block",
+          "hairline-table",
+          "lesson-block",
+          "accent-left-rail-css",
+          "hairline-rules-css"
+        ],
+        "restraint": []
+      }
+    },
+    {
+      "profile": "anthropic.com editorial/news profile",
+      "score": 85.82,
+      "breakdown": {
+        "palette": 20.82,
+        "typography": 20,
+        "layout": 15,
+        "components": 20,
+        "restraint": 10
+      },
+      "evidence": {
+        "palette": {
+          "score": 20.82,
+          "exact": 5,
+          "near": 1,
+          "misses": [
+            "#000000",
+            "#7c7c74",
+            "#d47f2a",
+            "#6e4216"
+          ],
+          "colorsFound": 21,
+          "warmDiscipline": 0.714
+        },
+        "typography": [
+          "serif-family",
+          "mono-family",
+          "body-family-or-cjk-substitute",
+          "hero-scale",
+          "tight-heading-leading",
+          "medium-weight-headings",
+          "readable-body-size",
+          "generous-body-leading"
+        ],
+        "layout": [
+          "anthropic-container-width",
+          "large-top-padding",
+          "section-breathing-room",
+          "rounded-scale",
+          "mobile-breakpoint"
+        ],
+        "components": [
+          "lede",
+          "metadata-block",
+          "clay-rail-callout",
+          "quiet-aside",
+          "ordered-step-list",
+          "figure",
+          "line-art-svg",
+          "code-block",
+          "hairline-table",
+          "lesson-block",
+          "accent-left-rail-css",
+          "hairline-rules-css"
+        ],
+        "restraint": []
+      }
+    }
+  ]
+}

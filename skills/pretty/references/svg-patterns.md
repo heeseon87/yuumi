@@ -179,7 +179,7 @@ The SVG structure with both fan-out and join phases, plus an `awaitAll` merge no
 - `#awaitNode` — node that turns from dashed to solid when joins complete (optional)
 - `#commitArrow`, `#commitLabel` — final elements that fade in last (optional)
 
-The IIFE at the bottom of `template.html` reads these IDs and orchestrates the 4-phase animation. Don't rewrite it — just add the elements with the right IDs.
+The IIFE at the bottom of `shell.html` reads these IDs and orchestrates the 4-phase animation. Don't rewrite it — just add the elements with the right IDs.
 
 **Animation timing** (auto-played once when figure enters viewport):
 1. **Phase 1 — fan-out** (0.05s + i×0.12s start, 0.7s duration): solid accent lines reveal from source to targets

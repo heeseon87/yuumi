@@ -1,6 +1,6 @@
 # Component Catalog
 
-A catalog of the visual components available in `assets/shell.html`. **Each entry tells you what the component is *for* — when its meaning fits.** It does not tell you where to put it or what should come before or after. That is your decision, made for the specific target you're explaining.
+A catalog of the visual components available in `../assets/shell.html` when read from this references directory, or `skills/pretty/assets/shell.html` from the repo root. **Each entry tells you what the component is *for* — when its meaning fits.** It does not tell you where to put it or what should come before or after. That is your decision, made for the specific artifact you're building.
 
 Read this when you have a question like *"I want to convey X — what fits?"* — not before you've thought about what the page needs to say.
 
@@ -12,7 +12,7 @@ Read this when you have a question like *"I want to convey X — what fits?"* �
 Serif headings, sized for hierarchy. `<h2>` can take an italic number prefix via `<span class="num">01</span>` when you want academic-essay numbering, but bare headings are equally valid.
 
 ### `<p>` — body paragraph
-Standard prose. 19px Hahmlet (serif) at line-height 1.75 — book-like density. Korean and English share the same family, so mixed-language paragraphs stay visually unified.
+Standard prose. 19px Hahmlet/serif at line-height 1.75 — book-like density. Korean and English share the same family, so mixed-language paragraphs stay visually unified.
 
 ### `.body-start` — drop-cap paragraph
 A first letter set in large serif accent. Use it **once per document**, on the paragraph where you want to mark "the real prose starts here." More than once dilutes the effect.
@@ -21,7 +21,7 @@ A first letter set in large serif accent. Use it **once per document**, on the p
 A line that deserves to ring. Big italic serif with a hanging quote glyph. The quote mark is drawn by CSS — don't include literal `"` in your text. Use sparingly: 0–3 per document.
 
 ### `<pre><code>` — code excerpt
-Dark monospace block. Spans inside for syntax color: `.k` (keyword), `.fn` (function), `.s` (string), `.c` (comment, italic), `.n` (default). Keep excerpts short — if the snippet is long, your prose is doing too little.
+Dark monospace block for short excerpts. Add the library-compatible language class (`class="language-<id>"`) when you know it; otherwise the shell infers from the first line and code shape. Keep excerpts short; if the snippet is long, your prose is doing too little.
 
 ### `<code>` — inline code
 Accent-colored monospace inline. Use for identifiers, file paths, short literal values.
@@ -59,7 +59,7 @@ Each item gets an italic serif number and a hairline connector to the next. Use 
 A left accent rail around a deeper inner ordered list. Use when one step in `.steps` contains several sub-steps (e.g., a transaction encloses four operations). Pass `data-label="..."` to label the rail (`TRANSACTION`, `PHASE 2`, etc.); omit for an unlabeled group.
 
 ### `.callout` — left-accent callout
-A minimal block: italic serif label + dash list. Use it for **2-3 sentences of insight that earn their own breathing room** — the surprising point, the non-obvious connection. Don't overuse: more than 4-5 per document and they stop being callouts. If everything is a callout, nothing is.
+A minimal block: italic serif label + compact clay bullet list. Use it for **2-3 sentences of insight that earn their own breathing room** — the surprising point, the non-obvious connection. Don't overuse: more than 4-5 per document and they stop being callouts. If everything is a callout, nothing is.
 
 Suggested labels (you choose what fits): `Insight`, `Surprise`, `Why it matters`, `Key idea`. A label that names the *intent* of the callout beats a generic one.
 

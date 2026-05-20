@@ -1,7 +1,7 @@
 {
   "name": "claude-kit",
-  "version": "1.3.6",
-  "description": "Tokyo Night powerline statusline + essential skills for Claude Code",
+  "version": "1.3.7",
+  "description": "Tokyo Night powerline statusline + essential Claude Code skills, including Anthropic-style HTML artifacts",
   "author": {
     "name": "heeseon"
   },
@@ -11,7 +11,10 @@
     "statusline",
     "tokyo-night",
     "powerline",
-    "skills"
+    "skills",
+    "pretty",
+    "anthropic-style",
+    "html"
   ],
   "skills": "./skills/"
 }

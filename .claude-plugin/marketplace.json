@@ -1,23 +1,31 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "hs",
-  "description": "Tokyo Night powerline statusline with CShip-style progress bars + essential skills (interview, edit, explain, implement)",
+  "description": "Tokyo Night powerline statusline with CShip-style progress bars + essential skills (interview, edit, explain, implement, pretty)",
   "owner": {
     "name": "heeseon"
   },
   "plugins": [
     {
       "name": "claude-kit",
-      "description": "Powerline statusline (Tokyo Night theme) + interview, edit, explain, implement skills",
-      "version": "1.3.6",
+      "description": "Powerline statusline (Tokyo Night theme) + interview, edit, explain, implement, pretty skills",
+      "version": "1.3.7",
       "author": {
         "name": "heeseon"
       },
       "source": "./",
       "category": "productivity",
       "homepage": "https://github.com/heeseon87/claude-kit",
-      "tags": ["statusline", "hud", "theme", "skills", "tokyo-night"]
+      "tags": [
+        "statusline",
+        "hud",
+        "theme",
+        "skills",
+        "tokyo-night",
+        "pretty",
+        "anthropic-style"
+      ]
     }
   ],
-  "version": "1.3.6"
+  "version": "1.3.7"
 }
