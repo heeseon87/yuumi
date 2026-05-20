@@ -1,6 +1,6 @@
 {
   "name": "claude-kit",
-  "version": "1.3.8",
+  "version": "1.3.9",
   "description": "Tokyo Night powerline statusline + essential Claude Code skills, including Anthropic-style HTML artifacts",
   "author": {
     "name": "heeseon"

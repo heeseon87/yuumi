@@ -30,13 +30,13 @@ Use:
 
 1. **Understand the artifact.** Identify the reader, the one idea they must leave with, and the structure that will get them there. Ask only if a missing decision changes the artifact.
 2. **Start from the shell.** Copy `skills/pretty/assets/shell.html` to the output path and write content inside `<div class="container">`.
-3. **Invent the structure for this artifact.** Do not fill a fixed template. Use the component catalog only when a component's meaning fits the content.
+3. **Invent the structure for this artifact.** Do not fill a fixed template. Use any component or layout that improves comprehension. The catalog is a palette, not a checklist.
 4. **Keep the visual language fixed.** Warm parchment background, near-black ink, clay accent, serif editorial headings, JetBrains Mono for code, hairline rules, soft ring borders, restrained dark code blocks.
 5. **Measure similarity.** Run:
    ```bash
    node skills/pretty/scripts/anthropic-similarity.mjs <artifact.html>
    ```
-   If `maxScore` is below 95, improve the artifact: usually the issue is missing reference colors, weak type hierarchy, too little whitespace, generic card styling, gradients, or not enough Anthropic-specific components.
+   If `maxScore` is below 95, improve the artifact: usually the issue is missing reference colors, weak type hierarchy, too little whitespace, generic card styling, gradients, or weak Anthropic visual signature.
 6. **Open the file.** On macOS: `open <artifact.html>`. Report only the path and verification state. Do not dump the artifact's contents in chat.
 
 ## Visual language
@@ -62,6 +62,8 @@ Use the reference swatches in the shell; do not freestyle colors.
 
 ### Components
 
+These are named conveniences in the shell, not the only legal moves. If comprehension wants a comparison grid, a single-column essay, a dense table, a split-panel walkthrough, or a custom semantic block, use it. Keep the color, spacing, typography, hairlines, and restraint in the Anthropic family.
+
 - Use `.lede` for the headline insight, not a vague subtitle.
 - Use `.meta` for small labeled facts.
 - Use `.callout` for a real insight that deserves a left clay rail. If everything is a callout, nothing is.
@@ -77,7 +79,7 @@ The metric is intentionally static and inspectable. It does not pretend to be a 
 - palette overlap and warm-neutral discipline
 - typography roles, sizes, weights, and line-height
 - layout rhythm, container width, section spacing, responsive behavior
-- component motifs: hairline rules, clay rail callouts, code blocks, line-art SVG, tables, step lists
+- visual signature: hairline rules, clay/quiet rails, structural variety, soft surfaces, tracked uppercase kickers
 - restraint: few gradients, no glassmorphism, no neon/rainbow palette, no generic SaaS card soup
 
 `maxScore` is the best score across built-in Anthropic reference profiles. For this skill, treat `95` as the minimum bar for an artifact that claims the Anthropic look.
@@ -86,6 +88,7 @@ The metric is intentionally static and inspectable. It does not pretend to be a 
 
 - Do not clone Anthropic copy, product screens, or proprietary layouts. Borrow the design language, not copyrighted content.
 - Do not add fake metrics, testimonial cards, decorative icons, or generic feature grids.
+- Do not chase the score by padding fake components. The metric checks visual signature, not whether you used specific class names.
 - Do not use gradients, glass, neon, rainbow accents, or cool blue-gray palettes.
 - Do not use a fixed section order just because a previous pretty page did.
 - Do not put long explanations in chat. The HTML artifact is the deliverable.

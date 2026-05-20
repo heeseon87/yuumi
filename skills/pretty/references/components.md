@@ -2,6 +2,8 @@
 
 A catalog of the visual components available in `../assets/shell.html` when read from this references directory, or `skills/pretty/assets/shell.html` from the repo root. **Each entry tells you what the component is *for* — when its meaning fits.** It does not tell you where to put it or what should come before or after. That is your decision, made for the specific artifact you're building.
 
+This catalog is a palette, not a checklist. If readability wants a component not listed here, make it. What must stay consistent is the Anthropic-like visual grammar: warm paper, restrained clay accents, hairline rules, serif rhythm, quiet surfaces, and generous spacing.
+
 Read this when you have a question like *"I want to convey X — what fits?"* — not before you've thought about what the page needs to say.
 
 ---
@@ -118,6 +120,8 @@ What you're free to invent:
 - Whether to close with takeaways, a quote, or just a final paragraph
 
 There is no canonical structure. There is the structure *this* target needs.
+
+The similarity metric rewards the visual signature, not this catalog's class names. Do not add a fake `.callout`, `.meta`, or `.lesson` just to satisfy a score. If an unlisted layout makes the content easier to understand while preserving the color, spacing, typography, and restraint, use the unlisted layout.
 
 ---
 

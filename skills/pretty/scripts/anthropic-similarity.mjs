@@ -4,7 +4,7 @@ import path from 'node:path';
 
 const file = process.argv[2];
 if (!file || file === '--help' || file === '-h') {
-  console.log(`Usage: node skills/pretty/scripts/anthropic-similarity.mjs <artifact.html> [--json]\n\nScores a local HTML artifact against built-in Anthropic design profiles.\nThe score is static and inspectable: palette, typography, layout rhythm, components, and restraint.`);
+  console.log(`Usage: node skills/pretty/scripts/anthropic-similarity.mjs <artifact.html> [--json]\n\nScores a local HTML artifact against built-in Anthropic design profiles.\nThe score is static and inspectable: palette, typography, layout rhythm, visual signature, and restraint.`);
   process.exit(file ? 0 : 1);
 }
 
@@ -130,27 +130,56 @@ function scoreLayout() {
   return { score: clamp(s, 0, 15), reasons };
 }
 
-function scoreComponents() {
+function scoreVisualSignature() {
   let s = 0;
   const reasons = [];
-  const checks = [
-    [/class=["'][^"']*lede/i, 2, 'lede'],
-    [/class=["'][^"']*meta/i, 2, 'metadata-block'],
-    [/class=["'][^"']*callout/i, 3, 'clay-rail-callout'],
-    [/class=["'][^"']*aside/i, 2, 'quiet-aside'],
-    [/class=["'][^"']*steps/i, 2, 'ordered-step-list'],
-    [/<figure[\s>]/i, 2, 'figure'],
-    [/<svg[\s>]/i, 2, 'line-art-svg'],
-    [/<pre[\s>][\s\S]*<code/i, 2, 'code-block'],
-    [/<table[\s>]/i, 1.5, 'hairline-table'],
-    [/class=["'][^"']*lesson/i, 1.5, 'lesson-block']
-  ];
-  for (const [re, pts, reason] of checks) {
-    if (re.test(body)) { s += pts; reasons.push(reason); }
-  }
-  if (/border-left\s*:\s*2px\s+solid\s+var\(--accent\)/i.test(styleBlocks)) { s += 1.5; reasons.push('accent-left-rail-css'); }
-  if (/border-top\s*:\s*1px\s+solid/i.test(styleBlocks) && /border-bottom\s*:\s*1px\s+solid/i.test(styleBlocks)) { s += 1.5; reasons.push('hairline-rules-css'); }
-  return { score: clamp(s, 0, 20), reasons };
+  const details = {};
+  const css = styleBlocks.toLowerCase();
+  const markup = body.toLowerCase();
+
+  const hairlineTop = /border-top\s*:\s*1px\s+solid/i.test(css);
+  const hairlineBottom = /border-bottom\s*:\s*1px\s+solid/i.test(css);
+  const hairlineRule = /border\s*:\s*1px\s+solid/i.test(css);
+  const hairlineScore = hairlineTop && hairlineBottom ? 5 : hairlineTop || hairlineBottom ? 3 : hairlineRule ? 2 : 0;
+  if (hairlineScore) reasons.push('hairline-rules');
+  details.hairlineRules = { score: hairlineScore, max: 5, signals: { borderTop: hairlineTop, borderBottom: hairlineBottom, border: hairlineRule } };
+  s += hairlineScore;
+
+  const accentRail = /border-left\s*:\s*[23]px\s+solid\s+(?:var\(--accent[^)]*\)|#[a-f0-9]{3,8})/i.test(css);
+  const quietRail = /border-left\s*:\s*[23]px\s+solid/i.test(css);
+  const railScore = accentRail ? 4 : quietRail ? 3 : 0;
+  if (railScore) reasons.push(accentRail ? 'accent-rail' : 'quiet-left-rail');
+  details.accentRail = { score: railScore, max: 4, signals: { accentRail, quietRail } };
+  s += railScore;
+
+  const structuralTags = ['table', 'figure', 'blockquote', 'ul', 'ol', 'pre', 'hr', 'dl', 'aside', 'details'];
+  const structures = structuralTags.filter((tag) => new RegExp(`<${tag}(?:\\s|>)`, 'i').test(markup));
+  const structuralScore = Math.min(structures.length, 6);
+  if (structuralScore) reasons.push(`structural-variety:${structures.join(',')}`);
+  details.structuralVariety = { score: structuralScore, max: 6, count: structures.length, structures };
+  s += structuralScore;
+
+  const softRadiusValues = [...css.matchAll(/border-radius\s*:\s*([0-9.]+)px/g)].map((m) => Number.parseFloat(m[1]));
+  const hasSoftRadius = softRadiusValues.some((value) => value >= 2 && value <= 8);
+  const shadowMatches = [...css.matchAll(/box-shadow\s*:\s*([^;}]*)/g)].map((m) => m[1]);
+  const hasHeavyShadow = shadowMatches.some((shadow) => {
+    const parts = shadow.match(/-?\d+(?:\.\d+)?px/g)?.map((part) => Math.abs(Number.parseFloat(part))) ?? [];
+    const alpha = Number.parseFloat(shadow.match(/rgba?\([^)]*,\s*([0-9.]+)\s*\)/)?.[1] ?? '0');
+    return parts.some((n) => n >= 24) || alpha >= 0.24;
+  });
+  const surfaceScore = (hasSoftRadius ? 1.5 : 0) + (!hasHeavyShadow ? 1.5 : 0);
+  if (surfaceScore) reasons.push('quiet-surface-discipline');
+  details.quietSurface = { score: surfaceScore, max: 3, signals: { hasSoftRadius, hasHeavyShadow, shadowCount: shadowMatches.length } };
+  s += surfaceScore;
+
+  const hasUppercase = /text-transform\s*:\s*uppercase/i.test(css);
+  const trackedMatch = /letter-spacing\s*:\s*(0\.0[5-9]|0\.1[0-9])em/i.test(css);
+  const kickerScore = hasUppercase && trackedMatch ? 2 : hasUppercase || trackedMatch ? 1 : 0;
+  if (kickerScore) reasons.push('tracked-uppercase-kicker');
+  details.kicker = { score: kickerScore, max: 2, signals: { hasUppercase, trackedLetterSpacing: Boolean(trackedMatch) } };
+  s += kickerScore;
+
+  return { score: clamp(s, 0, 20), reasons, details };
 }
 
 function scoreRestraint(colors) {
@@ -175,9 +204,9 @@ const results = PROFILES.map((profile) => {
   const palette = scorePalette(profile, colors);
   const typography = scoreTypography(profile);
   const layout = scoreLayout();
-  const components = scoreComponents();
+  const visualSignature = scoreVisualSignature();
   const restraint = scoreRestraint(colors);
-  const score = palette.score + typography.score + layout.score + components.score + restraint.score;
+  const score = palette.score + typography.score + layout.score + visualSignature.score + restraint.score;
   return {
     profile: profile.name,
     score: Number(score.toFixed(2)),
@@ -185,14 +214,14 @@ const results = PROFILES.map((profile) => {
       palette: Number(palette.score.toFixed(2)),
       typography: Number(typography.score.toFixed(2)),
       layout: Number(layout.score.toFixed(2)),
-      components: Number(components.score.toFixed(2)),
+      visualSignature: Number(visualSignature.score.toFixed(2)),
       restraint: Number(restraint.score.toFixed(2))
     },
     evidence: {
       palette,
       typography: typography.reasons,
       layout: layout.reasons,
-      components: components.reasons,
+      visualSignature,
       restraint: restraint.penalties
     }
   };
@@ -215,7 +244,7 @@ if (process.argv.includes('--json')) {
   console.log(`Passed >=95: ${output.passed95 ? 'yes' : 'no'}`);
   for (const r of output.results) {
     console.log(`\n${r.profile}: ${r.score.toFixed(2)}`);
-    console.log(`  palette ${r.breakdown.palette} · typography ${r.breakdown.typography} · layout ${r.breakdown.layout} · components ${r.breakdown.components} · restraint ${r.breakdown.restraint}`);
+    console.log(`  palette ${r.breakdown.palette} · typography ${r.breakdown.typography} · layout ${r.breakdown.layout} · visualSignature ${r.breakdown.visualSignature} · restraint ${r.breakdown.restraint}`);
     const misses = r.evidence.palette.misses || [];
     if (misses.length) console.log(`  missing colors: ${misses.join(', ')}`);
   }

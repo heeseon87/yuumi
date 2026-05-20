@@ -68,6 +68,7 @@ Read these when you have a specific question, not as a checklist.
 The `claude-kit:explain` skill is essayist: engaging, literary, with analogies and pull quotes. Implement notes should be **terser and more direct**. The reviewer doesn't want to be charmed — they want to know what you did and why. Default to:
 
 - Short sentences.
+- Split multi-step reasoning into several short paragraphs when that helps the reader scan; don't compress distinct reasons into one wall of text.
 - Active voice, first-person plural ("we chose X") or imperative is fine.
 - Code references in inline `<code>` rather than block excerpts unless the code itself is the decision. When a block is necessary, use the standard code block component from `pretty`.
 - Pull quotes (`<blockquote>`) sparingly, only when one sentence really captures the change.

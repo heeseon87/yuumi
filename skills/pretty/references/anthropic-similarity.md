@@ -15,7 +15,7 @@ Reference extraction was based on the public HTML/CSS available from those pages
 - clay / coral accents: `#c96442`, `#d97757`, `#c46849`
 - muted warm text: `#5e5d59`, `#87867f`, `#b0aea5`, `#4d4c48`
 - editorial serif hierarchy, restrained body rhythm, mono code treatment
-- hairline rules, clay rail callouts, line-art SVG, quiet tables/metadata, generous spacing
+- hairline rules, clay rails, structural variety, quiet surfaces, tracked uppercase kickers
 - no gradient-heavy / glass / neon / generic SaaS treatment
 
 ## Score weights
@@ -27,10 +27,12 @@ Total: 100 points.
 | Palette | 35 | overlap with reference swatches, near-color tolerance, warm-neutral discipline, gradient penalty |
 | Typography | 20 | serif/mono/sans or CJK substitute roles, hero scale, tight heading leading, medium heading weight, readable body size, generous body leading |
 | Layout | 15 | Anthropic-like max width, large page padding, section breathing room, rounded scale, mobile breakpoint |
-| Components | 20 | lede, metadata, clay-rail callout, aside, steps, figure/SVG, code block, table, lesson, supporting CSS motifs |
+| Visual signature | 20 | class-name-independent motifs: hairline rules (5), accent/quiet left rails (4), structural variety across semantic HTML such as tables/figures/lists/code/quotes/metadata/asides/details (6), soft-radius/no-heavy-shadow surface discipline (3), tracked uppercase kicker treatment (2) |
 | Restraint | 10 | few gradients, no glassmorphism/neon/rainbow, limited saturated color drift |
 
 `maxScore` is the best score across built-in reference profiles. The pretty quality gate is `maxScore >= 95`.
+
+The visual-signature dimension deliberately does **not** check for component class names like `.lede`, `.callout`, or `.meta`. The component catalog is a palette, not a checklist. A page should score well because it carries Anthropic-like visual grammar, not because it memorized the shell's vocabulary.
 
 ## What this metric is not
 

@@ -69,6 +69,8 @@
 		line-height: 1.75;
 		font-weight: 400;
 		letter-spacing: -0.003em;
+		word-break: keep-all;
+		overflow-wrap: anywhere;
 		-webkit-font-smoothing: antialiased;
 		-moz-osx-font-smoothing: grayscale;
 	}
@@ -136,7 +138,7 @@
 		font-weight: 400;
 		color: var(--accent-deep);
 		font-size: 0.6em;
-		margin-right: 14px;
+		margin-right: 22px;
 		vertical-align: 0.35em;
 		letter-spacing: 0.02em;
 	}
@@ -145,7 +147,7 @@
 		font-weight: 500;
 		font-size: 22px;
 		line-height: 1.3;
-		margin: 44px 0 14px;
+		margin: 44px 0 20px;
 		color: var(--text);
 	}
 
@@ -175,11 +177,12 @@
 	em { font-style: italic; }
 
 	code {
-		font-size: 0.85em;
+		font-size: 0.95em;
 		color: var(--accent-deep);
 		background: transparent;
 		padding: 0;
 		font-weight: 500;
+		vertical-align: -0.02em;
 	}
 
 	pre {
@@ -486,10 +489,10 @@
 	table { width: 100%; border-collapse: collapse; font-size: 15.5px; background: transparent; }
 	th, td {
 		text-align: left;
-		padding: 14px 14px 14px 0;
+		padding: 18px 16px 18px 0;
 		border-bottom: 1px solid var(--rule);
 		vertical-align: top;
-		line-height: 1.55;
+		line-height: 1.65;
 	}
 	thead th {
 		border-top: 1px solid var(--rule-strong);
@@ -699,7 +702,7 @@
 
 	<div class="aside">
 		<div class="aside-label">Caution</div>
-		A high score is not permission to clone Anthropic's product screens or copy. It only says this artifact follows the same static design profile: palette, type rhythm, component motifs, and restraint.
+		A high score is not permission to clone Anthropic's product screens or copy. It only says this artifact follows the same static design profile: palette, type rhythm, visual signature, and restraint.
 	</div>
 
 	<div class="t-wrap">
@@ -708,7 +711,7 @@
 			<tbody>
 				<tr><td>Palette</td><td>Warm reference swatches and low cool-gray drift.</td><td>Use shell tokens; remove invented blues and purples.</td></tr>
 				<tr><td>Type</td><td>Serif editorial hierarchy, mono code, generous leading.</td><td>Increase heading scale and line-height discipline.</td></tr>
-				<tr><td>Components</td><td>Lede, meta, callout, figure, steps, table, code block.</td><td>Add meaning-fit components, not decorative cards.</td></tr>
+				<tr><td>Visual signature</td><td>Hairline rules, rails, structural variety, soft surfaces, tracked kickers.</td><td>Add only structures that fit the content; don't pad fake classes.</td></tr>
 			</tbody>
 		</table>
 	</div>
