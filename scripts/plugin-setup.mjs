@@ -51,10 +51,17 @@ function getSourceRoot() {
 
 // Standard installer location stays valid across node minor upgrades; for
 // nvm-windows/fnm/volta fall back to the absolute path of the running node.
+//
+// Must return a fully resolved absolute path — Claude Code spawns
+// statusLine.command WITHOUT a shell, so cmd-style `%VAR%` tokens never expand.
+// `%ProgramFiles%\nodejs\node.exe` would be passed literally and node would not
+// be found, leaving the statusline silently blank. We expand ProgramFiles here
+// (at setup time, where node can read process.env) instead.
 function resolveWindowsNodeRef() {
   const programFiles = process.env.ProgramFiles || 'C:\\Program Files';
-  if (existsSync(join(programFiles, 'nodejs', 'node.exe'))) {
-    return '"%ProgramFiles%\\nodejs\\node.exe"';
+  const standardNode = join(programFiles, 'nodejs', 'node.exe');
+  if (existsSync(standardNode)) {
+    return `"${standardNode}"`;
   }
   return `"${process.execPath}"`;
 }

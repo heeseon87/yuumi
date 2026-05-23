@@ -47,12 +47,13 @@ Fix on Unix: `chmod 755 ~/.claude/hud/statusline.mjs`
 Read `~/.claude/settings.json` and inspect `statusLine.command`. The expected value is one of:
 
 - macOS/Linux: `"<homedir>/.claude/hud/statusline.mjs"` (with surrounding quotes inside the JSON string)
-- Windows: `"%ProgramFiles%\\nodejs\\node.exe" "<homedir>\\.claude\\hud\\statusline.mjs"` when standard Node is installed, or `"<current node.exe>" "<homedir>\\.claude\\hud\\statusline.mjs"` for version managers
+- Windows: an **absolute** node path + the `.mjs`, e.g. `"C:\\Program Files\\nodejs\\node.exe" "<homedir>\\.claude\\hud\\statusline.mjs"` for a standard install, or `"<current node.exe>" "<homedir>\\.claude\\hud\\statusline.mjs"` for version managers. The node path must be fully resolved — Claude Code spawns this command without a shell, so `%VAR%` tokens never expand.
 
 Common problems:
 
 | Problem | Pattern | Fix |
 |---------|---------|-----|
+| Unexpanded `%ProgramFiles%` (blank statusline) | Command contains the literal `%ProgramFiles%` (or any `%...%`) on Windows | Run setup (it now writes the absolute `node.exe` path; the env-var form never expands without a shell) |
 | Hardcoded stale node path | `"C:\\old\\node.exe" "...statusline.mjs"` and node path is missing | Run setup |
 | Legacy Windows cmd wrapper | Path ends with `statusline.cmd` on Windows | Run setup (the new setup removes the `.cmd` wrapper from the hot path) |
 | Missing statusLine | No `statusLine` key | Run setup |
@@ -83,6 +84,7 @@ Spawn the configured command exactly the way Claude Code does (with stdin) and i
 
 Pass: produces text output containing ANSI escape codes (e.g. `\u001b[`).
 Fail diagnostics:
+- **Windows, blank statusline + `statusLine.command` contains `%ProgramFiles%`** → The env-var form never expands when Claude Code spawns the command without a shell, so `node.exe` is not found. Re-run setup (Step 6); it writes the absolute node path. NOTE: testing the command by hand in cmd.exe *does* expand `%ProgramFiles%`, which masks the bug — diagnose from the literal `settings.json` value, not from a shell test.
 - **Windows, node path missing / stale** → Re-run setup (Step 6). It rewrites the direct `node statusline.mjs` command with the current node reference.
 - **Windows, settings still points at `statusline.cmd`** → Re-run setup (Step 6). The legacy wrapper is removed from the statusline hot path to avoid orphaned `cmd.exe` processes.
 - **Unix, "permission denied"** → Step 3 fix.
