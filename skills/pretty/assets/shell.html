@@ -758,6 +758,15 @@
 	}
 	.filter-on .table-filter:focus { outline: none; border-color: var(--accent); }
 	.filter-on tr[hidden] { display: none; }
+
+	@media (prefers-reduced-motion: reduce) {
+		.fold > summary::before, .toc a, .tab { transition: none !important; }
+	}
+
+	.tab:focus-visible, .stepper-nav button:focus-visible,
+	.toc a:focus-visible, .fold > summary:focus-visible {
+		outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px;
+	}
 </style>
 </head>
 <body>
