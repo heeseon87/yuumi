@@ -668,6 +668,29 @@
 		figure { margin: 36px -22px; }
 		figcaption { padding: 0 22px; }
 	}
+
+	/* Sticky table of contents with scrollspy. */
+	.toc {
+		position: sticky; top: 24px; float: right; width: 200px;
+		margin: 8px 0 24px 32px; padding-left: 16px;
+		border-left: 1px solid var(--rule);
+		font-size: 13px; line-height: 1.9;
+	}
+	.toc a {
+		display: block; color: var(--text-faint); text-decoration: none;
+		border-left: 2px solid transparent; margin-left: -17px; padding-left: 15px;
+		transition: color 0.15s ease, border-color 0.15s ease;
+	}
+	.toc a:hover { color: var(--text-dim); }
+	.toc a.active { color: var(--accent-deep); border-left-color: var(--accent); }
+	@media (max-width: 880px) {
+		.toc { position: static; float: none; width: auto; margin: 0 0 24px;
+			border-left: none; border-top: 1px solid var(--rule);
+			border-bottom: 1px solid var(--rule); padding: 12px 0; }
+		.toc a { display: inline-block; margin: 0 14px 0 0; border-left: none; padding-left: 0; }
+		.toc a.active { border-left: none; }
+	}
+	@media (prefers-reduced-motion: reduce) { .toc a { transition: none; } }
 </style>
 </head>
 <body>
@@ -810,6 +833,30 @@
 
 		window.replayParallel = animate;
 	})();
+</script>
+
+<script>
+/* TOC scrollspy — highlights the section currently in view. No-op if no .toc. */
+(function () {
+	var toc = document.querySelector('.toc');
+	if (!toc || !('IntersectionObserver' in window)) return;
+	var links = Array.prototype.slice.call(toc.querySelectorAll('a[href^="#"]'));
+	var byId = {};
+	links.forEach(function (a) { byId[a.getAttribute('href').slice(1)] = a; });
+	var targets = links
+		.map(function (a) { return document.getElementById(a.getAttribute('href').slice(1)); })
+		.filter(Boolean);
+	if (!targets.length) return;
+	var obs = new IntersectionObserver(function (entries) {
+		entries.forEach(function (en) {
+			if (!en.isIntersecting) return;
+			links.forEach(function (l) { l.classList.remove('active'); });
+			var a = byId[en.target.id];
+			if (a) a.classList.add('active');
+		});
+	}, { rootMargin: '0px 0px -70% 0px', threshold: 0 });
+	targets.forEach(function (t) { obs.observe(t); });
+})();
 </script>
 </body>
 </html>
