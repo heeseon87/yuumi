@@ -88,6 +88,19 @@ Two-column CSS grid: left column is monospace path (with ASCII tree connectors),
 
 ---
 
+## Interaction & navigation
+
+These live in the shell too. See `interaction-patterns.md` for the full catalog and the "name the burden" rule.
+
+- `.toc` — sticky scrollspy table of contents for long pages.
+- `.fold` — collapsible `<details>` section for progressive disclosure (never fold the main point).
+- `.tabs` — switch parallel views; JS-off shows all panels.
+- `[data-before-after]`, `[data-stepper]`, `[data-filter-table]` — active widgets; use only when you can name the burden removed.
+
+For quantitative charts (Chart.js) or large auto-laid graphs (Mermaid), see `data-viz.md`. Inline SVG stays the default for relational/line-art diagrams.
+
+---
+
 ## Closing apparatus
 
 ### `.footnotes`
@@ -111,6 +124,12 @@ The components above are *tools*. The right tool depends on what you're trying t
 - A *named caution or complication* → `.aside`
 - A *portable lesson to leave the reader with* → `.lesson`
 - A *tangent or citation* → `<sup>` + `.footnotes`
+- A *long page that needs a map* → `.toc`
+- *Optional depth that would overload the first screen* → `.fold`
+- *Parallel alternatives (same idea, different form)* → `.tabs`
+- A *two-state comparison* → `[data-before-after]`
+- A *sequence worth pacing* → `[data-stepper]`
+- A *quantitative series* → Chart.js (`data-viz.md`); a *large graph* → Mermaid
 
 What you're free to invent:
 - The order of sections

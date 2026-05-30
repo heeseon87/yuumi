@@ -41,6 +41,8 @@ Diagrams earn their place only when the relationship is hard to express linearly
 | Before/after responsibility split | Two-column comparison with one or two arrows, not a fake architecture map |
 | File/directory hierarchy | Skip SVG — use `.tree` grid (CJK-safe) |
 
+> For *quantitative* data (real numbers to scale) prefer Chart.js, and for *large auto-laid* graphs prefer Mermaid — see `data-viz.md`. Inline SVG remains the default for relational and line-art diagrams. Inline SVG can also be made interactive (e.g. a `[data-stepper]` revealing paths one at a time) — see `interaction-patterns.md`.
+
 ## Pattern 1 — ERD / Architecture diagram
 
 Three or four entity boxes connected by labeled lines. Use this for "what tables/services are involved".
