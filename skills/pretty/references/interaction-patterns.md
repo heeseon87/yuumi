@@ -7,6 +7,19 @@ A catalog of the interactive components baked into `../assets/shell.html`. Same 
 ### `.toc` — sticky table of contents (scrollspy)
 A right-rail (desktop) / top strip (mobile) `<nav>` of anchor links. The current section auto-highlights as the reader scrolls. **Removes:** "where am I in a long document" navigation burden. **Use when:** the page has 4+ `<h2>` sections or scrolls past ~3 viewports. **Don't use:** short single-idea pages — the rail is noise.
 
+**Structure (required):** make `<nav class="toc">` a *direct child* of `.container` and wrap the rest of the body in `<main>`:
+
+```html
+<div class="container">
+  <nav class="toc"> … anchor links … </nav>
+  <main>
+    … eyebrow, h1, all sections, footnotes …
+  </main>
+</div>
+```
+
+The shell flips `.container` into a two-column layout only via `.container:has(> .toc)`, so `<main>` becomes the single content column and the sticky rail keeps its own right gutter for the full article height. Without the `<main>` wrapper the content elements become flex items and the layout breaks. Do **not** make the TOC a `float: right` + `position: sticky` element — a float only reserves space for its own height, so once the article scrolls past the float the body flows full-width and the pinned rail overlaps it.
+
 ### `.fold` — collapsible `<details>` section
 Hairline-topped section with a clay disclosure marker. Open in source (JS-off shows everything). **Removes:** first-screen overload — keep the headline visible, defer depth. **Use when:** a section is optional depth (proofs, edge cases, full logs). **Don't use:** to hide the page's main point. The lede and core claim must never be folded.
 

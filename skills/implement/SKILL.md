@@ -77,7 +77,7 @@ Good implementation-note visuals:
 - **Before / after state map** — when a migration, fallback, or refactor changes ownership, storage, or responsibility.
 - **Small sequence diagram** — only after verifying real function names and calls in code.
 
-Keep the budget tight. Three figures is usually plenty; five is a hard ceiling unless the document is explicitly a visual map. Put each figure next to the prose it replaces, not in a gallery. The caption must state the insight, not merely describe the drawing.
+There is no fixed count and no ceiling — the number of figures is set by **how many genuine cognitive-load points the log has**, not by its length. Visualize every place the reader would otherwise have to compute something in their head (a branch to simulate, a state change to track, a before/after ownership shift); add no figure that does not clear such a burden, and cut decorative ones. A simple log may need none; a decision-dense one may need many. Put each figure next to the prose it replaces, not in a gallery. The caption must state the insight, not merely describe the drawing.
 
 Do not draw decorative architecture. Do not invent nodes, domains, steps, or relationships to make a diagram look balanced. If the code does not call it, the diagram does not show it.
 

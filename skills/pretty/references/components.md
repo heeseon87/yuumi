@@ -92,7 +92,7 @@ Two-column CSS grid: left column is monospace path (with ASCII tree connectors),
 
 These live in the shell too. See `interaction-patterns.md` for the full catalog and the "name the burden" rule.
 
-- `.toc` — sticky scrollspy table of contents for long pages.
+- `.toc` — sticky scrollspy table of contents for long pages (make it a direct child of `.container` and wrap the body in `<main>`; see `interaction-patterns.md`).
 - `.fold` — collapsible `<details>` section for progressive disclosure (never fold the main point).
 - `.tabs` — switch parallel views; JS-off shows all panels.
 - `[data-before-after]`, `[data-stepper]`, `[data-filter-table]` — active widgets; use only when you can name the burden removed.
