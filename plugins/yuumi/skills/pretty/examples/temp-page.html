@@ -1,7 +1,7 @@
 <!--
 	Anthropic-style Pretty Shell
 	-------------------------------
-	A blank canvas with the shared Yuumi visual language baked in. The body is intentionally empty —
+	A blank canvas with the shared Claude Kit visual language baked in. The body is intentionally empty —
 	you, the agent, design the page structure based on the artifact you are making.
 
 	HOW TO USE:
@@ -24,7 +24,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Pretty visual QA fixture</title>
+<title>Explainer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -87,6 +87,9 @@
 		margin: 0 auto;
 		padding: 88px 28px 140px;
 	}
+	/* The TOC (if present) is position:fixed and therefore OUT of normal flow, so
+	   the container needs no special layout — content always renders full width.
+	   See the .toc rules below. */
 
 	/* ── Typographic primitives ── */
 
@@ -507,6 +510,30 @@
 	}
 	td:last-child, th:last-child { padding-right: 0; }
 	td code { font-size: 13.5px; }
+	/* Cells should not break on every character — the global overflow-wrap:anywhere
+	   (set on body for long URLs/code) otherwise collapses short cells to 2-3 lines. */
+	th, td { overflow-wrap: normal; word-break: normal; }
+	.col-tight { white-space: nowrap; }
+
+	/* Collapsible section — progressive disclosure. Open by default in source so
+	   JS-off / print still shows everything. */
+	.fold { border-top: 1px solid var(--rule); margin: 8px 0; }
+	.fold > summary {
+		list-style: none; cursor: pointer; padding: 16px 0;
+		font-family: 'Hahmlet', Georgia, serif; font-size: 19px; color: var(--text);
+		display: flex; align-items: baseline; gap: 12px;
+	}
+	.fold > summary::-webkit-details-marker { display: none; }
+	.fold > summary::before {
+		content: "›"; color: var(--accent); font-size: 18px;
+		transition: transform 0.18s ease; transform: translateY(-1px);
+	}
+	.fold[open] > summary::before { transform: rotate(90deg) translateX(-1px); }
+	.fold > summary:hover { color: var(--accent-deep); }
+	.fold > *:not(summary) { margin-left: 24px; }
+	@media (prefers-reduced-motion: reduce) {
+		.fold > summary::before { transition: none; }
+	}
 
 	/* Lessons / takeaway block — inline tagged title + dim body */
 	.lesson { margin: 30px 0; padding: 0; }
@@ -548,6 +575,20 @@
 		font-size: 0.75em;
 		font-weight: 500;
 		padding: 0 1px;
+	}
+
+	/* Footnote hover/focus popover — preview without losing reading place. */
+	.fnref { position: relative; }
+	.fnref > a { text-decoration: none; color: var(--accent); }
+	.fnref > a[data-note]:hover::after,
+	.fnref > a[data-note]:focus::after {
+		content: attr(data-note);
+		position: absolute; left: 0; top: 1.6em; z-index: 5;
+		width: max-content; max-width: 280px;
+		background: var(--surface); color: var(--text-dim);
+		border: 1px solid var(--rule-strong); border-radius: 3px;
+		padding: 10px 12px; font-size: 13.5px; line-height: 1.6;
+		box-shadow: 0 4px 14px rgba(20,20,19,0.08);
 	}
 
 	/*
@@ -644,99 +685,340 @@
 		figure { margin: 36px -22px; }
 		figcaption { padding: 0 22px; }
 	}
+
+	/* Table of contents (scrollspy), taken OUT of normal flow (position:fixed) so
+	   it never steals width from the content — the article always renders full
+	   width. Vertically centered, ALWAYS on the side (never snapped to the top).
+	   Two modes by viewport width:
+	     >= 1480px   full label rail parked in the right margin beside the column
+	     < 1480px    collapsed to a silhouette of bars at the right edge; hovering
+	                 or focusing a link expands it as an overlay ON TOP of content
+	   Never make the TOC a flex/grid column or a float — those reduce or overlap
+	   the content. Fixed positioning keeps the content width constant. */
+	.toc {
+		position: fixed;
+		top: 50%;
+		transform: translateY(-50%);
+		right: 2px;
+		z-index: 20;
+		max-height: calc(100vh - 40px);
+		overflow-y: auto;
+		padding: 10px 3px;
+		font-size: 13px;
+		line-height: 1.9;
+		border: 1px solid transparent;
+		border-radius: 4px;
+		transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, right 0.15s ease, padding 0.15s ease;
+	}
+	/* collapsed: each link becomes a small right-aligned bar — the silhouette */
+	.toc a {
+		display: block;
+		width: 16px; height: 2px;
+		margin: 9px 0 9px auto;
+		background: var(--rule-strong);
+		border-radius: 1px;
+		color: transparent;
+		overflow: hidden;
+		white-space: nowrap;
+		text-decoration: none;
+		transition: width 0.15s ease, background-color 0.12s ease, color 0.12s ease;
+	}
+	.toc a.active { background: var(--accent); width: 24px; }
+	/* expanded: overlay over the content on hover / keyboard focus */
+	.toc:hover, .toc:focus-within {
+		right: 14px;
+		padding: 14px 18px;
+		background: var(--surface);
+		border-color: var(--rule-strong);
+		box-shadow: 0 6px 22px rgba(20, 20, 19, 0.10);
+	}
+	.toc:hover a, .toc:focus-within a {
+		width: auto; height: auto;
+		margin: 0; padding: 2px 0;
+		background: none;
+		color: var(--text-faint);
+	}
+	.toc:hover a:hover, .toc:focus-within a:hover { color: var(--text-dim); }
+	.toc:hover a.active, .toc:focus-within a.active { width: auto; background: none; color: var(--accent-deep); }
+
+	/* >= 1480px: room beside the centered 1140px column — full rail in the margin */
+	@media (min-width: 1480px) {
+		.toc, .toc:hover, .toc:focus-within {
+			right: auto;
+			left: calc(50% + 588px);
+			width: 150px;
+			padding: 0 0 0 16px;
+			background: none;
+			border: none;
+			border-left: 1px solid var(--rule);
+			border-radius: 0;
+			box-shadow: none;
+		}
+		.toc a, .toc:hover a, .toc:focus-within a {
+			width: auto; height: auto;
+			margin: 0 0 0 -17px; padding: 2px 0 2px 15px;
+			background: none; color: var(--text-faint);
+			border-left: 2px solid transparent;
+		}
+		.toc a.active, .toc:hover a.active, .toc:focus-within a.active {
+			width: auto; color: var(--accent-deep); border-left-color: var(--accent); background: none;
+		}
+		.toc a:hover { color: var(--text-dim); }
+	}
+
+	@media (prefers-reduced-motion: reduce) { .toc, .toc a { transition: none; } }
+
+	/* Tabs — switch parallel views (e.g. language variants). JS-off shows all panels. */
+	.tab-bar { display: none; gap: 4px; border-bottom: 1px solid var(--rule); margin: 24px 0 0; }
+	.tabs-on .tab-bar { display: flex; }
+	.tab {
+		background: none; border: none; cursor: pointer;
+		font-family: inherit; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase;
+		color: var(--text-faint); padding: 10px 14px; margin-bottom: -1px;
+		border-bottom: 2px solid transparent;
+	}
+	.tab:hover { color: var(--text-dim); }
+	.tab[aria-selected="true"] { color: var(--accent-deep); border-bottom-color: var(--accent); }
+	.tabs-on .tab-panel[hidden] { display: none; }
+	.tabs-on .tab-panel { margin-top: 20px; }
+
+	/* Before/after compare — reader drags to reveal. JS-off shows both stacked. */
+	.ba-stage { position: relative; }
+	.ba-control { display: none; }
+	.ba-on .ba-control {
+		display: flex; align-items: center; gap: 12px; margin-top: 12px;
+		font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-faint);
+	}
+	.ba-on .ba-control input[type="range"] { flex: 1; accent-color: var(--accent); }
+	.ba-on .ba-stage { display: grid; }
+	.ba-on .ba-stage > .ba-before, .ba-on .ba-stage > .ba-after { grid-area: 1 / 1; }
+	.ba-on .ba-after { clip-path: inset(0 0 0 var(--split, 50%)); }
+	.ba-on .ba-before { clip-path: inset(0 calc(100% - var(--split, 50%)) 0 0); }
+
+	/* Stepper — walk a sequence one step at a time. JS-off shows all steps. */
+	.stepper-step { list-style: none; padding: 4px 0; }
+	.stepper-nav { display: none; }
+	.stepper-on .stepper-nav {
+		display: flex; align-items: center; gap: 16px; margin-top: 16px;
+		font-size: 13px; color: var(--text-faint);
+	}
+	.stepper-on .stepper-nav button {
+		background: none; border: 1px solid var(--rule-strong); border-radius: 3px;
+		width: 32px; height: 32px; cursor: pointer; color: var(--accent); font-size: 16px;
+	}
+	.stepper-on .stepper-nav button:disabled { color: var(--text-faint); cursor: default; opacity: 0.4; }
+	.stepper-on .stepper-step { display: none; }
+	.stepper-on .stepper-step.current { display: block; }
+
+	/* Filterable table — for long tables (15+ rows). JS-off hides the input. */
+	.table-filter { display: none; }
+	.filter-on .table-filter {
+		display: block; width: 100%; box-sizing: border-box; margin: 0 0 12px;
+		font-family: inherit; font-size: 14px; color: var(--text);
+		background: var(--surface); border: 1px solid var(--rule-strong);
+		border-radius: 3px; padding: 9px 12px;
+	}
+	.filter-on .table-filter:focus { outline: none; border-color: var(--accent); }
+	.filter-on tr[hidden] { display: none; }
+
+	@media (prefers-reduced-motion: reduce) {
+		.fold > summary::before, .toc a, .tab { transition: none !important; }
+	}
+
+	.tab:focus-visible, .stepper-nav button:focus-visible,
+	.toc a:focus-visible, .fold > summary:focus-visible {
+		outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px;
+	}
 </style>
 </head>
 <body>
 <div class="container">
+<nav class="toc" aria-label="On this page">
+	<a href="#why">왜 먼저 기록하나</a>
+	<a href="#commit">커밋의 일생</a>
+	<a href="#modes">동기와 비동기</a>
+	<a href="#batching">그룹 커밋</a>
+	<a href="#recovery">크래시 복구</a>
+</nav>
 
+<main>
+<p class="eyebrow">Storage internals · 데이터베이스 내부</p>
+<h1>쓰기 전 로그의 일생</h1>
+<p class="lede">데이터 파일을 고치기 전에 변경 의도를 먼저 순차 로그에 적어 두면, 충돌이 나도 잃은 것을 되짚어 복구할 수 있다.</p>
+<p class="byline">대상 — 트랜잭션이 어떻게 “지속(durable)”되는지 알고 싶은 백엔드 개발자 · 약 8분</p>
 
-	<p class="eyebrow">Yuumi · Pretty</p>
-	<h1>Calm pages for dense technical work</h1>
-	<p class="lede">A pretty page should make a hard idea feel inevitable: warm paper, quiet type, one clay accent, and just enough structure to keep the reader moving.</p>
-	<p class="byline"><strong>Fixture</strong> · generated from <code>skills/pretty/assets/shell.html</code> · used for visual QA of the shared pretty system</p>
+<p class="body-start">데이터베이스가 행 하나를 바꿀 때, 디스크의 데이터 페이지를 곧장 덮어쓰지 않는다. 페이지를 직접 고치는 도중 전원이 나가면 그 페이지는 옛것도 새것도 아닌 <em>찢어진 상태</em>로 남기 때문이다. 대신 “이 페이지를 이렇게 바꾸겠다”는 의도를 작은 순차 로그에 먼저 적는다. 이것이 <strong>쓰기 전 로그(Write-Ahead Log, WAL)</strong>다.</p>
 
-	<dl class="meta">
-		<dt>Palette</dt><dd><code>#f5f4ed</code> parchment, <code>#141413</code> ink, <code>#c96442</code> clay.</dd>
-		<dt>Typography</dt><dd>Editorial serif rhythm for prose, JetBrains Mono for code and paths.</dd>
-		<dt>Constraint</dt><dd>No gradient theater, no fake dashboards, no decoration that does not carry meaning.</dd>
-	</dl>
+<div class="callout">
+	<div class="callout-label">핵심 규칙</div>
+	<ul>
+		<li>데이터 페이지가 디스크에 닿기 <em>전에</em>, 그 변경을 설명하는 로그 레코드가 먼저 디스크에 닿아야 한다.</li>
+		<li>이 한 줄의 순서 보장이 “커밋했다고 응답했으면 살아남는다”는 약속 전체를 떠받친다.</li>
+	</ul>
+</div>
 
-	<p class="body-start">Pretty is not a section template. It is a material system for technical artifacts that need to be read quickly and trusted immediately. The page starts with the headline insight, then uses structure only where the reader would otherwise slow down.</p>
+<h2 id="why"><span class="num">01</span>왜 데이터보다 로그를 먼저 쓰나</h2>
 
-	<div class="callout">
-		<div class="callout-label">Key idea</div>
-		<ul>
-			<li>The clay rail is for a real insight, not for every paragraph that wants attention.</li>
-			<li>Hairline rules do containment without turning the page into a grid of generic cards.</li>
-			<li>Whitespace does the heavy lifting; color only confirms the hierarchy.</li>
-		</ul>
-	</div>
+<p>데이터 페이지는 디스크 여기저기에 흩어져 있다. 한 트랜잭션이 다섯 페이지를 건드리면 다섯 번의 임의 위치 쓰기가 생기고, 그 다섯 번 중간에 충돌이 나면 일부만 반영된 모순 상태가 남는다. 반면 WAL은 파일 끝에 계속 덧붙이기만 하는 <strong>순차 쓰기</strong>다. 디스크 입장에서 순차 쓰기는 임의 쓰기보다 훨씬 빠르고, 무엇보다 “여기까지는 확정”이라는 경계가 한 점으로 명확하다.</p>
 
-	<h2><span class="num">01</span> The page chooses a path before it chooses components</h2>
-	<p>Anthropic-style artifacts feel calm because they avoid premature chrome. The structure is built around what the reader needs next: a fact, a sequence, a caution, a diagram, or a portable lesson.</p>
+<p>그래서 거래는 두 단계로 갈린다. 먼저 작고 빠른 로그를 디스크에 확정(<code>fsync</code>)하고 사용자에게 커밋 성공을 알린다. 무거운 데이터 페이지 쓰기는 나중에 한가할 때 따라가게 둔다. 사용자가 체감하는 커밋 지연은 데이터 페이지가 아니라 로그의 <code>fsync</code>가 결정한다.</p>
 
-	<ol class="steps">
-		<li><div class="step-title">Name the one idea.</div><div class="step-desc">If the lede cannot carry the core insight alone, the rest of the page will sprawl.</div></li>
-		<li><div class="step-title">Add only the components that match meaning.</div><div class="step-desc">Use <code>.meta</code> for named facts, <code>.steps</code> for ordered work, and SVG only when relationships need space.</div></li>
-		<li><div class="step-title">Verify and tighten.</div><div class="step-desc">Open the page, check the console, inspect the first viewport, and remove visuals that do not lower reader effort.</div></li>
+<h2 id="commit"><span class="num">02</span>커밋 한 번의 일생</h2>
+
+<p>한 번의 커밋은 다섯 단계를 거친다. 단계마다 “메모리에 있는가, 디스크에 닿았는가”가 달라지는데, 이걸 머릿속에 한꺼번에 쌓아 두면 헷갈린다. 아래 스테퍼는 <strong>다섯 단계를 동시에 떠안지 않고 한 칸씩</strong> 짚게 해 준다 — 지금 데이터가 어디에 있는지만 보면 된다.</p>
+
+<div data-stepper>
+	<ol class="steps" style="list-style:none;padding:0;">
+		<li class="stepper-step">
+			<span class="step-title">변경을 메모리 버퍼에 적용</span>
+			<span class="step-desc">트랜잭션이 행을 수정하면 그 변화는 우선 메모리 안의 데이터 페이지(버퍼 풀)에서만 일어난다. 디스크에는 아직 아무것도 닿지 않았다. 이 시점에 충돌하면 변경은 통째로 사라지지만, 누구에게도 커밋을 약속한 적이 없으니 모순은 아니다.</span>
+		</li>
+		<li class="stepper-step">
+			<span class="step-title">WAL 레코드를 로그 버퍼에 추가</span>
+			<span class="step-desc">같은 변경을 “페이지 P의 오프셋 X를 옛값에서 새값으로”라는 형태의 로그 레코드로 만들어 메모리상의 로그 버퍼 끝에 덧붙인다. 아직 메모리다 — 그러나 이 레코드 하나면 변경을 다시 재현할 수 있다.</span>
+		</li>
+		<li class="stepper-step">
+			<span class="step-title">커밋 레코드까지 디스크로 <code>fsync</code></span>
+			<span class="step-desc">커밋 시점에 로그 버퍼를 디스크의 WAL 파일로 밀어내고 <code>fsync</code>로 강제 확정한다. 이 한 번의 디스크 동기화가 끝나는 순간이 “지속성의 분기점”이다. 여기를 통과하면 충돌이 나도 변경은 복구 가능하다.</span>
+		</li>
+		<li class="stepper-step">
+			<span class="step-title">사용자에게 커밋 성공 응답</span>
+			<span class="step-desc">로그가 확정됐으므로 데이터 페이지가 아직 메모리에만 있어도 커밋 성공을 돌려줄 수 있다. 사용자가 체감하는 지연은 여기서 끝난다 — 무거운 데이터 쓰기를 기다리지 않는다.</span>
+		</li>
+		<li class="stepper-step">
+			<span class="step-title">체크포인트에서 데이터 페이지 반영</span>
+			<span class="step-desc">나중에 백그라운드 체크포인트가 메모리의 변경된 페이지들을 디스크 데이터 파일에 천천히 내려쓴다. 데이터 파일이 로그를 따라잡으면 그 지점 이전의 WAL은 더 이상 필요 없어 회수된다.</span>
+		</li>
 	</ol>
-
-	<figure>
-		<svg viewBox="0 0 720 260" xmlns="http://www.w3.org/2000/svg" aria-label="Pretty design path">
-			<defs>
-				<marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--text-dim)"/></marker>
-			</defs>
-			<rect x="44" y="78" width="150" height="72" rx="4" fill="none" stroke="var(--text)" stroke-width="1.2"/>
-			<text x="119" y="110" class="svg-text" text-anchor="middle" font-weight="600">insight</text>
-			<text x="119" y="132" class="svg-text-italic" text-anchor="middle">what must land</text>
-			<path d="M 194 114 C 270 62, 344 62, 420 114" fill="none" stroke="var(--accent)" stroke-width="1.4"/>
-			<path d="M 194 114 C 270 174, 344 174, 420 114" fill="none" stroke="var(--accent-deep)" stroke-width="1.2" stroke-dasharray="5 4"/>
-			<rect x="420" y="78" width="150" height="72" rx="4" fill="var(--bg)" stroke="var(--text)" stroke-width="1.2"/>
-			<text x="495" y="110" class="svg-text" text-anchor="middle" font-weight="600">artifact</text>
-			<text x="495" y="132" class="svg-text-italic" text-anchor="middle">structure that reads</text>
-			<line x1="570" y1="114" x2="660" y2="114" stroke="var(--text-dim)" stroke-width="1" marker-end="url(#arrow)"/>
-			<text x="615" y="99" class="svg-text-dim" text-anchor="middle">verified</text>
-		</svg>
-		<figcaption><span class="fig-num">Fig 1</span>The visual system turns the core insight into a scan path, then verifies that structure, restraint, and comprehension survive in the browser.</figcaption>
-	</figure>
-
-	<div class="aside">
-		<div class="aside-label">Caution</div>
-		A pretty page is not permission to clone Anthropic's product screens or copy. Borrow the calm editorial grammar, then ground every structure in the source material.
+	<div class="stepper-nav">
+		<button class="stepper-prev" aria-label="이전 단계">‹</button>
+		<span class="stepper-count"></span>
+		<button class="stepper-next" aria-label="다음 단계">›</button>
 	</div>
+</div>
 
-	<div class="t-wrap">
-		<table>
-			<thead><tr><th>Dimension</th><th>What visual QA checks</th><th>Typical fix</th></tr></thead>
-			<tbody>
-				<tr><td>Palette</td><td>Warm reference swatches and low cool-gray drift.</td><td>Use shell tokens; remove invented blues and purples.</td></tr>
-				<tr><td>Type</td><td>Serif editorial hierarchy, mono code, generous leading.</td><td>Increase heading scale and line-height discipline.</td></tr>
-				<tr><td>Visual signature</td><td>Hairline rules, rails, structural variety, soft surfaces, tracked kickers.</td><td>Add only structures that fit the content; don't pad fake components.</td></tr>
-			</tbody>
-		</table>
+<div class="aside">
+	<div class="aside-label">JS가 꺼져 있어도</div>
+	위 다섯 단계는 한 칸씩 넘기는 위젯이지만, 스크립트가 없으면 다섯 단계가 모두 번호 매겨진 채 펼쳐진다. 순서 정보는 어떤 환경에서도 사라지지 않는다.
+</div>
+
+<h2 id="modes"><span class="num">03</span>동기 커밋과 비동기 커밋</h2>
+
+<p>3단계의 <code>fsync</code>를 매 커밋마다 끝까지 기다리느냐, 아니면 응답을 먼저 주고 <code>fsync</code>를 뒤로 미루느냐 — 여기서 데이터베이스의 성격이 갈린다. 같은 코드 경로의 <strong>두 변종</strong>이라 나란히 두고 보는 게 가장 빠르다. 아래 탭은 둘 사이를 스크롤 없이 오가게 해 준다.</p>
+
+<div data-tabs>
+	<div class="tab-bar" role="tablist">
+		<button class="tab" data-tab="sync" role="tab">동기 커밋</button>
+		<button class="tab" data-tab="async" role="tab">비동기 커밋</button>
 	</div>
-
-	<pre><code class="language-kotlin">// filter-update.kt
-fun updateFilter(sessionIds: List&lt;UUID&gt;) {
-    repo.updateBulk(sessionIds, synced = true)
-}</code></pre>
-
-	<pre><code class="language-sql">WITH session_state AS (
-    SELECT user_id, COUNT(*) AS total
-    FROM user_swing_session_filter
-    WHERE synced IS NULL OR synced = 0
-)
-SELECT * FROM session_state;</code></pre>
-
-	<pre><code class="language-bash">open skills/pretty/examples/temp-page.html
-# then check console errors, first-screen hierarchy, and whether each visual earns its place</code></pre>
-
-	<div class="lesson">
-		<div><span class="lesson-tag">Takeaway</span><span class="lesson-title">Pretty is comprehension work, not a vibe.</span></div>
-		<div class="lesson-body">If the artifact still makes the reader calculate branches, timelines, or contracts in their head, add structure. If a visual only decorates, cut it.</div>
+	<div class="tab-panel" id="sync" role="tabpanel">
+		<p>커밋이 로그 <code>fsync</code>가 끝날 때까지 블로킹한다. 응답이 돌아왔다면 그 트랜잭션은 디스크에 확정된 것이다 — 충돌이 나도 절대 잃지 않는다. 대신 매 커밋이 디스크 동기화 한 번의 지연을 떠안는다.</p>
+<pre><code class="language-sql">-- 기본값: 응답 = 디스크 확정 보장
+SET synchronous_commit = on;
+COMMIT;  -- WAL fsync가 끝나야 반환</code></pre>
+		<p>금융 원장처럼 “응답했으면 살아 있어야 한다”가 절대 조건인 곳의 기본값이다.</p>
 	</div>
+	<div class="tab-panel" id="async" role="tabpanel">
+		<p>커밋이 로그를 메모리 버퍼에 적고 곧장 반환한다. <code>fsync</code>는 백그라운드가 잠시 뒤 처리한다. 응답은 빠르지만, 확정 직전에 충돌하면 마지막 수백 밀리초의 커밋은 사라질 수 있다.</p>
+<pre><code class="language-sql">-- 지연을 줄이는 대신 최근 커밋 유실 위험
+SET synchronous_commit = off;
+COMMIT;  -- 즉시 반환, fsync는 나중에</code></pre>
+		<p>유실해도 다시 만들 수 있는 로그·세션·캐시 적재처럼, 약간의 손실을 처리량과 맞바꿔도 되는 곳에서 쓴다.</p>
+	</div>
+</div>
+
+<h2 id="batching"><span class="num">04</span>그룹 커밋 — 지연을 처리량으로</h2>
+
+<p>동기 커밋의 비용은 <code>fsync</code>다. 그런데 디스크 동기화 한 번에 여러 트랜잭션의 로그를 함께 실어 보낼 수 있다. 동시에 커밋하려는 트랜잭션들을 아주 짧게 모았다가 <strong>한 번의 <code>fsync</code>로 묶어</strong> 내보내는 것이 그룹 커밋이다. 묶음이 커질수록 트랜잭션 하나가 부담하는 동기화 비용은 줄지만, 묶음을 채우려 기다리는 만큼 개별 지연은 늘어난다.</p>
+
+<figure>
+	<canvas data-chart='{"type":"line","data":{"labels":["1","2","4","8","16","32"],"datasets":[{"label":"fsync당 처리량 (상대값)","data":[1,2,4,8,16,32],"yAxisID":"y","tension":0.3},{"label":"커밋당 지연 (상대값)","data":[1,1.4,2.1,3.4,6,11.2],"yAxisID":"y","borderColor":"#5E5D59","backgroundColor":"#5E5D59","borderDash":[5,4]}]},"options":{"scales":{"y":{"type":"logarithmic","title":{"display":true,"text":"상대값 (로그 스케일)"}},"x":{"title":{"display":true,"text":"묶음당 트랜잭션 수"}}},"plugins":{"legend":{"position":"bottom"}}}}'></canvas>
+	<figcaption><span class="fig-num">Fig 1</span>그룹 커밋의 맞교환을 문단 대신 <em>모양</em>으로 — 묶음을 키우면 fsync당 처리량은 선형으로 오르고(실선) 커밋당 지연도 함께 오른다(점선). 절대 측정치가 아니라 관계의 형태를 보이는 도식적 곡선이다.</figcaption>
+</figure>
+
+<p>아래 표는 차트가 그리는 바로 그 수치다 — 차트가 렌더되지 않는 환경에서도, 또 사실 확인을 위해서도 같은 값을 그대로 둔다.</p>
+
+<div class="t-wrap">
+<table>
+	<thead>
+		<tr>
+			<th>묶음당 트랜잭션</th>
+			<th>fsync당 처리량 (상대값)</th>
+			<th>커밋당 지연 (상대값)</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr><td>1</td><td>1</td><td>1.0</td></tr>
+		<tr><td>2</td><td>2</td><td>1.4</td></tr>
+		<tr><td>4</td><td>4</td><td>2.1</td></tr>
+		<tr><td>8</td><td>8</td><td>3.4</td></tr>
+		<tr><td>16</td><td>16</td><td>6.0</td></tr>
+		<tr><td>32</td><td>32</td><td>11.2</td></tr>
+	</tbody>
+</table>
+</div>
+
+<p>그래서 그룹 커밋은 한가한 시스템에는 손해이고(묶을 친구가 없어 기다리기만 한다), 동시 커밋이 쏟아지는 바쁜 시스템에서야 빛난다. 부하가 높을수록 묶음이 저절로 차서, 한 번의 <code>fsync</code>가 더 많은 일을 떠안는다.</p>
+
+<h2 id="recovery"><span class="num">05</span>크래시가 나면 — 복구의 두 방향</h2>
+
+<p>충돌 후 재시작하면 데이터베이스는 마지막 체크포인트 지점부터 WAL을 다시 읽는다. 복구 경로는 짧게 두 방향이다. 아래는 그 두 방향을 코드로 본 약식 표다 — 좌측 열의 짧은 표시가 줄바꿈으로 깨지지 않도록 <code>col-tight</code>를 걸어 두었다.</p>
+
+<div class="t-wrap">
+<table>
+	<thead>
+		<tr>
+			<th class="col-tight">단계</th>
+			<th>하는 일</th>
+			<th>대상</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td class="col-tight">REDO</td>
+			<td>체크포인트 이후의 모든 로그를 다시 적용해, 디스크에 못 닿았던 변경을 재현한다.</td>
+			<td>커밋된 트랜잭션</td>
+		</tr>
+		<tr>
+			<td class="col-tight">UNDO</td>
+			<td>충돌 순간 커밋되지 않았던 트랜잭션의 변경을 거꾸로 되돌린다.</td>
+			<td>미완 트랜잭션</td>
+		</tr>
+	</tbody>
+</table>
+</div>
+
+<p>REDO가 동기 커밋의 약속을 지키는 쪽이다. 3단계의 <code>fsync</code>를 통과한 트랜잭션은 그 로그 레코드가 디스크에 있으므로, 데이터 페이지가 아직 메모리에만 있다가 함께 날아갔어도 로그를 되읽어 똑같이 복원할 수 있다.</p>
+
+<details class="fold">
+	<summary>되읽기를 어디서 멈춰야 안전한가 (선택 심화)</summary>
+	<p>WAL을 무한정 되읽을 수는 없다. 복구는 마지막 <strong>체크포인트</strong> 레코드를 기준점으로 삼는다. 체크포인트는 “이 지점까지의 변경은 데이터 파일에 모두 반영됐다”는 표식이라, 그 이전의 로그는 다시 적용할 필요가 없다. 그래서 복구 시간은 전체 로그가 아니라 마지막 체크포인트 이후 쌓인 로그 길이에 비례한다. 체크포인트를 자주 찍으면 복구는 빨라지지만 평상시 데이터 페이지 쓰기 부담이 늘어, 이 간격 자체가 또 하나의 맞교환이 된다.</p>
+	<p>이 심화는 접어 두었다 — 헤드라인(로그를 먼저 쓰면 복구할 수 있다)을 첫 화면에서 가리지 않으면서, 더 파고들 독자에게만 깊이를 내준다.</p>
+</details>
+
+<div class="callout">
+	<div class="callout-label">남길 한 가지</div>
+	<ul>
+		<li>WAL은 느린 임의 쓰기를 빠른 순차 쓰기 한 번으로 바꿔, 지속성의 비용을 작은 <code>fsync</code> 하나로 압축한다.</li>
+		<li>이후의 모든 선택 — 동기/비동기, 그룹 커밋 묶음 크기, 체크포인트 간격 — 은 결국 그 하나의 <code>fsync</code>를 언제·몇 개로 묶어 치를지에 대한 맞교환이다.</li>
+	</ul>
+</div>
+
+<div class="footnotes">
+	<ol>
+		<li id="fn1">“쓰기 전”은 데이터가 아니라 <em>로그</em>가 먼저 디스크에 닿는다는 뜻이다. 데이터 페이지 쓰기는 오히려 가장 뒤로 미뤄진다.</li>
+		<li id="fn2">차트와 표의 수치는 그룹 커밋의 관계 형태를 보이기 위한 도식적 예시값이며, 특정 시스템의 측정 벤치마크가 아니다.</li>
+	</ol>
+</div>
 
 
+
+	<!-- The body is intentionally empty.
+	     Design your own structure based on what the artifact needs.
+	     Pull components from ../references/components.md as a catalog.
+	     Open this file's CSS above to know what classes are available. -->
+
+</main>
 </div>
 
 <!-- PrismJS-powered code blocks.
@@ -869,6 +1151,166 @@ SELECT * FROM session_state;</code></pre>
 
 		window.replayParallel = animate;
 	})();
+</script>
+
+<script>
+/* TOC scrollspy — highlights the section currently in view. No-op if no .toc. */
+(function () {
+	var toc = document.querySelector('.toc');
+	if (!toc || !('IntersectionObserver' in window)) return;
+	var links = Array.prototype.slice.call(toc.querySelectorAll('a[href^="#"]'));
+	var byId = {};
+	links.forEach(function (a) { byId[a.getAttribute('href').slice(1)] = a; });
+	var targets = links
+		.map(function (a) { return document.getElementById(a.getAttribute('href').slice(1)); })
+		.filter(Boolean);
+	if (!targets.length) return;
+	var obs = new IntersectionObserver(function (entries) {
+		entries.forEach(function (en) {
+			if (!en.isIntersecting) return;
+			links.forEach(function (l) { l.classList.remove('active'); });
+			var a = byId[en.target.id];
+			if (a) a.classList.add('active');
+		});
+	}, { rootMargin: '0px 0px -70% 0px', threshold: 0 });
+	targets.forEach(function (t) { obs.observe(t); });
+})();
+</script>
+
+<script>
+/* Tabs — progressive enhancement. Without JS all panels stay visible. */
+(function () {
+	document.querySelectorAll('[data-tabs]').forEach(function (group) {
+		var tabs = Array.prototype.slice.call(group.querySelectorAll('.tab'));
+		var panels = Array.prototype.slice.call(group.querySelectorAll('.tab-panel'));
+		if (!tabs.length || !panels.length) return;
+		group.classList.add('tabs-on');
+		function select(id) {
+			tabs.forEach(function (t) { t.setAttribute('aria-selected', String(t.getAttribute('data-tab') === id)); });
+			panels.forEach(function (p) { p.hidden = (p.id !== id); });
+		}
+		tabs.forEach(function (t) {
+			t.addEventListener('click', function () { select(t.getAttribute('data-tab')); });
+		});
+		select(tabs[0].getAttribute('data-tab'));
+	});
+})();
+</script>
+
+<script>
+/* Before/after — progressive enhancement. */
+(function () {
+	document.querySelectorAll('[data-before-after]').forEach(function (el) {
+		var range = el.querySelector('input[type="range"]');
+		var stage = el.querySelector('.ba-stage');
+		if (!range || !stage) return;
+		el.classList.add('ba-on');
+		function apply() { stage.style.setProperty('--split', range.value + '%'); }
+		range.addEventListener('input', apply);
+		apply();
+	});
+})();
+</script>
+
+<script>
+/* Stepper — progressive enhancement. */
+(function () {
+	document.querySelectorAll('[data-stepper]').forEach(function (el) {
+		var steps = Array.prototype.slice.call(el.querySelectorAll('.stepper-step'));
+		var prev = el.querySelector('.stepper-prev');
+		var next = el.querySelector('.stepper-next');
+		var count = el.querySelector('.stepper-count');
+		if (steps.length < 2 || !prev || !next) return;
+		el.classList.add('stepper-on');
+		var i = 0;
+		function render() {
+			steps.forEach(function (s, n) { s.classList.toggle('current', n === i); });
+			if (count) count.textContent = (i + 1) + ' / ' + steps.length;
+			prev.disabled = (i === 0);
+			next.disabled = (i === steps.length - 1);
+		}
+		prev.addEventListener('click', function () { if (i > 0) { i--; render(); } });
+		next.addEventListener('click', function () { if (i < steps.length - 1) { i++; render(); } });
+		render();
+	});
+})();
+</script>
+
+<script>
+/* Filterable table — progressive enhancement. */
+(function () {
+	document.querySelectorAll('[data-filter-table]').forEach(function (wrap) {
+		var input = wrap.querySelector('.table-filter');
+		var rows = Array.prototype.slice.call(wrap.querySelectorAll('tbody tr'));
+		if (!input || !rows.length) return;
+		wrap.classList.add('filter-on');
+		input.addEventListener('input', function () {
+			var q = input.value.trim().toLowerCase();
+			rows.forEach(function (r) {
+				r.hidden = q !== '' && r.textContent.toLowerCase().indexOf(q) === -1;
+			});
+		});
+	});
+})();
+</script>
+
+<script>
+/* Heavy-library lazy loader — only fetches Chart.js / Mermaid when the page
+   actually uses them. Pinned CDN (scan-safe, same pattern as PrismJS). */
+(function () {
+	var PINS = {
+		chart: 'https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js',
+		mermaid: 'https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js'
+	};
+	function token(name, fallback) {
+		var v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+		return v || fallback;
+	}
+	function inject(src, onload) {
+		var s = document.createElement('script');
+		s.src = src; s.async = true;
+		s.onload = onload;
+		s.onerror = function () { document.documentElement.dataset.prettyLibError = src; };
+		document.head.appendChild(s);
+	}
+	if (document.querySelector('[data-chart]')) {
+		inject(PINS.chart, function () {
+			if (!window.Chart) return;
+			Chart.defaults.color = token('--text-dim', '#5e5d59');
+			Chart.defaults.borderColor = token('--rule', '#e8e6dc');
+			Chart.defaults.font.family = "'JetBrains Mono', ui-monospace, monospace";
+			var accent = token('--accent', '#c96442');
+			document.querySelectorAll('[data-chart]').forEach(function (el) {
+				try {
+					var cfg = JSON.parse(el.getAttribute('data-chart'));
+					((cfg.data && cfg.data.datasets) || []).forEach(function (ds) {
+						if (ds.backgroundColor === undefined) ds.backgroundColor = accent;
+						if (ds.borderColor === undefined) ds.borderColor = accent;
+					});
+					new Chart(el, cfg);
+				} catch (e) { document.documentElement.dataset.prettyChartError = e.message; }
+			});
+		});
+	}
+	if (document.querySelector('.mermaid')) {
+		inject(PINS.mermaid, function () {
+			if (!window.mermaid) return;
+			try {
+				mermaid.initialize({
+					startOnLoad: false, theme: 'base',
+					themeVariables: {
+						primaryColor: token('--surface', '#faf9f5'),
+						primaryTextColor: token('--text', '#141413'),
+						primaryBorderColor: token('--rule-strong', '#d1cfc5'),
+						lineColor: token('--text-dim', '#5e5d59'),
+						fontFamily: "'JetBrains Mono', ui-monospace, monospace"
+					}
+				});
+				mermaid.run();
+			} catch (e) { document.documentElement.dataset.prettyMermaidError = e.message; }
+		});
+	}
+})();
 </script>
 </body>
 </html>

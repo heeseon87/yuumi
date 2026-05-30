@@ -1,7 +1,7 @@
 <!--
 	Anthropic-style Pretty Shell
 	-------------------------------
-	A blank canvas with the shared Yuumi visual language baked in. The body is intentionally empty —
+	A blank canvas with the shared Claude Kit visual language baked in. The body is intentionally empty —
 	you, the agent, design the page structure based on the artifact you are making.
 
 	HOW TO USE:
@@ -87,6 +87,9 @@
 		margin: 0 auto;
 		padding: 88px 28px 140px;
 	}
+	/* The TOC (if present) is position:fixed and therefore OUT of normal flow, so
+	   the container needs no special layout — content always renders full width.
+	   See the .toc rules below. */
 
 	/* ── Typographic primitives ── */
 
@@ -507,6 +510,30 @@
 	}
 	td:last-child, th:last-child { padding-right: 0; }
 	td code { font-size: 13.5px; }
+	/* Cells should not break on every character — the global overflow-wrap:anywhere
+	   (set on body for long URLs/code) otherwise collapses short cells to 2-3 lines. */
+	th, td { overflow-wrap: normal; word-break: normal; }
+	.col-tight { white-space: nowrap; }
+
+	/* Collapsible section — progressive disclosure. Open by default in source so
+	   JS-off / print still shows everything. */
+	.fold { border-top: 1px solid var(--rule); margin: 8px 0; }
+	.fold > summary {
+		list-style: none; cursor: pointer; padding: 16px 0;
+		font-family: 'Hahmlet', Georgia, serif; font-size: 19px; color: var(--text);
+		display: flex; align-items: baseline; gap: 12px;
+	}
+	.fold > summary::-webkit-details-marker { display: none; }
+	.fold > summary::before {
+		content: "›"; color: var(--accent); font-size: 18px;
+		transition: transform 0.18s ease; transform: translateY(-1px);
+	}
+	.fold[open] > summary::before { transform: rotate(90deg) translateX(-1px); }
+	.fold > summary:hover { color: var(--accent-deep); }
+	.fold > *:not(summary) { margin-left: 24px; }
+	@media (prefers-reduced-motion: reduce) {
+		.fold > summary::before { transition: none; }
+	}
 
 	/* Lessons / takeaway block — inline tagged title + dim body */
 	.lesson { margin: 30px 0; padding: 0; }
@@ -548,6 +575,20 @@
 		font-size: 0.75em;
 		font-weight: 500;
 		padding: 0 1px;
+	}
+
+	/* Footnote hover/focus popover — preview without losing reading place. */
+	.fnref { position: relative; }
+	.fnref > a { text-decoration: none; color: var(--accent); }
+	.fnref > a[data-note]:hover::after,
+	.fnref > a[data-note]:focus::after {
+		content: attr(data-note);
+		position: absolute; left: 0; top: 1.6em; z-index: 5;
+		width: max-content; max-width: 280px;
+		background: var(--surface); color: var(--text-dim);
+		border: 1px solid var(--rule-strong); border-radius: 3px;
+		padding: 10px 12px; font-size: 13.5px; line-height: 1.6;
+		box-shadow: 0 4px 14px rgba(20,20,19,0.08);
 	}
 
 	/*
@@ -643,6 +684,150 @@
 		blockquote { font-size: 20px; }
 		figure { margin: 36px -22px; }
 		figcaption { padding: 0 22px; }
+	}
+
+	/* Table of contents (scrollspy), taken OUT of normal flow (position:fixed) so
+	   it never steals width from the content — the article always renders full
+	   width. Vertically centered, ALWAYS on the side (never snapped to the top).
+	   Two modes by viewport width:
+	     >= 1480px   full label rail parked in the right margin beside the column
+	     < 1480px    collapsed to a silhouette of bars at the right edge; hovering
+	                 or focusing a link expands it as an overlay ON TOP of content
+	   Never make the TOC a flex/grid column or a float — those reduce or overlap
+	   the content. Fixed positioning keeps the content width constant. */
+	.toc {
+		position: fixed;
+		top: 50%;
+		transform: translateY(-50%);
+		right: 2px;
+		z-index: 20;
+		max-height: calc(100vh - 40px);
+		overflow-y: auto;
+		padding: 10px 3px;
+		font-size: 13px;
+		line-height: 1.9;
+		border: 1px solid transparent;
+		border-radius: 4px;
+		transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, right 0.15s ease, padding 0.15s ease;
+	}
+	/* collapsed: each link becomes a small right-aligned bar — the silhouette */
+	.toc a {
+		display: block;
+		width: 16px; height: 2px;
+		margin: 9px 0 9px auto;
+		background: var(--rule-strong);
+		border-radius: 1px;
+		color: transparent;
+		overflow: hidden;
+		white-space: nowrap;
+		text-decoration: none;
+		transition: width 0.15s ease, background-color 0.12s ease, color 0.12s ease;
+	}
+	.toc a.active { background: var(--accent); width: 24px; }
+	/* expanded: overlay over the content on hover / keyboard focus */
+	.toc:hover, .toc:focus-within {
+		right: 14px;
+		padding: 14px 18px;
+		background: var(--surface);
+		border-color: var(--rule-strong);
+		box-shadow: 0 6px 22px rgba(20, 20, 19, 0.10);
+	}
+	.toc:hover a, .toc:focus-within a {
+		width: auto; height: auto;
+		margin: 0; padding: 2px 0;
+		background: none;
+		color: var(--text-faint);
+	}
+	.toc:hover a:hover, .toc:focus-within a:hover { color: var(--text-dim); }
+	.toc:hover a.active, .toc:focus-within a.active { width: auto; background: none; color: var(--accent-deep); }
+
+	/* >= 1480px: room beside the centered 1140px column — full rail in the margin */
+	@media (min-width: 1480px) {
+		.toc, .toc:hover, .toc:focus-within {
+			right: auto;
+			left: calc(50% + 588px);
+			width: 150px;
+			padding: 0 0 0 16px;
+			background: none;
+			border: none;
+			border-left: 1px solid var(--rule);
+			border-radius: 0;
+			box-shadow: none;
+		}
+		.toc a, .toc:hover a, .toc:focus-within a {
+			width: auto; height: auto;
+			margin: 0 0 0 -17px; padding: 2px 0 2px 15px;
+			background: none; color: var(--text-faint);
+			border-left: 2px solid transparent;
+		}
+		.toc a.active, .toc:hover a.active, .toc:focus-within a.active {
+			width: auto; color: var(--accent-deep); border-left-color: var(--accent); background: none;
+		}
+		.toc a:hover { color: var(--text-dim); }
+	}
+
+	@media (prefers-reduced-motion: reduce) { .toc, .toc a { transition: none; } }
+
+	/* Tabs — switch parallel views (e.g. language variants). JS-off shows all panels. */
+	.tab-bar { display: none; gap: 4px; border-bottom: 1px solid var(--rule); margin: 24px 0 0; }
+	.tabs-on .tab-bar { display: flex; }
+	.tab {
+		background: none; border: none; cursor: pointer;
+		font-family: inherit; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase;
+		color: var(--text-faint); padding: 10px 14px; margin-bottom: -1px;
+		border-bottom: 2px solid transparent;
+	}
+	.tab:hover { color: var(--text-dim); }
+	.tab[aria-selected="true"] { color: var(--accent-deep); border-bottom-color: var(--accent); }
+	.tabs-on .tab-panel[hidden] { display: none; }
+	.tabs-on .tab-panel { margin-top: 20px; }
+
+	/* Before/after compare — reader drags to reveal. JS-off shows both stacked. */
+	.ba-stage { position: relative; }
+	.ba-control { display: none; }
+	.ba-on .ba-control {
+		display: flex; align-items: center; gap: 12px; margin-top: 12px;
+		font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-faint);
+	}
+	.ba-on .ba-control input[type="range"] { flex: 1; accent-color: var(--accent); }
+	.ba-on .ba-stage { display: grid; }
+	.ba-on .ba-stage > .ba-before, .ba-on .ba-stage > .ba-after { grid-area: 1 / 1; }
+	.ba-on .ba-after { clip-path: inset(0 0 0 var(--split, 50%)); }
+	.ba-on .ba-before { clip-path: inset(0 calc(100% - var(--split, 50%)) 0 0); }
+
+	/* Stepper — walk a sequence one step at a time. JS-off shows all steps. */
+	.stepper-step { list-style: none; padding: 4px 0; }
+	.stepper-nav { display: none; }
+	.stepper-on .stepper-nav {
+		display: flex; align-items: center; gap: 16px; margin-top: 16px;
+		font-size: 13px; color: var(--text-faint);
+	}
+	.stepper-on .stepper-nav button {
+		background: none; border: 1px solid var(--rule-strong); border-radius: 3px;
+		width: 32px; height: 32px; cursor: pointer; color: var(--accent); font-size: 16px;
+	}
+	.stepper-on .stepper-nav button:disabled { color: var(--text-faint); cursor: default; opacity: 0.4; }
+	.stepper-on .stepper-step { display: none; }
+	.stepper-on .stepper-step.current { display: block; }
+
+	/* Filterable table — for long tables (15+ rows). JS-off hides the input. */
+	.table-filter { display: none; }
+	.filter-on .table-filter {
+		display: block; width: 100%; box-sizing: border-box; margin: 0 0 12px;
+		font-family: inherit; font-size: 14px; color: var(--text);
+		background: var(--surface); border: 1px solid var(--rule-strong);
+		border-radius: 3px; padding: 9px 12px;
+	}
+	.filter-on .table-filter:focus { outline: none; border-color: var(--accent); }
+	.filter-on tr[hidden] { display: none; }
+
+	@media (prefers-reduced-motion: reduce) {
+		.fold > summary::before, .toc a, .tab { transition: none !important; }
+	}
+
+	.tab:focus-visible, .stepper-nav button:focus-visible,
+	.toc a:focus-visible, .fold > summary:focus-visible {
+		outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px;
 	}
 </style>
 </head>
@@ -786,6 +971,166 @@
 
 		window.replayParallel = animate;
 	})();
+</script>
+
+<script>
+/* TOC scrollspy — highlights the section currently in view. No-op if no .toc. */
+(function () {
+	var toc = document.querySelector('.toc');
+	if (!toc || !('IntersectionObserver' in window)) return;
+	var links = Array.prototype.slice.call(toc.querySelectorAll('a[href^="#"]'));
+	var byId = {};
+	links.forEach(function (a) { byId[a.getAttribute('href').slice(1)] = a; });
+	var targets = links
+		.map(function (a) { return document.getElementById(a.getAttribute('href').slice(1)); })
+		.filter(Boolean);
+	if (!targets.length) return;
+	var obs = new IntersectionObserver(function (entries) {
+		entries.forEach(function (en) {
+			if (!en.isIntersecting) return;
+			links.forEach(function (l) { l.classList.remove('active'); });
+			var a = byId[en.target.id];
+			if (a) a.classList.add('active');
+		});
+	}, { rootMargin: '0px 0px -70% 0px', threshold: 0 });
+	targets.forEach(function (t) { obs.observe(t); });
+})();
+</script>
+
+<script>
+/* Tabs — progressive enhancement. Without JS all panels stay visible. */
+(function () {
+	document.querySelectorAll('[data-tabs]').forEach(function (group) {
+		var tabs = Array.prototype.slice.call(group.querySelectorAll('.tab'));
+		var panels = Array.prototype.slice.call(group.querySelectorAll('.tab-panel'));
+		if (!tabs.length || !panels.length) return;
+		group.classList.add('tabs-on');
+		function select(id) {
+			tabs.forEach(function (t) { t.setAttribute('aria-selected', String(t.getAttribute('data-tab') === id)); });
+			panels.forEach(function (p) { p.hidden = (p.id !== id); });
+		}
+		tabs.forEach(function (t) {
+			t.addEventListener('click', function () { select(t.getAttribute('data-tab')); });
+		});
+		select(tabs[0].getAttribute('data-tab'));
+	});
+})();
+</script>
+
+<script>
+/* Before/after — progressive enhancement. */
+(function () {
+	document.querySelectorAll('[data-before-after]').forEach(function (el) {
+		var range = el.querySelector('input[type="range"]');
+		var stage = el.querySelector('.ba-stage');
+		if (!range || !stage) return;
+		el.classList.add('ba-on');
+		function apply() { stage.style.setProperty('--split', range.value + '%'); }
+		range.addEventListener('input', apply);
+		apply();
+	});
+})();
+</script>
+
+<script>
+/* Stepper — progressive enhancement. */
+(function () {
+	document.querySelectorAll('[data-stepper]').forEach(function (el) {
+		var steps = Array.prototype.slice.call(el.querySelectorAll('.stepper-step'));
+		var prev = el.querySelector('.stepper-prev');
+		var next = el.querySelector('.stepper-next');
+		var count = el.querySelector('.stepper-count');
+		if (steps.length < 2 || !prev || !next) return;
+		el.classList.add('stepper-on');
+		var i = 0;
+		function render() {
+			steps.forEach(function (s, n) { s.classList.toggle('current', n === i); });
+			if (count) count.textContent = (i + 1) + ' / ' + steps.length;
+			prev.disabled = (i === 0);
+			next.disabled = (i === steps.length - 1);
+		}
+		prev.addEventListener('click', function () { if (i > 0) { i--; render(); } });
+		next.addEventListener('click', function () { if (i < steps.length - 1) { i++; render(); } });
+		render();
+	});
+})();
+</script>
+
+<script>
+/* Filterable table — progressive enhancement. */
+(function () {
+	document.querySelectorAll('[data-filter-table]').forEach(function (wrap) {
+		var input = wrap.querySelector('.table-filter');
+		var rows = Array.prototype.slice.call(wrap.querySelectorAll('tbody tr'));
+		if (!input || !rows.length) return;
+		wrap.classList.add('filter-on');
+		input.addEventListener('input', function () {
+			var q = input.value.trim().toLowerCase();
+			rows.forEach(function (r) {
+				r.hidden = q !== '' && r.textContent.toLowerCase().indexOf(q) === -1;
+			});
+		});
+	});
+})();
+</script>
+
+<script>
+/* Heavy-library lazy loader — only fetches Chart.js / Mermaid when the page
+   actually uses them. Pinned CDN (scan-safe, same pattern as PrismJS). */
+(function () {
+	var PINS = {
+		chart: 'https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js',
+		mermaid: 'https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js'
+	};
+	function token(name, fallback) {
+		var v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+		return v || fallback;
+	}
+	function inject(src, onload) {
+		var s = document.createElement('script');
+		s.src = src; s.async = true;
+		s.onload = onload;
+		s.onerror = function () { document.documentElement.dataset.prettyLibError = src; };
+		document.head.appendChild(s);
+	}
+	if (document.querySelector('[data-chart]')) {
+		inject(PINS.chart, function () {
+			if (!window.Chart) return;
+			Chart.defaults.color = token('--text-dim', '#5e5d59');
+			Chart.defaults.borderColor = token('--rule', '#e8e6dc');
+			Chart.defaults.font.family = "'JetBrains Mono', ui-monospace, monospace";
+			var accent = token('--accent', '#c96442');
+			document.querySelectorAll('[data-chart]').forEach(function (el) {
+				try {
+					var cfg = JSON.parse(el.getAttribute('data-chart'));
+					((cfg.data && cfg.data.datasets) || []).forEach(function (ds) {
+						if (ds.backgroundColor === undefined) ds.backgroundColor = accent;
+						if (ds.borderColor === undefined) ds.borderColor = accent;
+					});
+					new Chart(el, cfg);
+				} catch (e) { document.documentElement.dataset.prettyChartError = e.message; }
+			});
+		});
+	}
+	if (document.querySelector('.mermaid')) {
+		inject(PINS.mermaid, function () {
+			if (!window.mermaid) return;
+			try {
+				mermaid.initialize({
+					startOnLoad: false, theme: 'base',
+					themeVariables: {
+						primaryColor: token('--surface', '#faf9f5'),
+						primaryTextColor: token('--text', '#141413'),
+						primaryBorderColor: token('--rule-strong', '#d1cfc5'),
+						lineColor: token('--text-dim', '#5e5d59'),
+						fontFamily: "'JetBrains Mono', ui-monospace, monospace"
+					}
+				});
+				mermaid.run();
+			} catch (e) { document.documentElement.dataset.prettyMermaidError = e.message; }
+		});
+	}
+})();
 </script>
 </body>
 </html>

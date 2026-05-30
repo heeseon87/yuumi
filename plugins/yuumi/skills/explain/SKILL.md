@@ -1,6 +1,7 @@
 ---
-name: yuumi:explain
+name: explain
 description: Render an Anthropic-style HTML explainer of the target — structure designed per-target with cognitive-load-focused visuals
+version: 1.3.22
 argument-hint: [target]
 ---
 
@@ -56,7 +57,7 @@ High-value explainer visuals:
 - **Before / after comparison** — when a refactor or design choice changes responsibility.
 - **Verification ladder** — when trust depends on stacked evidence.
 
-Keep it sparse. Three strong visuals beat seven mediocre ones. Five is the normal ceiling. If a document wants more, split the artifact or make a dedicated map page.
+There is no fixed count and no ceiling. The number of visuals is set by **how many genuine cognitive-load points the content has** — not by its length — and you judge that. The goal is to visualize *every* place where the reader would otherwise have to compute something in their head: a branch to simulate, a timeline to hold, a transformation to track, a boundary to map. A page with one such point needs one visual; a page dense with them needs many; long prose with few stuck-points still needs few. The discipline is not "few" but "each earns its place by removing a named burden, and none exists just to look busy." A mediocre visual still costs the reader attention, so cut those; never cap the strong ones. If a single map sprawls, it may still read better as its own dedicated page.
 
 Facts beat symmetry. Do not invent layers, nodes, arrows, files, calls, or domains because a diagram looks empty. Trace the code first; draw only relationships that actually exist. If the visual is about a general concept rather than this codebase, label it as conceptual.
 

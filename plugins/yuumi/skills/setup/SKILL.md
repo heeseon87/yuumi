@@ -1,5 +1,5 @@
 ---
-name: yuumi:setup
+name: setup
 description: Initial setup for Tokyo Night statusline (run once after install; updates auto-sync via SessionStart hook)
 version: 1.3.22
 ---

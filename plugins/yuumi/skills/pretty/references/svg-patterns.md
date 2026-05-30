@@ -13,7 +13,7 @@ A diagram earns its place only when it reduces reader work. Before drawing, name
 - verification ladder: "which evidence is done, which remains pending?"
 - ownership/boundary map: "which component owns this responsibility now?"
 
-If the answer is "visual interest," skip the diagram. Three strong figures are usually enough; five is the ceiling for normal docs. Put the figure near the text it replaces, and make the caption state the insight.
+If the answer is "visual interest," skip the diagram. There is no fixed count and no ceiling — the number of figures is driven by **how many genuine cognitive-load points the content has**, not by its length, and you judge that. The goal is to visualize *every* place where the reader would otherwise have to run a computation in their head: a branch to simulate, a timeline to hold, a transformation to track, a boundary to map. A page with one such point needs one figure; a page dense with them needs many; long prose with few stuck-points still needs few. The only gate is that each figure clears a named burden and none exists just to look busy — cut mediocre or decorative visuals, never the ones that remove real work. Put each figure near the text it replaces, and make the caption state the insight.
 
 Default to inline SVG. Use Mermaid, Graphviz/DOT, ELK/Dagre, D3, or Observable Plot only when the data size or layout problem justifies the dependency; for final pretty artifacts, export or translate the result back into self-contained SVG styled with the shell tokens.
 
@@ -40,6 +40,8 @@ Diagrams earn their place only when the relationship is hard to express linearly
 | Verification ladder | Vertical ladder or stepped timeline: evidence completed → pending follow-up |
 | Before/after responsibility split | Two-column comparison with one or two arrows, not a fake architecture map |
 | File/directory hierarchy | Skip SVG — use `.tree` grid (CJK-safe) |
+
+> For *quantitative* data (real numbers to scale) prefer Chart.js, and for *large auto-laid* graphs prefer Mermaid — see `data-viz.md`. Inline SVG remains the default for relational and line-art diagrams. Inline SVG can also be made interactive (e.g. a `[data-stepper]` revealing paths one at a time) — see `interaction-patterns.md`.
 
 ## Pattern 1 — ERD / Architecture diagram
 
