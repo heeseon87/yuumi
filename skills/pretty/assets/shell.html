@@ -719,6 +719,19 @@
 	.tab[aria-selected="true"] { color: var(--accent-deep); border-bottom-color: var(--accent); }
 	.tabs-on .tab-panel[hidden] { display: none; }
 	.tabs-on .tab-panel { margin-top: 20px; }
+
+	/* Before/after compare — reader drags to reveal. JS-off shows both stacked. */
+	.ba-stage { position: relative; }
+	.ba-control { display: none; }
+	.ba-on .ba-control {
+		display: flex; align-items: center; gap: 12px; margin-top: 12px;
+		font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-faint);
+	}
+	.ba-on .ba-control input[type="range"] { flex: 1; accent-color: var(--accent); }
+	.ba-on .ba-stage { display: grid; }
+	.ba-on .ba-stage > .ba-before, .ba-on .ba-stage > .ba-after { grid-area: 1 / 1; }
+	.ba-on .ba-after { clip-path: inset(0 0 0 var(--split, 50%)); }
+	.ba-on .ba-before { clip-path: inset(0 calc(100% - var(--split, 50%)) 0 0); }
 </style>
 </head>
 <body>
@@ -903,6 +916,21 @@
 			t.addEventListener('click', function () { select(t.getAttribute('data-tab')); });
 		});
 		select(tabs[0].getAttribute('data-tab'));
+	});
+})();
+</script>
+
+<script>
+/* Before/after — progressive enhancement. */
+(function () {
+	document.querySelectorAll('[data-before-after]').forEach(function (el) {
+		var range = el.querySelector('input[type="range"]');
+		var stage = el.querySelector('.ba-stage');
+		if (!range || !stage) return;
+		el.classList.add('ba-on');
+		function apply() { stage.style.setProperty('--split', range.value + '%'); }
+		range.addEventListener('input', apply);
+		apply();
 	});
 })();
 </script>
