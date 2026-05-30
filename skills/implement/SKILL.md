@@ -1,6 +1,7 @@
 ---
 name: yuumi:implement
 description: Implement a spec while keeping a running context-slugged HTML decision log that captures reviewer-facing decisions, tradeoffs, open questions, and cognitive-load-reducing visuals
+version: 1.3.21
 argument-hint: [spec]
 ---
 

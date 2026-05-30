@@ -1,6 +1,7 @@
 ---
 name: yuumi:edit
 description: Use when editing long drafts or multiple files where copy-paste workflow is tedious, when you have scattered edit instructions across a document, or when edits across files need to stay consistent with each other
+version: 1.3.21
 ---
 
 # Edit (Spatial Editing)
