@@ -1,13 +1,13 @@
 # yuumi 🐱
 
 > A Tokyo Night statusline and a pack of workflow skills for Claude Code — and Codex.
-> You drive the agent; yuumi rides along, purrs, and (let's be honest) takes some of the credit.
+> Your agent does the carrying. You ride along like Yuumi — and (let's be honest) take the credit.
 
 ## Why "yuumi"?
 
 In *League of Legends*, **Yuumi** is the cat who attaches to a teammate and rides into battle on their back. She doesn't walk the lane — she gets carried. The AD carry does the work; Yuumi tosses out a heal, a little speed, the occasional poke, and somehow finishes the game convinced *she* hard-carried. (She was eating cup ramen behind the ADC the whole time.)
 
-That's the whole idea. **You and your coding agent are the ADC** — you do the carrying. **yuumi is the cat on your back**: a statusline that watches the lane so you don't have to, and a set of skills that buff your workflow. It rides along, smooths the run, and yes — it'll absolutely claim a share of the win.
+That's the whole idea — and in this story, **you're Yuumi.** Your coding **agent is the ADC**: it walks the lane, takes the fights, does the carrying. You attach to it, ride along, toss out the occasional buff (a prompt, a nudge, a skill), and come away having "carried." This plugin is your Yuumi kit — a statusline to watch the lane for you, and a set of skills to buff the agent doing the work. Go ahead and take the credit; the cup ramen's already warm.
 
 Works on **macOS, Linux, and Windows**.
 
@@ -169,4 +169,4 @@ Then set your terminal font to `JetBrainsMono Nerd Font`.
 
 ---
 
-*yuumi rides on Claude Code and Codex. You do the carrying; she takes the credit. 🐱*
+*Your agent carries on Claude Code and Codex. You ride along — and take the credit. That's the yuumi way. 🐱*
