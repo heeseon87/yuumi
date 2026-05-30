@@ -1,6 +1,6 @@
 ---
 name: yuumi:pretty
-description: Create Anthropic-style HTML artifacts with the shared Yuumi visual system, component catalog, SVG patterns, and cognitive-load-focused visual QA
+description: Create Anthropic-style HTML artifacts with the shared Yuumi visual system — navigable layouts, progressive disclosure, optional interactive widgets and data charts, a component catalog, SVG patterns, and cognitive-load-focused visual QA
 argument-hint: [brief]
 ---
 
@@ -10,9 +10,9 @@ The output should feel like it belongs in the same family as Anthropic / Claude 
 
 ## The North Star
 
-**The reader should understand the artifact in one pass and trust the page before they know why.**
+**The first screen gives the reader the point and a map; the reader then controls how deep they go.**
 
-Visual polish is not decoration here. It is the interface for comprehension. Use the Anthropic visual language to make dense technical material feel calm, deliberate, and readable.
+A reader should grasp the headline insight and the shape of the whole in one glance, then descend into detail on their own terms — expanding sections, switching views, stepping through a process. Trust comes before they know why. Visual and interactive polish is not decoration; it is the interface for comprehension.
 
 ## What you produce
 
@@ -23,6 +23,8 @@ Use:
 - `skills/pretty/assets/shell.html` — blank HTML shell with tokens, typography, CSS components, and the optional SVG animation controller.
 - `skills/pretty/references/components.md` — component catalog. It tells you what each component is for; it is not a section template.
 - `skills/pretty/references/svg-patterns.md` — line-art SVG patterns for relationships that prose cannot carry.
+- `skills/pretty/references/interaction-patterns.md` — navigation scaffold (TOC, fold, tabs) and active widgets (before/after, stepper, filterable table). Everything degrades gracefully without JS.
+- `skills/pretty/references/data-viz.md` — when to reach past inline SVG to Chart.js (quantitative) or Mermaid (large graphs), and how the shell lazy-loads + themes them.
 
 Use the shell and references as a shared visual system, not as a score target. There is no numeric style gate; quality comes from browser verification, source fidelity, restrained visual language, and whether the structure lowers reader effort.
 
@@ -31,9 +33,10 @@ Use the shell and references as a shared visual system, not as a score target. T
 1. **Understand the artifact.** Identify the reader, the one idea they must leave with, and the structure that will get them there. Ask only if a missing decision changes the artifact.
 2. **Start from the shell.** Copy `skills/pretty/assets/shell.html` to the output path and write content inside `<div class="container">`.
 3. **Invent the structure for this artifact.** Do not fill a fixed template. Use any component or layout that improves comprehension. The catalog is a palette, not a checklist.
-4. **Keep the visual language fixed.** Warm parchment background, near-black ink, clay accent, serif editorial headings, JetBrains Mono for code, hairline rules, soft ring borders, restrained dark code blocks.
-5. **Run the visual QA pass.** Check the saved artifact for browser errors, first-screen comprehension, CJK typography when relevant, source-fact fidelity, restrained palette/type/spacing, and whether every visual element earns its place.
-6. **Open the file.** On macOS: `open <artifact.html>`. Report only the path and verification state. Do not dump the artifact's contents in chat.
+4. **Plan navigation for length.** If the artifact is long (4+ major sections or 3+ viewports), give the reader a map and a way to control depth: a `.toc`, `.fold` for optional depth, `.tabs` for parallel views. Do not cram a long artifact into one flat scroll. Keep the headline insight on the first screen — never fold the main point.
+5. **Keep the visual language fixed.** Warm parchment background, near-black ink, clay accent, serif editorial headings, JetBrains Mono for code, hairline rules, soft ring borders, restrained dark code blocks.
+6. **Run the visual QA pass.** Check the saved artifact for browser errors, first-screen comprehension, CJK typography when relevant, source-fact fidelity, restrained palette/type/spacing, and whether every visual element earns its place.
+7. **Open the file.** On macOS: `open <artifact.html>`. Report only the path and verification state. Do not dump the artifact's contents in chat.
 
 ## Visual language
 
@@ -60,9 +63,11 @@ Use the reference swatches in the shell; do not freestyle colors.
 
 Visuals are not decoration. Add a diagram only when it saves the reader from doing mental bookkeeping: simulating branches, remembering a timeline, comparing before/after states, mapping input to output, following a data transformation, or stacking verification evidence.
 
-Before adding `<figure>`, name the burden it removes. If the answer is vague — "it looks nicer" or "the page needs visual interest" — skip it. Three strong figures usually beat five. Five is the normal ceiling unless the artifact is explicitly a visual map.
+Before adding any visual or interaction — `<figure>`, a chart, a tab group, a stepper — name the specific burden it removes. If the answer is vague ("it looks nicer", "the page needs interest"), skip it. There is no fixed ceiling on count; the ceiling is the gate: every element must earn its place by removing a named burden. A page may be richly visual or nearly all prose — what is never allowed is a visual or widget that exists only to look busy.
 
-Inline SVG is the default. Use libraries only when the problem genuinely needs them: Mermaid for quick draft flowcharts, Graphviz/DOT or ELK/Dagre for code-fact graphs with many nodes, Observable Plot for real quantitative charts. For final pretty artifacts, prefer self-contained inline SVG styled with the shell tokens.
+Inline SVG is the default. For final pretty artifacts, prefer self-contained inline SVG styled with the shell tokens. When the data is genuinely quantitative use Chart.js, and for large auto-laid or draft graphs use Mermaid — the shell lazy-loads both from a pinned CDN only when the page contains the element (`[data-chart]` on a `<canvas>`, or `.mermaid`). See `data-viz.md`.
+
+Active widgets (before/after, stepper, filterable table) are progressive enhancements — the page must be fully usable, and the main point fully visible, with JS disabled. Always pair a chart with its source data table.
 
 ### Components
 
@@ -87,6 +92,10 @@ The real test is comprehension. A reader should need less working memory after t
 - branches, timelines, contracts, and verification stacks are visualized only when prose would make the reader calculate
 - visuals are source-grounded and captioned with the actual insight
 - the browser renders cleanly with no console errors
+- interactions work and degrade: tabs switch, steppers step, folds toggle, and with JS off every panel/step is visible and the main point is on the first screen
+- charts render on-palette with a paired data table, and chart/graph libraries load only on pages that use them
+- the layout is navigable: long pages have a map (`.toc`) and the reader can control depth
+- keyboard focus is visible on every interactive element; motion respects `prefers-reduced-motion`
 
 ## Anti-patterns
 
@@ -96,6 +105,11 @@ The real test is comprehension. A reader should need less working memory after t
 - Do not use gradients, glass, neon, rainbow accents, or cool blue-gray palettes.
 - Do not use a fixed section order just because a previous pretty page did.
 - Do not put long explanations in chat. The HTML artifact is the deliverable.
+- Do not add interaction for its own sake. A tab group, stepper, or slider must remove a named burden, not signal "interactive".
+- Do not fold, tab, or otherwise hide the artifact's main point. Progressive disclosure defers *optional depth*, never the headline insight.
+- Do not show a chart without its underlying data table. Charts must survive JS-off and be fact-checkable.
+- Do not load a chart/graph library "just in case". Only the element's presence triggers it.
+- Do not let library defaults (bright blue, drop shadows) leak through — verify charts render on-palette.
 
 ## When you're done
 
