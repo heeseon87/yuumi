@@ -169,4 +169,4 @@ Then set your terminal font to `JetBrainsMono Nerd Font`.
 
 ---
 
-*Your agent does the carrying on Claude Code and Codex. So sit back, eat your cup ramen, and enjoy the credit you "earned" — to your heart's content. 🐱*
+*Your agent does the carrying on Claude Code and Codex. So sit back, eat your cup ramen, and shout it one more time: "Carry!" 🐱*
