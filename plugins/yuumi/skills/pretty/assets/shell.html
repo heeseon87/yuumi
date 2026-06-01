@@ -490,6 +490,11 @@
 	/* Hairline table */
 	.t-wrap { overflow-x: auto; margin: 32px 0; }
 	table { width: 100%; border-collapse: collapse; font-size: 15.5px; background: transparent; }
+	/* Keep row-label columns scannable. Auto table layout otherwise collapses the
+	   first column in fact tables; 15em is ~1.5x the natural width observed in
+	   mixed Korean/English labels, while .t-wrap still allows horizontal scroll. */
+	th:first-child,
+	td:first-child { min-width: 15em; }
 	th, td {
 		text-align: left;
 		padding: 18px 16px 18px 0;
@@ -863,18 +868,22 @@
 <script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-java.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-diff.min.js"></script>
 
-<!-- Pretty integration: fill in standard PrismJS aliases that the minified bundles drop, then highlight + label. -->
+<!-- Pretty integration: normalize/infer PrismJS languages, then highlight + label. -->
 <script>
 	(function () {
 		try {
 			const Prism = window.Prism;
-			if (!Prism) return;
+			if (!Prism || !Prism.languages || !Prism.util) return;
 
 			const aliases = {
 				html: 'markup', xml: 'markup', svg: 'markup', mathml: 'markup',
-				sh: 'bash', shell: 'bash', zsh: 'bash',
+				js: 'javascript', mjs: 'javascript', cjs: 'javascript',
+				ts: 'typescript', tsx: 'typescript',
+				kt: 'kotlin', kts: 'kotlin',
+				sh: 'bash', shell: 'bash', zsh: 'bash', console: 'bash', terminal: 'bash',
 				py: 'python',
-				mysql: 'sql', mariadb: 'sql'
+				yml: 'yaml',
+				mysql: 'sql', mariadb: 'sql', postgres: 'sql', postgresql: 'sql'
 			};
 			for (const [from, to] of Object.entries(aliases)) {
 				if (!Prism.languages[from] && Prism.languages[to]) {
@@ -882,12 +891,69 @@
 				}
 			}
 
+			function canonicalLanguage(value) {
+				if (!value) return null;
+				const raw = String(value).trim().toLowerCase().replace(/^(language|lang)-/, '');
+				if (!raw || raw === 'none' || raw === 'text' || raw === 'plain') return null;
+				const lang = aliases[raw] || raw;
+				return Prism.languages[lang] ? lang : null;
+			}
+
+			function explicitLanguage(code) {
+				const pre = code.closest('pre');
+				const candidates = [
+					code.getAttribute('data-lang'),
+					code.getAttribute('data-language'),
+					pre && pre.getAttribute('data-lang'),
+					pre && pre.getAttribute('data-language'),
+					Prism.util.getLanguage(code)
+				];
+				for (const candidate of candidates) {
+					const lang = canonicalLanguage(candidate);
+					if (lang) return lang;
+				}
+				return null;
+			}
+
+			function looksLikeJson(text) {
+				if (!/^[\[{]/.test(text)) return false;
+				try { JSON.parse(text); return true; } catch (_) { return false; }
+			}
+
+			function inferLanguage(code) {
+				const text = code.textContent.trim();
+				if (!text) return null;
+				if (/^(diff --git|@@\s)/m.test(text)) return 'diff';
+				if (looksLikeJson(text)) return 'json';
+				if (/^<\/?[a-z][\s\S]*>/i.test(text)) return 'markup';
+				if (/\b(SELECT|INSERT|UPDATE|DELETE|WITH|CREATE|ALTER|DROP|FROM|WHERE|JOIN|FOR UPDATE SKIP LOCKED)\b/i.test(text)) return 'sql';
+				if (/^(\s*[\w.-]+:\s*.+|\s*-\s+[\w.-]+:\s*.+)$/m.test(text) && !/[;{}]/.test(text)) return 'yaml';
+				if (/^(#!.*\b(?:ba|z)?sh\b|\s*(?:\$\s*)?(?:curl|git|npm|pnpm|yarn|node|python|pip|docker|kubectl|hermes|codex|claude|\.\/gradlew)\b)/m.test(text)) return 'bash';
+				if (/\b(data\s+class|suspend\s+fun|fun\s+\w+|val\s+\w+|var\s+\w+|object\s+\w+)\b/.test(text)) return 'kotlin';
+				if (/\b(public\s+class|private\s+final|System\.out|new\s+[A-Z]\w*\()\b/.test(text)) return 'java';
+				if (/\b(def\s+\w+|from\s+\w+\s+import|import\s+\w+|print\(|self\.)\b/.test(text)) return 'python';
+				if (/\b(const|let|function|interface|type|export|import)\b[\s\S]*(=>|{|;)/.test(text)) return 'typescript';
+				if (/\b([.#]?[\w-]+\s*\{|display\s*:|color\s*:|font-size\s*:)\b/.test(text)) return 'css';
+				return null;
+			}
+
+			let missingLanguageCount = 0;
 			document.querySelectorAll('pre code').forEach((code) => {
-				const lang = Prism.util.getLanguage(code);
-				if (lang && lang !== 'none' && Prism.languages[lang]) {
-					code.parentElement.dataset.lang = lang;
+				const pre = code.closest('pre');
+				const explicit = explicitLanguage(code);
+				const inferred = explicit ? null : inferLanguage(code);
+				const lang = explicit || inferred;
+				if (lang) {
+					code.classList.add('language-' + lang);
+					if (pre) pre.dataset.lang = inferred ? lang + ' · inferred' : lang;
+					if (inferred) code.dataset.inferredLanguage = lang;
+				} else {
+					missingLanguageCount += 1;
 				}
 			});
+			if (missingLanguageCount) {
+				document.documentElement.dataset.prettyCodeLangMissing = String(missingLanguageCount);
+			}
 			Prism.highlightAll();
 		} catch (error) {
 			document.documentElement.dataset.prettyHighlightError = error && error.message ? error.message : 'PrismJS highlighting failed';
@@ -973,6 +1039,51 @@
 
 		window.replayParallel = animate;
 	})();
+</script>
+
+<script>
+/* Auto TOC — if a long page forgot the rail, build one from real h2 sections.
+   Manual .toc always wins; short pages stay quiet. */
+(function () {
+	var container = document.querySelector('.container');
+	if (!container || container.querySelector('.toc')) return;
+	var headings = Array.prototype.slice.call(container.querySelectorAll('h2')).filter(function (h) {
+		return h.textContent && h.textContent.trim();
+	});
+	if (headings.length < 4) return;
+
+	var usedIds = {};
+	Array.prototype.slice.call(document.querySelectorAll('[id]')).forEach(function (el) {
+		if (el.id) usedIds[el.id] = true;
+	});
+	function labelFor(heading) {
+		var clone = heading.cloneNode(true);
+		Array.prototype.slice.call(clone.querySelectorAll('.num')).forEach(function (n) { n.remove(); });
+		return clone.textContent.trim().replace(/\s+/g, ' ');
+	}
+	function slugFor(text, index) {
+		var base = text.toLowerCase().replace(/[^a-z0-9가-힣]+/g, '-').replace(/^-+|-+$/g, '') || ('section-' + (index + 1));
+		var id = base;
+		var n = 2;
+		while (usedIds[id]) { id = base + '-' + n; n += 1; }
+		usedIds[id] = true;
+		return id;
+	}
+
+	var nav = document.createElement('nav');
+	nav.className = 'toc';
+	nav.setAttribute('aria-label', 'Table of contents');
+	headings.forEach(function (heading, index) {
+		var label = labelFor(heading) || ('Section ' + (index + 1));
+		if (!heading.id) heading.id = slugFor(label, index);
+		var a = document.createElement('a');
+		a.href = '#' + heading.id;
+		a.textContent = label;
+		nav.appendChild(a);
+	});
+	container.insertBefore(nav, container.firstElementChild);
+	document.documentElement.dataset.prettyTocAuto = String(headings.length);
+})();
 </script>
 
 <script>

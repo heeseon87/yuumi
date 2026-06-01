@@ -1,7 +1,7 @@
 ---
 name: yuumi:pretty
 description: Create Anthropic-style HTML artifacts with the shared Yuumi visual system — navigable layouts, progressive disclosure, optional interactive widgets and data charts, a component catalog, SVG patterns, and cognitive-load-focused visual QA
-version: 1.3.24
+version: 1.3.25
 argument-hint: [brief]
 ---
 
@@ -34,7 +34,7 @@ Use the shell and references as a shared visual system, not as a score target. T
 1. **Understand the artifact.** Identify the reader, the one idea they must leave with, and the structure that will get them there. Ask only if a missing decision changes the artifact.
 2. **Start from the shell.** Copy `skills/pretty/assets/shell.html` to the output path and write content inside `<div class="container">`.
 3. **Invent the structure for this artifact.** Do not fill a fixed template. Use any component or layout that improves comprehension. The catalog is a palette, not a checklist.
-4. **Plan navigation for length.** If the artifact is long (4+ major sections or 3+ viewports), give the reader a map and a way to control depth: a `.toc`, `.fold` for optional depth, `.tabs` for parallel views. Do not cram a long artifact into one flat scroll. Keep the headline insight on the first screen — never fold the main point.
+4. **Plan navigation for length.** If the artifact is long (4+ major sections or 3+ viewports), give the reader a map and a way to control depth: a `.toc`, `.fold` for optional depth, `.tabs` for parallel views. Do not cram a long artifact into one flat scroll. Keep the headline insight on the first screen — never fold the main point. The shell can auto-build a fallback `.toc` from 4+ `<h2>` sections if you forget, but that is a safety net, not the standard: write an explicit `<nav class="toc">` with matching section ids when the map is part of the intended reading path.
 5. **Keep the visual language fixed.** Warm parchment background, near-black ink, clay accent, serif editorial headings, JetBrains Mono for code, hairline rules, soft ring borders, restrained dark code blocks.
 6. **Run the visual QA pass.** Check the saved artifact for browser errors, first-screen comprehension, CJK typography when relevant, source-fact fidelity, restrained palette/type/spacing, and whether every visual element earns its place.
 7. **Open the file.** On macOS: `open <artifact.html>`. Report only the path and verification state. Do not dump the artifact's contents in chat.
@@ -82,7 +82,7 @@ These are named conveniences in the shell, not the only legal moves. If comprehe
 - Use `.aside` for cautions or edge cases.
 - Use `.steps` only when order matters.
 - Use `<figure>` + SVG for spatial, temporal, or branching relationships. Keep it line-art: thin strokes, no gradients, no shadows.
-- Use language-classed `<pre><code>` for short code excerpts. Add the language class; the shell handles rendering and labels. Do not paste huge code blocks as a substitute for explanation.
+- Use language-classed `<pre><code class="language-…">` for short code excerpts. Bare `<pre><code>` is a QA failure: Prism cannot reliably colorize it and the block falls back to plain warm-white text. The shell has a best-effort fallback for common languages, but the artifact should still declare the language explicitly and verify that token spans were produced. Do not paste huge code blocks as a substitute for explanation.
 
 ## Quality bar
 
@@ -96,6 +96,7 @@ The real test is comprehension. A reader should need less working memory after t
 - visuals are source-grounded and captioned with the actual insight
 - the browser renders cleanly with no console errors
 - interactions work and degrade: tabs switch, steppers step, folds toggle, and with JS off every panel/step is visible and the main point is on the first screen
+- code blocks are language-classed (`<pre><code class="language-…">`) and Prism produced token spans; no bare `<pre><code>` blocks remain unless intentionally plain text and labeled as such
 - charts render on-palette with a paired data table, and chart/graph libraries load only on pages that use them
 - the layout is navigable: long pages have a map (`.toc`) and the reader can control depth
 - keyboard focus is visible on every interactive element; motion respects `prefers-reduced-motion`
@@ -112,6 +113,7 @@ The real test is comprehension. A reader should need less working memory after t
 - Do not fold, tab, or otherwise hide the artifact's main point. Progressive disclosure defers *optional depth*, never the headline insight.
 - Do not show a chart without its underlying data table. Charts must survive JS-off and be fact-checkable.
 - Do not load a chart/graph library "just in case". Only the element's presence triggers it.
+- Do not use bare `<pre><code>` for code examples. Add `class="language-sql"`, `language-kotlin`, `language-typescript`, etc.; otherwise Prism may leave the whole block as plain warm-white text.
 - Do not let library defaults (bright blue, drop shadows) leak through — verify charts render on-palette.
 
 ## When you're done
