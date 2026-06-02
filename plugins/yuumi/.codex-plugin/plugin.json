@@ -1,6 +1,6 @@
 {
   "name": "yuumi",
-  "version": "1.3.25",
+  "version": "1.3.26",
   "description": "Yuumi workflow skills for editing, explaining, implementation notes, interviews, and polished HTML artifacts.",
   "author": {
     "name": "heeseon"
@@ -12,7 +12,7 @@
   "interface": {
     "displayName": "Yuumi",
     "shortDescription": "Workflow skills for coding agents.",
-    "longDescription": "Yuumi bundles practical cross-agent workflow skills for spatial editing, plan interviews, code explanation, implementation decision logs, and polished Anthropic-style HTML artifacts.",
+    "longDescription": "Yuumi bundles practical cross-agent workflow skills for spatial editing, plan interviews, code explanation, implementation decision logs, guided teach-me learning sessions, and polished Anthropic-style HTML artifacts.",
     "developerName": "heeseon",
     "category": "Productivity",
     "capabilities": [
@@ -35,6 +35,7 @@
     "implementation-notes",
     "pretty",
     "html",
-    "interview"
+    "interview",
+    "teach-me"
   ]
 }

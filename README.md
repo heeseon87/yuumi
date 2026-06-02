@@ -23,7 +23,7 @@ Two things:
 | Capability | Claude Code | Codex |
 |------------|:-----------:|:-----:|
 | Tokyo Night statusline HUD | ✅ | — |
-| `interview` · `edit` · `explain` · `implement` · `pretty` | ✅ | ✅ |
+| `interview` · `edit` · `explain` · `implement` · `pretty` · `teach-me` | ✅ | ✅ |
 | `setup` · `doctor` (HUD maintenance) | ✅ | — |
 
 The Codex build intentionally ships only the portable workflow skills — there's no statusline to maintain there.
@@ -62,6 +62,11 @@ Turns a brief into a polished, **single-file Anthropic-style HTML artifact** —
 For longer material it goes past a static page: a **sticky table of contents** with scrollspy, **progressive disclosure** (collapsible sections and tabs), optional **interactive widgets** (before/after slider, step-through walkthroughs, filterable tables), and **data charts that lazy-load only when used** (Chart.js for quantitative data, Mermaid for large graphs) — all themed to the same palette, and every interaction degrades gracefully with JavaScript off. It ships component, interaction-pattern, and data-viz catalogs, and is tuned for cognitive-load-focused visual QA (Korean / mixed CJK text is first-class).
 - **Use it when** you want a beautiful, self-contained — and now navigable, explorable — page for a concept, doc, or report.
 - **Output:** a `.html` file in the working directory, opened in your browser.
+
+#### `/yuumi:teach-me [topic]` — learn the session until you actually understand it
+Turns the agent into a **wise, incremental teacher** for whatever you just built (or any `[topic]`). It keeps a running checklist of what you should grasp — the problem and the branches not taken, the solution with its design decisions and edge cases, and why the change matters — then has you restate your understanding first, quizzes you with `AskUserQuestion`, shows you the real code, and drills the *whys*. It won't wrap up until you've demonstrated you can reason about it on your own.
+- **Use it when** you want to *own* a change, not just ship it — onboarding, post-implementation review, or understanding someone else's work.
+- **Output:** a `<topic-slug>-understanding.md` checklist, plus a verified mental model in your head.
 
 ### HUD maintenance — Claude Code only
 
@@ -103,7 +108,7 @@ Then restart Claude Code once. The statusline appears at the bottom of the scree
 codex plugin marketplace add heeseon87/yuumi
 ```
 
-Then open Codex Plugins, search for **Yuumi**, and install it. The Codex plugin includes only the portable workflow skills — `edit`, `explain`, `implement`, `interview`, and `pretty` — and skips the statusline/HUD setup.
+Then open Codex Plugins, search for **Yuumi**, and install it. The Codex plugin includes only the portable workflow skills — `edit`, `explain`, `implement`, `interview`, `pretty`, and `teach-me` — and skips the statusline/HUD setup.
 
 ## Update
 

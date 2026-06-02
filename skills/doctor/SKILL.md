@@ -1,7 +1,7 @@
 ---
 name: yuumi:doctor
 description: Diagnose and fix yuumi statusline issues (broken paths, permissions, outdated settings)
-version: 1.3.25
+version: 1.3.26
 ---
 
 # Yuumi Doctor
