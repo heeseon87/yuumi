@@ -1,7 +1,7 @@
 ---
 name: yuumi:interview
 description: Interview me about the plan
-version: 1.3.26
+version: 1.3.27
 argument-hint: [plan]
 ---
 

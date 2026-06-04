@@ -9,7 +9,7 @@
     {
       "name": "yuumi",
       "description": "Powerline statusline (Tokyo Night theme) + interview, edit, explain, implement, pretty, teach-me skills",
-      "version": "1.3.26",
+      "version": "1.3.27",
       "author": {
         "name": "heeseon"
       },
@@ -27,5 +27,5 @@
       ]
     }
   ],
-  "version": "1.3.26"
+  "version": "1.3.27"
 }
