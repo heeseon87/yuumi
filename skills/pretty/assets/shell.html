@@ -751,7 +751,9 @@
 		.toc, .toc:hover, .toc:focus-within {
 			right: auto;
 			left: calc(50% + 588px);
-			width: 150px;
+			/* fluid: fills the margin, capped at 220px. Grows past 1480px,
+			   stays inside the viewport at the 1480px floor (border-box). */
+			width: min(220px, calc(50vw - 596px));
 			padding: 0 0 0 16px;
 			background: none;
 			border: none;
@@ -764,6 +766,8 @@
 			margin: 0 0 0 -17px; padding: 2px 0 2px 15px;
 			background: none; color: var(--text-faint);
 			border-left: 2px solid transparent;
+			/* wrap long section titles instead of clipping them */
+			white-space: normal; overflow: visible; line-height: 1.4;
 		}
 		.toc a.active, .toc:hover a.active, .toc:focus-within a.active {
 			width: auto; color: var(--accent-deep); border-left-color: var(--accent); background: none;
