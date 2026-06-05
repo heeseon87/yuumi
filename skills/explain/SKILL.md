@@ -1,7 +1,7 @@
 ---
 name: yuumi:explain
 description: Render an Anthropic-style HTML explainer of the target — structure designed per-target with cognitive-load-focused visuals
-version: 1.4.1
+version: 1.5.0
 argument-hint: [target]
 ---
 
