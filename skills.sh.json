@@ -3,14 +3,15 @@
   "groupings": [
     {
       "title": "Yuumi workflow skills",
-      "description": "Authoring, planning, and HTML-artifact skills that ride along on any agent: pressure-test a plan with a deep interview, edit drafts in place with inline {curly-brace} notes, render Anthropic-style HTML explainers, implement a spec with a running decision log, and a teacher that won't stop until you actually understand the work.",
+      "description": "Authoring, planning, and HTML-artifact skills that ride along on any agent: pressure-test a plan with a deep interview, edit drafts in place with inline {curly-brace} notes, render Anthropic-style HTML explainers, implement a spec with a running decision log, review someone else's change by building understanding actively so the judgment stays yours, and a teacher that won't stop until you actually understand the work.",
       "skills": [
         "interview",
         "edit",
         "explain",
         "implement",
         "pretty",
-        "teach-me"
+        "teach-me",
+        "review"
       ]
     },
     {
