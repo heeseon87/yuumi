@@ -1,7 +1,7 @@
 ---
 name: yuumi:statusline-setup
 description: Install the Tokyo Night statusline in Claude Code (one-time; Claude Code only — sets settings.json statusLine to point at the statusline shipped with this skill)
-version: 1.4.0
+version: 1.4.1
 ---
 
 # Yuumi Statusline Setup

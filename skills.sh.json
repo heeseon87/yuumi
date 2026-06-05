@@ -3,6 +3,7 @@
   "groupings": [
     {
       "title": "Yuumi workflow skills",
+      "description": "Authoring, planning, and HTML-artifact skills that ride along on any agent: pressure-test a plan with a deep interview, edit drafts in place with inline {curly-brace} notes, render Anthropic-style HTML explainers, implement a spec with a running decision log, and a teacher that won't stop until you actually understand the work.",
       "skills": [
         "interview",
         "edit",
@@ -14,6 +15,7 @@
     },
     {
       "title": "Claude Code statusline (Claude Code only)",
+      "description": "Install and diagnose the Tokyo Night powerline statusline for Claude Code — a HUD with 5h/7d rate-limit bars, context usage, model, git branch, and IME state. These two skills wire and repair settings.json; they are no-ops on other agents.",
       "skills": [
         "statusline-setup",
         "statusline-doctor"
