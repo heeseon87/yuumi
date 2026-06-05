@@ -1,6 +1,6 @@
 # yuumi 🐱
 
-> A Tokyo Night statusline and a pack of workflow skills for Claude Code — and Codex.
+> A Tokyo Night statusline for Claude Code, and a pack of workflow skills for any agent — installed with one `npx skills` command.
 > Your agent does the carrying. You ride along like Yuumi — slurping cup ramen, and (let's be honest) taking the credit.
 
 ## Why "yuumi"?
@@ -18,63 +18,63 @@ Works on **macOS, Linux, and Windows**.
 Two things:
 
 1. **A statusline (HUD)** — a Tokyo Night powerline readout for your session. *Claude Code only.*
-2. **Workflow skills** — authoring, planning, and HTML-artifact helpers. Most also run on **Codex**.
+2. **Workflow skills** — authoring, planning, and HTML-artifact helpers. They run on **any agent** the [`skills`](https://skills.sh) CLI supports (Claude Code, Codex, Cursor, Hermes, and dozens more).
 
-| Capability | Claude Code | Codex |
-|------------|:-----------:|:-----:|
-| Tokyo Night statusline HUD | ✅ | — |
+| Capability | Claude Code | Other agents |
+|------------|:-----------:|:------------:|
 | `interview` · `edit` · `explain` · `implement` · `pretty` · `teach-me` | ✅ | ✅ |
-| `setup` · `doctor` (HUD maintenance) | ✅ | — |
+| Tokyo Night statusline HUD | ✅ | — |
+| `statusline-setup` · `statusline-doctor` | ✅ | no-op |
 
-The Codex build intentionally ships only the portable workflow skills — there's no statusline to maintain there.
+One install path for everyone: **`npx skills add -g heeseon87/yuumi`**. The workflow skills work everywhere; the statusline is a Claude Code feature, so the `statusline-*` skills only do anything there.
 
 ---
 
 ## The skills
 
-A skill runs when you type its command. On Claude Code the command is `/yuumi:<name>` (e.g. `/yuumi:explain`); the examples below use the short form for readability.
+A skill runs when you type its command. Installed via the `skills` CLI, the command is the skill's directory name — **`/yuumi-<name>`** (e.g. `/yuumi-explain`). The examples below use that form.
 
-### Authoring & planning — portable (Claude Code + Codex)
+### Authoring & planning — portable (any agent)
 
-#### `/yuumi:interview [plan-file]` — pressure-test a plan before you build it
+#### `/yuumi-interview [plan-file]` — pressure-test a plan before you build it
 Reads a plan/spec file and **interviews you in depth** with pointed, non-obvious questions: technical implementation, UX, edge cases, tradeoffs, the things you haven't thought about yet. It keeps probing until the plan is solid, then writes the refined spec back to the file.
 - **Use it when** you have a rough plan and want the holes found *before* you write code.
 - **Output:** a sharpened spec, written to your plan file.
 
-#### `/yuumi:edit [files…]` — edit in place with `{curly-brace}` notes
+#### `/yuumi-edit [files…]` — edit in place with `{curly-brace}` notes
 **Position is context.** Instead of copy-pasting text back and forth, you leave instructions *where they belong* — drop `{make this hit harder}` or `{too vague}` or `{cut}` right next to the line, and the skill applies each edit in context and removes the markers. Handles one file, several files, or (with no argument) finds every `{note}` in your docs.
 - **Use it when** you're revising long drafts or making consistent edits across multiple files and the copy-paste loop is tedious.
 - **Output:** the edited file(s) plus a short summary of every change made.
 
-#### `/yuumi:explain [target]` — an Anthropic-style HTML explainer
+#### `/yuumi-explain [target]` — an Anthropic-style HTML explainer
 Investigates a target (a file, endpoint, module, system, or concept), then renders a **single-file HTML explainer** designed to install an accurate mental model in one read. It traces the real code, explains the *why* behind decisions, and uses sparse line-art diagrams only where prose would make you do mental bookkeeping. Engaging essay, not dry docs.
 - **Use it when** you (or a teammate) need to actually *understand* a piece of the system.
 - **Output:** `<slug>-explained.html` in the working directory, opened in your browser.
 
-#### `/yuumi:implement [spec]` — implement a spec, with a live decision log
+#### `/yuumi-implement [spec]` — implement a spec, with a live decision log
 Implements the spec while keeping a **running HTML notes file** that captures exactly what a reviewer needs: design decisions, deliberate deviations from the spec, tradeoffs considered, and open questions for you. The log is updated *as the work happens*, so you can open it mid-flight to check direction — and a reviewer can scan it in 30 seconds before merging.
 - **Use it when** you want the implementation *and* a reviewer-facing record of every non-obvious choice.
 - **Output:** the code, plus `<slug>-implementation-notes.html` (it tells you how many open questions are waiting).
 
-#### `/yuumi:pretty [brief]` — the house visual system for HTML artifacts
+#### `/yuumi-pretty [brief]` — the house visual system for HTML artifacts
 Turns a brief into a polished, **single-file Anthropic-style HTML artifact** — warm paper background, clay accent, editorial serif type, hairline rules, line-art SVG diagrams, restrained dark code blocks. This is the shared visual language that `explain` and `implement` build on, so every artifact feels like the same family.
 
 For longer material it goes past a static page: a **sticky table of contents** with scrollspy, **progressive disclosure** (collapsible sections and tabs), optional **interactive widgets** (before/after slider, step-through walkthroughs, filterable tables), and **data charts that lazy-load only when used** (Chart.js for quantitative data, Mermaid for large graphs) — all themed to the same palette, and every interaction degrades gracefully with JavaScript off. It ships component, interaction-pattern, and data-viz catalogs, and is tuned for cognitive-load-focused visual QA (Korean / mixed CJK text is first-class).
 - **Use it when** you want a beautiful, self-contained — and now navigable, explorable — page for a concept, doc, or report.
 - **Output:** a `.html` file in the working directory, opened in your browser.
 
-#### `/yuumi:teach-me [topic]` — learn the session until you actually understand it
+#### `/yuumi-teach-me [topic]` — learn the session until you actually understand it
 Turns the agent into a **wise, incremental teacher** for whatever you just built (or any `[topic]`). It keeps a running checklist of what you should grasp — the problem and the branches not taken, the solution with its design decisions and edge cases, and why the change matters — then has you restate your understanding first, quizzes you with `AskUserQuestion`, shows you the real code, and drills the *whys*. It won't wrap up until you've demonstrated you can reason about it on your own.
 - **Use it when** you want to *own* a change, not just ship it — onboarding, post-implementation review, or understanding someone else's work.
 - **Output:** a `<topic-slug>-understanding.md` checklist, plus a verified mental model in your head.
 
 ### HUD maintenance — Claude Code only
 
-#### `/yuumi:setup` — one-time statusline install
-Installs the Tokyo Night statusline. Writes the HUD into `~/.claude/hud/`, points `settings.json` at it, and registers a **SessionStart hook** so future plugin updates auto-sync with no manual steps. Run this once after installing; back-ups of any pre-existing files are kept.
+#### `/yuumi-statusline-setup` — one-time statusline install
+Wires Claude Code to the Tokyo Night statusline that ships inside this skill. It points `settings.json` `statusLine` **directly** at the installed `statusline.mjs` (no `~/.claude/hud/` copy, no SessionStart hook) and backs up your prior settings. Run it once after `npx skills add -g heeseon87/yuumi`; updates then flow through `npx skills update` with nothing to re-run.
 
-#### `/yuumi:doctor` — diagnose & auto-fix the statusline
-Runs an OS-aware checklist (node availability, HUD files, permissions, `settings.json` shape, the SessionStart hook, stale Windows node paths / legacy `.cmd` wrappers) and **fixes anything fixable**, then prints a pass/fail report.
+#### `/yuumi-statusline-doctor` — diagnose & auto-fix the statusline
+Runs an OS-aware checklist (node availability, the installed statusline asset, executable bit, `settings.json` shape, legacy marketplace-era config) and **fixes anything fixable**, then prints a pass/fail report.
 - **Use it when** the statusline is blank, stale, or misbehaving.
 
 ---
@@ -90,34 +90,33 @@ The rate-limit bars are **allocation-aware**: the color isn't a fixed percentage
 
 ---
 
-## Install (one-time)
+## Install
 
-### Claude Code
-
-```
-/plugin marketplace add heeseon87/yuumi
-/plugin install yuumi@yuumi
-/yuumi:setup
-```
-
-Then restart Claude Code once. The statusline appears at the bottom of the screen.
-
-### Codex
+One channel for every agent — the [`skills`](https://skills.sh) CLI:
 
 ```bash
-codex plugin marketplace add heeseon87/yuumi
+npx skills add -g heeseon87/yuumi
 ```
 
-Then open Codex Plugins, search for **Yuumi**, and install it. The Codex plugin includes only the portable workflow skills — `edit`, `explain`, `implement`, `interview`, `pretty`, and `teach-me` — and skips the statusline/HUD setup.
+It detects your agent(s) and installs the skills globally (`-g`). Pick the skills/agents you want, or take them all. This works on Claude Code, Codex, Cursor, Hermes, and [dozens more](https://skills.sh).
+
+### Claude Code — turn on the statusline (one extra step)
+
+The statusline is a Claude Code feature, so wiring it needs one command **inside Claude Code** after the install above:
+
+```
+/yuumi-statusline-setup
+```
+
+Then restart Claude Code once — the statusline appears at the bottom of the screen. (The `skills` CLI can place files but can't edit Claude Code's `settings.json`; this skill does that part. It requires the **global** install above.)
 
 ## Update
 
-```
-/plugin marketplace update yuumi
-/plugin update yuumi@yuumi
+```bash
+npx skills update
 ```
 
-That's it — **no manual setup re-run needed**. The `SessionStart` hook installed during setup auto-syncs the HUD files with the latest plugin version every time you start a session.
+That's it — **no setup re-run needed**. The statusline lives at a stable path inside the installed skill, so `npx skills update` refreshes it in place and the next statusline refresh picks it up.
 
 ## Requirements
 
@@ -128,14 +127,16 @@ That's it — **no manual setup re-run needed**. The `SessionStart` hook install
 ## Troubleshooting
 
 ```
-/yuumi:doctor
+/yuumi-statusline-doctor
 ```
 
-Checks node availability, HUD file presence, `settings.json` configuration, the SessionStart hook, and stale Windows node references / legacy `.cmd` wrapper configuration — and auto-fixes anything fixable.
+Checks node availability, the installed statusline asset, the executable bit, `settings.json` configuration, and legacy marketplace-era config (old `~/.claude/hud/` path or leftover SessionStart hook) — and auto-fixes anything fixable.
+
+> **Migrating from an older marketplace install?** Just run `npx skills add -g heeseon87/yuumi` then `/yuumi-statusline-setup` — setup repoints `settings.json` at the new skill-dir statusline and removes the obsolete SessionStart hook. Run `/yuumi-statusline-doctor` if anything looks off.
 
 ## Platform notes
 
-On Windows, setup points `statusLine.command` directly at `node statusline.mjs` instead of generating a `statusline.cmd` wrapper. This still avoids relying on PATHEXT/shebang execution, but removes the extra batch-file layer that could leave orphaned `cmd.exe` processes after Claude Code is hard-killed. The command prefers `%ProgramFiles%\nodejs\node.exe` and falls back to the node binary that ran setup. If you switch node installations, re-run `/yuumi:setup` once to refresh the node reference.
+On macOS/Linux, `statusLine.command` is the statusline path run via its `#!/usr/bin/env node` shebang (setup restores the executable bit the installer drops). On Windows there is no shebang, so the command is an absolute `node.exe` + the path — it prefers `%ProgramFiles%\nodejs\node.exe` and falls back to the node binary that ran setup. If you switch node installations, re-run `/yuumi-statusline-setup` once to refresh the reference.
 
 ## Nerd Font setup
 
@@ -174,4 +175,4 @@ Then set your terminal font to `JetBrainsMono Nerd Font`.
 
 ---
 
-*Your agent carries on Claude Code and Codex. You ride along — and take the credit. That's the yuumi way. 🐱*
+*Your agent carries — on Claude Code, Codex, and wherever else you ride. You take the credit. That's the yuumi way. 🐱*

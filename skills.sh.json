@@ -11,6 +11,13 @@
         "pretty",
         "teach-me"
       ]
+    },
+    {
+      "title": "Claude Code statusline (Claude Code only)",
+      "skills": [
+        "statusline-setup",
+        "statusline-doctor"
+      ]
     }
   ]
 }

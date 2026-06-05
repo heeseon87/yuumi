@@ -1,7 +1,7 @@
 ---
 name: yuumi:pretty
 description: Create Anthropic-style HTML artifacts with the shared Yuumi visual system — navigable layouts, progressive disclosure, optional interactive widgets and data charts, a component catalog, SVG patterns, and cognitive-load-focused visual QA
-version: 1.3.28
+version: 1.4.0
 argument-hint: [brief]
 ---
 
