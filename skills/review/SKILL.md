@@ -1,13 +1,13 @@
 ---
 name: yuumi:review
-description: Actively understand a change someone else made — a PR, branch, or diff you did not write — before you judge it. A top-down terminal walkthrough that builds a real mental model through dialogue (prediction, tracing, rough sketches) rather than handing over a passive explanation, so the judgment that follows is yours. Use whenever you need to get your head around someone else's change, start a PR review, or make sense of an unfamiliar diff.
+description: Understand a change someone else made — a PR, branch, or diff you did not write — and judge whether its design holds, before any line-by-line code review. A top-down terminal walkthrough that builds a real mental model through dialogue (prediction, tracing, rough sketches) rather than a passive explanation, then has you judge the design yourself — dependencies, abstractions, fit — with the agent as a backstop. Use whenever you need to get your head around someone else's change, weigh its design or approach, or make sense of an unfamiliar diff before reviewing the details.
 version: 1.5.0
 argument-hint: [PR number / branch / diff / file]
 ---
 
-reviewing a change is hard, but the hard part is not the comment — it is understanding a change someone else made well enough to judge it at all. judgment cannot appear before the change is intelligible, and for code she did not write that intelligibility is most of the work. this skill builds it.
+reviewing a change is hard, but the hard part is not the comment — it is understanding a change someone else made well enough to judge it at all. judgment cannot appear before the change is intelligible, and for code she did not write that intelligibility is most of the work. this skill builds that understanding, and then carries it into the one judgment that depends on it most: whether the design holds. whether the details are correct — the nulls, the types, the edge cases — is the code review that comes after, a separate pass and a separate skill.
 
-your job is to help her understand it herself, actively, so the judgment that follows is hers and not one you placed in her hands. understanding is something she does, not something she receives. a clear explanation can make a thing feel understood while leaving nothing behind in her — real understanding comes when she predicts, restates, traces, and reaches the next step from what she already knows. keep the work in dialogue. never let it settle into an essay that asks only to be read.
+your job is to help her understand it herself, actively, so the design judgment that follows is hers and not one you placed in her hands. understanding is something she does, not something she receives. a clear explanation can make a thing feel understood while leaving nothing behind in her — real understanding comes when she predicts, restates, traces, and reaches the next step from what she already knows. keep the work in dialogue. never let it settle into an essay that asks only to be read.
 
 ## finding the change
 
@@ -15,7 +15,7 @@ first find what is under review. a number is a pull request. a branch is its dif
 
 read the diff, but do not stop at the diff — in either direction. look back to what the author left around it (title, body, messages, linked issue, the trail the change answers) to recover intent, and look outward through the code (callers, callees, tests, the contracts it touches) to see what the change reaches and what it promises not to disturb. code keeps consequences; intent often lives beside it.
 
-then prepare the review plan. it is not a list of findings, and it need not prove the change is many changes — a pull request is often, honestly, one thing, and when it is, say so. route the review instead through the distinct questions she will need to answer about that one thing. the plan is an ordered list of review sections — the lenses the change asks to be seen through: things like its public contract, the meaning of its data shapes, where a responsibility boundary moved, a changed data source or ordering, compatibility and tests, the blast radius. use only the lenses that fit the change in front of you, usually three to six; a truly trivial change may have one, but a real contract, data-shape, or behavior change should not collapse to a single section just because it has a single gestalt. each item names a section and the question it answers — a section, never a verdict — so she can foresee the walk without being handed the judgment.
+then prepare the review plan. it is not a list of findings, and it need not prove the change is many changes — a pull request is often, honestly, one thing, and when it is, say so. route the review instead through the distinct questions she will need to answer about that one thing. the plan is an ordered list of review sections — the lenses the change asks to be seen through: things like its public contract, the meaning of its data shapes, where a responsibility boundary moved, a changed data source or ordering, compatibility and tests, the blast radius. use only the lenses that fit the change in front of you, usually three to six; a truly trivial change may have one, but a real contract, data-shape, or behavior change should not collapse to a single section just because it has a single gestalt. each item names a section and the question it answers — a section, never a verdict — so she can foresee the walk without being handed the judgment. the final section is always the design judgment: once the change is understood, the place where she weighs whether its design holds. the lenses before it build understanding; the last one turns to her verdict.
 
 ## the opening contract
 
@@ -30,7 +30,8 @@ before any diagram, insight, trace, or question, the first reply must show the r
 i'll walk this in N sections:
 1. [section] — [the question this section answers]
 2. [section] — [the question this section answers]
-3. [section] — [the question this section answers]
+...
+N. design judgment — does the design hold? (her call first, then yours)
 
 [the whole-shape sketch may go here, after the plan — never instead of it]
 
@@ -38,7 +39,7 @@ part 1 of N — [section 1]
 [one-sentence scaffold, then the first handoff]
 ```
 
-the `## review plan` heading, the numbered sections, and the first `part 1 of N —` line are all required, and the plan and the shape diagram are different artifacts — one cannot replace the other. before you send the first reply, check it: does `## review plan` come before any diagram, insight, or question? does a `part 1 of N —` line come before the first handoff, with the same N as the plan? if not, it is not ready — rewrite it before sending.
+the `## review plan` heading, the numbered sections, and the first `part 1 of N —` line are all required, and the plan and the shape diagram are different artifacts — one cannot replace the other. the last numbered section is always the design judgment. before you send the first reply, check it: does `## review plan` come before any diagram, insight, or question? does a `part 1 of N —` line come before the first handoff, with the same N as the plan? if not, it is not ready — rewrite it before sending.
 
 ## building understanding
 
@@ -52,7 +53,7 @@ the walk has an order. take these steps in sequence, every time:
 4. **walk it section by section.** before entering each section, print a standalone breadcrumb line — `part X of N — [section]` — using the same names and N from the plan, unless you revise the plan in the open.
 5. **hand off inside the section.** once the breadcrumb and a one-sentence scaffold are down, hand her the next move.
 
-put the plan before the shape, not after: a diagram shown first satisfies the urge to "show the whole," and the plan gets skipped. the plan is what she asked to see first, so it comes first.
+put the plan before the shape, not after: a diagram shown first satisfies the urge to "show the whole," and the plan gets skipped. the plan is what she asked to see first, so it comes first. the final section, the design judgment, runs differently from the rest — there she judges before you do; `## judging the design` says how.
 
 the five steps are what to do. the rest of this section is how to do each one well.
 
@@ -70,7 +71,7 @@ when the why is a problem, remember that a structural fact is neutral until you 
 
 ### keeping the why honest
 
-keep the why descriptive: it means the author's intent — why this shape, this rule, this boundary — not whether the choice was right. correctness is a judgment, hers to make later; leak it now and you anchor her before she has thought.
+keep the why descriptive: it means the author's intent — why this shape, this rule, this boundary — not whether the choice was right. correctness is a judgment, hers to make later; leak it now and you anchor her before she has thought. this holds for the cost too: naming what the old shape charged explains why the author moved, it does not endorse that the move was the right one. the design verdict must reach her unprimed.
 
 the why-chain also has to know where code ends. some reasons follow from the code, and those you state plainly; some are only suggested by its shape, and those you offer as guesses; but intent was decided outside the code, which keeps only the consequences. when the chain reaches that edge, look to what the author left around the change, and where the trail goes silent, ask her — never invent a reason to fill the gap, because every judgment built on a confabulated why inherits the lie. go down until her own knowledge makes the next step obvious — don't wait for her to say she is lost, by then you stopped too high — and stop climbing once the chain crosses out of the code.
 
@@ -96,4 +97,14 @@ the steps are the hidden frame of the telling, not labels to stamp on its surfac
 
 walk the sections you published. when something off the plan turns out to be worth a look, name it as a detour and say why you are stepping aside, rather than silently swinging the whole walk onto it; and if the plan really must change, revise it in the open — restate N — instead of letting it drift. do not crown any section the headline, or the thing that matters most — which finding weighs most is a judgment, hers to make and one that comes later; promoting a section now both anchors her and loses the thread she was following.
 
-let her set the depth, but tell a skip from understanding. if she wants to move on, move on; but when a load-bearing step gets only a nod, ask for one small prediction or restatement before you treat it as understood — a comfortable "looks fine" is exactly how the illusion of understanding survives. understanding has no fixed finish line; it is reached when she can hold the change in her head and reason about it on her own. that is where this skill ends and her own judgment begins.
+let her set the depth, but tell a skip from understanding. if she wants to move on, move on; but when a load-bearing step gets only a nod, ask for one small prediction or restatement before you treat it as understood — a comfortable "looks fine" is exactly how the illusion of understanding survives. understanding has no fixed finish line; it is reached when she can hold the change in her head and reason about it on her own. that is when the last section turns from understanding to judgment.
+
+## judging the design
+
+the last section of the plan is not another thing to understand — it is where she judges. having walked the change, the question turns from what it is to whether its design holds: the direction of its dependencies, the fit of its abstractions, whether its shape will bend where this change asks it to bend. that is the design level, and it is hers to judge. whether the details are correct — the nulls, the types, the edge cases — is a different job, the code review that comes after, and not part of this skill.
+
+her judgment comes first, and unprimed. ask for her read on the design and the dependency direction, and then wait — do not set your own view down first, or she will weigh yours instead of forming hers. and do not ask in bare prose: when the question is about where something belongs or which way a dependency runs, draw that structure first, so she judges a picture instead of reassembling one from sentences.
+
+only once she has judged, set your view beside hers. where you agree, the design gate is passed. where you differ, walk the difference until it is honestly resolved — she may be right, and so may you.
+
+when she believes the design is sound, make one backstop pass: look for a design or dependency concern a tired eye might have missed, raise it plainly, and let her weigh it. a clean change has little to backstop; do not manufacture doubt. settle only when both views are on the table. that gate — her judgment, met by yours — is where this skill ends and the code review begins.
