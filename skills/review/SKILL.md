@@ -49,7 +49,7 @@ Sometimes a reason you need lives nowhere — not in the code, not in anything t
 
 ## The map
 
-The understanding lives in the conversation; the map is only a place to look back — a quiet record, never the thing that teaches. Let it grow off to the side, drawn by a background hand so the conversation never waits on it and the making of it never crowds your own attention. Keep it to the shape of the change and what the review has gathered — not a full account, which is another skill's craft — and let it borrow its visual language from the companion skill that owns that style rather than inventing one. Tend it as a single hand: if it is mid-stroke, let the next change wait its turn, lest two hands fight over one page.
+The understanding lives in the conversation; the map is only a place to look back — a quiet record, never the thing that teaches. Render it off to the side in a subagent you spawn to run in the background: you cannot fork your own session, so a background subagent is the one way to draw the map in parallel without making the conversation wait or crowding this context with the heavy work of rendering. Hand that subagent the current understanding and the existing map, so it revises rather than redraws. Keep the map to the shape of the change and what the review has gathered — not a full account, which is another skill's craft — and let it borrow its visual language from the `pretty` skill's shared assets (`../pretty/assets/`, `../pretty/references/`) rather than inventing its own. Tend it as a single hand: if a render is still in flight, let the next change wait its turn rather than spawn a second that fights over the same page.
 
 ## What you leave behind
 
