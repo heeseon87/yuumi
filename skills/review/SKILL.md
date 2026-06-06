@@ -23,6 +23,8 @@ read the diff, but do not stop at the diff. read what the author left around it:
 
 understanding moves from high to low. begin where she already has footing, and assume she knows the domain. climb only as far as needed to give the change a place in her mind, then descend toward the code.
 
+lay the whole terrain out first — the clusters the change falls into and their rough sizes — so she has a map to stand on before any detail arrives. then at every step downward, show her where on that map she now stands: which cluster, which part of it, what remains. a section that does not say where it sits in the whole forces her to rebuild the map in her head each time, and she will lose the thread.
+
 before any detail, turn on the schema. name the topic in domain words so her mind knows what shelf to use. after that, state what the change is trying to accomplish, what reality exists now, and where the tension lives. a problem is a violated expectation, so the standard must come before the breach. do not say only that two things conflict; show the mechanism by which both cannot be true at the same time. then resolve it.
 
 the shape is always: topic, expectation, present reality, tension as mechanism, resolution. without the topic, the detail has nowhere to land. without the expectation, the breach is just trivia. without the mechanism, the tension is only a conclusion she must believe.
@@ -41,7 +43,9 @@ go down until her own knowledge makes the next step obvious. do not wait for her
 
 draw almost everything that would otherwise force her to rebuild a picture in her head. an order of events, a value turning through a loop, branch combinations, the spread of a consequence, two things alike in name but apart in meaning, a thing that moved from one layer to another, what sits under what in a hierarchy, which way a dependency points, a structure's shape set before against after — all of these want a rough ASCII sketch. the test is simple: if she would have to assemble the picture in her mind, put it on the page instead. meeting such a point with prose is the failure. leaving one undrawn is the exception, and the exception should have a reason. forbid yourself the paragraph, not the picture.
 
-keep sketches rough. a rough sketch invites her to think alongside it; a polished one looks finished and quietly anchors her. draw only where something must be computed, compared, sequenced, or held in working memory. when nothing has to be computed, a picture is decoration, and decoration should stay out of the way.
+this holds across the whole review, not only over data shapes. a problem and the tension inside it, the verdicts you reach, a list of findings — all of these carry structure, and structure wants a small diagram or table, never a wall of sentences. let prose be only the thread that joins the pictures; the moment you find yourself carrying a relation, a contrast, a sequence, or a list in running text, you have put structure where it cannot be seen. the design judgments you raise and the defects you report are not exempt: give them shape too.
+
+keep sketches rough, but keep them legible: every arrow and label must be unambiguous about what it points to, because a sketch she has to decode is worse than none. a rough sketch invites her to think alongside it; a polished one looks finished and quietly anchors her. draw only where something must be computed, compared, sequenced, or held in working memory. when nothing has to be computed, a picture is decoration, and decoration should stay out of the way.
 
 let her set the depth. if she says a part is fine, accept that as complete. often she will want to stay at the design level while you carry the implementation depth on her behalf.
 
@@ -60,6 +64,8 @@ when intent is absent from code and absent from what the author left, ask her. i
 ## the map
 
 the conversation is where understanding happens. the map is only a place to look back.
+
+so the map must trace the same path the conversation took: start where the change starts, and accumulate in the order the review walked it. a map that wanders off on its own — however well themed — is unreadable, because its only worth is that looking back shows her the same road she just travelled. theme and structure are not enough; the content must mirror the walk.
 
 render the map with a background subagent. you cannot fork your own session, so a background subagent is the only way to render in parallel without polluting this context or crowding the conversation with drawing work. update the map incrementally: hand the subagent the current understanding and the existing map so it revises rather than redraws.
 
