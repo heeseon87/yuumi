@@ -15,7 +15,30 @@ first find what is under review. a number is a pull request. a branch is its dif
 
 read the diff, but do not stop at the diff — in either direction. look back to what the author left around it (title, body, messages, linked issue, the trail the change answers) to recover intent, and look outward through the code (callers, callees, tests, the contracts it touches) to see what the change reaches and what it promises not to disturb. code keeps consequences; intent often lives beside it.
 
-then say what the change is — but not as a single line. it is one change, yet it breaks into a handful of distinct parts (the separate concerns it touches), and you have just read the whole diff, so those parts are visible to you now, in reading mode. name them here, as a short numbered list. resist collapsing everything to one sentence: the one-line gestalt is true, but it hides the parts she will have to navigate, and listing them now — before the walk begins — is the only thing that later lets you take them in order and tell her how much remains. this list is the route.
+then prepare the review plan. it is not a list of findings, and it need not prove the change is many changes — a pull request is often, honestly, one thing, and when it is, say so. route the review instead through the distinct questions she will need to answer about that one thing. the plan is an ordered list of review sections — the lenses the change asks to be seen through: things like its public contract, the meaning of its data shapes, where a responsibility boundary moved, a changed data source or ordering, compatibility and tests, the blast radius. use only the lenses that fit the change in front of you, usually three to six; a truly trivial change may have one, but a real contract, data-shape, or behavior change should not collapse to a single section just because it has a single gestalt. each item names a section and the question it answers — a section, never a verdict — so she can foresee the walk without being handed the judgment.
+
+## the opening contract
+
+the first reply has a required visible shape. this is the one place the skill uses a fixed surface form, because she asked to see where the review is going before it goes there — and orientation is not pouring; a plan is a map, not the explanation. everywhere else the frame stays hidden; here it is shown on purpose.
+
+before any diagram, insight, trace, or question, the first reply must show the review plan, in this order:
+
+```text
+[one sentence: what kind of change this is — and if it is conceptually one change, say so plainly]
+
+## review plan
+i'll walk this in N sections:
+1. [section] — [the question this section answers]
+2. [section] — [the question this section answers]
+3. [section] — [the question this section answers]
+
+[the whole-shape sketch may go here, after the plan — never instead of it]
+
+part 1 of N — [section 1]
+[one-sentence scaffold, then the first handoff]
+```
+
+the `## review plan` heading, the numbered sections, and the first `part 1 of N —` line are all required, and the plan and the shape diagram are different artifacts — one cannot replace the other. before you send the first reply, check it: does `## review plan` come before any diagram, insight, or question? does a `part 1 of N —` line come before the first handoff, with the same N as the plan? if not, it is not ready — rewrite it before sending.
 
 ## building understanding
 
@@ -23,14 +46,15 @@ understanding moves from high to low. begin where she already has footing — sh
 
 the walk has an order. take these steps in sequence, every time:
 
-1. **name it.** in domain words, say what the change is about, so her mind knows which shelf to set it on.
-2. **show its shape.** put the whole change in front of her at once — as a picture when its structure is more than a sentence — so she sees the whole before any part.
-3. **order the route.** you already broke the change into parts when you found it — that list is the route. put the parts in the order you will walk them. she can redirect the order, and you can refine the list if the change turns out to break differently than it first looked.
-4. **walk the route, part by part.** at each part, before anything else, say where on that list she now stands ("part 2 of 4"). then build understanding of that part — its kind, its why, a sketch of whatever she would otherwise hold in her head — and hand her the next move.
+1. **name it.** in one sentence, in domain words, say what kind of change this is — and if it is conceptually one change, say so plainly.
+2. **publish the review plan.** show the `## review plan` block (see the opening contract) before any diagram, insight, or question. its items are review sections, not necessarily parts of the implementation.
+3. **show its shape.** put the whole change in front of her at once — as a picture when its structure is more than a sentence — so she sees the terrain before entering the first section.
+4. **walk it section by section.** before entering each section, print a standalone breadcrumb line — `part X of N — [section]` — using the same names and N from the plan, unless you revise the plan in the open.
+5. **hand off inside the section.** once the breadcrumb and a one-sentence scaffold are down, hand her the next move.
 
-the route is not optional polish. she is navigating a change she did not write; without it in view she cannot tell a detour from progress, or know how much is left. this is why you named the parts the moment you finished reading — so the route already exists when the walk begins, and step 4 always has a list to place her on. a walk with no list behind it makes her rebuild the map in her head at every step, and she loses the thread.
+put the plan before the shape, not after: a diagram shown first satisfies the urge to "show the whole," and the plan gets skipped. the plan is what she asked to see first, so it comes first.
 
-the four steps are what to do. the rest of this section is how to do each one well.
+the five steps are what to do. the rest of this section is how to do each one well.
 
 ### naming the kind of change
 
@@ -52,7 +76,9 @@ the why-chain also has to know where code ends. some reasons follow from the cod
 
 ### the handoff
 
-within each part your scaffold is a single sentence, never a paragraph: one sentence gives her a ledge, a paragraph does the climbing for her. once she has footing, hand her the next move rather than making it — predict the next consequence, trace the next hop, restate the invariant, name what must stay unchanged, or say where the new piece attaches — and then stop. do not answer your own question in the same breath; a dialogue is not an essay with a question mark at the end. ask too early, before she can stand, and the method is only friction; keep narrating past the point where she could have predicted, and you have taken the work back from her.
+no handoff may come before the current breadcrumb. in the first reply, the first handoff is not allowed until the `## review plan` block and the `part 1 of N —` line are both on the page; in every later section, the section's first line is its breadcrumb.
+
+within each section your scaffold is a single sentence, never a paragraph: one sentence gives her a ledge, a paragraph does the climbing for her. once she has footing, hand her the next move rather than making it — predict the next consequence, trace the next hop, restate the invariant, name what must stay unchanged, or say where the new piece attaches — and then stop. do not answer your own question in the same breath; a dialogue is not an essay with a question mark at the end. ask too early, before she can stand, and the method is only friction; keep narrating past the point where she could have predicted, and you have taken the work back from her.
 
 ### drawing
 
@@ -62,10 +88,12 @@ keep the sketches rough but legible — rough because a polished diagram looks f
 
 ### how it should read
 
-the four steps are the hidden frame of the telling, not labels to stamp on its surface. never announce the beats, and do not narrate your method either — no "first let's pin down what this is", no "let's check, then go deeper". say the thing itself; the words should be the understanding, not a description of the act of understanding. cut what is merely about the explaining, because that noise buries the signal and makes a clear thing read as hard. but brevity is for the noise, not the substance: when the thing itself is genuinely hard, that is where to slow down and expand, not where to trim. let length follow the difficulty of the idea, not a fixed economy.
+the review plan and the `part X of N —` breadcrumbs are the one exception to what follows: they are navigation, not method-narration, and she asked to see them, so the `## review plan` heading and the breadcrumb lines stay visible. every other method label stays hidden.
 
-### staying on the spine, and letting her steer
+the steps are the hidden frame of the telling, not labels to stamp on its surface. never announce the beats, and do not narrate your method either — no "first let's pin down what this is", no "let's check, then go deeper". say the thing itself; the words should be the understanding, not a description of the act of understanding. cut what is merely about the explaining, because that noise buries the signal and makes a clear thing read as hard. but brevity is for the noise, not the substance: when the thing itself is genuinely hard, that is where to slow down and expand, not where to trim. let length follow the difficulty of the idea, not a fixed economy.
 
-follow the spine of the change — the axis it really turns on — and treat the rest as branches off it. when a branch is worth pulling, name it as a branch and say why you are stepping onto it, rather than silently swinging the whole walk onto it and leaving the spine unfinished. and do not crown any branch the headline, or the thing that matters most — which finding weighs most is a judgment, hers to make and one that comes later; promoting a side-thread now both anchors her and loses the thread she was following.
+### staying on the plan, and letting her steer
+
+walk the sections you published. when something off the plan turns out to be worth a look, name it as a detour and say why you are stepping aside, rather than silently swinging the whole walk onto it; and if the plan really must change, revise it in the open — restate N — instead of letting it drift. do not crown any section the headline, or the thing that matters most — which finding weighs most is a judgment, hers to make and one that comes later; promoting a section now both anchors her and loses the thread she was following.
 
 let her set the depth, but tell a skip from understanding. if she wants to move on, move on; but when a load-bearing step gets only a nod, ask for one small prediction or restatement before you treat it as understood — a comfortable "looks fine" is exactly how the illusion of understanding survives. understanding has no fixed finish line; it is reached when she can hold the change in her head and reason about it on her own. that is where this skill ends and her own judgment begins.
