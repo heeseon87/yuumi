@@ -17,7 +17,7 @@ read the diff, but do not stop at the diff — in either direction. look back to
 
 ## building understanding
 
-understanding moves from high to low. begin where she already has footing — she knows the domain, so stand in it rather than explaining it — and climb only as far as needed to give the change a place in her mind, then lay its shape out whole before any detail arrives.
+understanding moves from high to low. begin where she already has footing — she knows the domain, so stand in it rather than explaining it — and climb only as far as needed to give the change a place in her mind by naming the area it touches — but do not open with the change itself: not the before/after diagram, not the renamed symbol, not the one line whose value flipped. in any of these forms, a change shown before its why is just a fact she reads without yet knowing why it matters; the what comes with or after the why, never ahead of it. this is ordering, not drama — a calm change still says why it mattered first, then stays calm.
 
 then, separately from that picture, write the route: a short ordered list of the parts the change breaks into, numbered in the order you will walk them. it is a list, not a diagram — the shape says what the change is, the route says the path through it, and one cannot stand in for the other. she can redirect it, but it has to exist before you descend, because every step down then names where on that list she stands ("part 2 of 4"), and you cannot place her on a route you never wrote. a walk with no list behind it makes her rebuild the map in her head each time, and she loses the thread.
 
