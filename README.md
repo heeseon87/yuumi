@@ -18,11 +18,11 @@ Works on **macOS, Linux, and Windows**.
 Two things:
 
 1. **A statusline (HUD)** — a Tokyo Night powerline readout for your session. *Claude Code only.*
-2. **Workflow skills** — authoring, planning, and HTML-artifact helpers. They run on **any agent** the [`skills`](https://skills.sh) CLI supports (Claude Code, Codex, Cursor, Hermes, and dozens more).
+2. **Workflow skills** — authoring, planning, code-review, and HTML-artifact helpers. They run on **any agent** the [`skills`](https://skills.sh) CLI supports (Claude Code, Codex, Cursor, Hermes, and dozens more).
 
 | Capability | Claude Code | Other agents |
 |------------|:-----------:|:------------:|
-| `interview` · `edit` · `explain` · `implement` · `pretty` · `teach-me` | ✅ | ✅ |
+| `interview` · `edit` · `explain` · `implement` · `pretty` · `teach-me` · `review` | ✅ | ✅ |
 | Tokyo Night statusline HUD | ✅ | — |
 | `statusline-setup` · `statusline-doctor` | ✅ | no-op |
 
@@ -67,6 +67,11 @@ For longer material it goes past a static page: a **sticky table of contents** w
 Turns the agent into a **wise, incremental teacher** for whatever you just built (or any `[topic]`). It keeps a running checklist of what you should grasp — the problem and the branches not taken, the solution with its design decisions and edge cases, and why the change matters — then has you restate your understanding first, quizzes you with `AskUserQuestion`, shows you the real code, and drills the *whys*. It won't wrap up until you've demonstrated you can reason about it on your own.
 - **Use it when** you want to *own* a change, not just ship it — onboarding, post-implementation review, or understanding someone else's work.
 - **Output:** a `<topic-slug>-understanding.md` checklist, plus a verified mental model in your head.
+
+#### `/yuumi-review [PR number / branch / diff / file]` — understand someone else's change before you judge it
+Reviewing a change is hard because the real work is *understanding* it, and understanding has to come before any verdict. This walks you top-down through a PR, branch, or diff you didn't write, **building the mental model in dialogue** instead of handing you a passive summary: it opens with *why* the change exists before *what* it did, lays out a route through the parts so you always know where you are, draws rough ASCII sketches wherever you'd otherwise juggle structure in your head, and hands *you* the next prediction to make rather than making it for you. The judgment that follows stays yours — it builds the understanding, it doesn't rubber-stamp a verdict into your hands.
+- **Use it when** you have to review, or just get your head around, code someone else wrote — a PR, an unfamiliar diff, a branch.
+- **Output:** an accurate mental model of the change, built actively in your terminal — no passive essay to skim.
 
 ### HUD maintenance — Claude Code only
 
