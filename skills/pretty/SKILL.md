@@ -36,7 +36,7 @@ Use the shell and references as a shared visual system, not as a score target. T
 3. **Invent the structure for this artifact.** Do not fill a fixed template. Use any component or layout that improves comprehension. The catalog is a palette, not a checklist.
 4. **Plan navigation for length.** If the artifact is long (4+ major sections or 3+ viewports), give the reader a map and a way to control depth: a `.toc`, `.fold` for optional depth, `.tabs` for parallel views. Do not cram a long artifact into one flat scroll. Keep the headline insight on the first screen — never fold the main point. The shell can auto-build a fallback `.toc` from 4+ `<h2>` sections if you forget, but that is a safety net, not the standard: write an explicit `<nav class="toc">` with matching section ids when the map is part of the intended reading path.
 5. **Keep the visual language fixed.** Warm parchment background, near-black ink, clay accent, serif editorial headings, JetBrains Mono for code, hairline rules, soft ring borders, restrained dark code blocks.
-6. **Run the visual QA pass.** Check the saved artifact for browser errors, first-screen comprehension, CJK typography when relevant, source-fact fidelity, restrained palette/type/spacing, and whether every visual element earns its place.
+6. **Run the visual QA pass.** Check the saved artifact for browser errors, first-screen comprehension, CJK typography when relevant, source-fact fidelity, restrained palette/type/spacing, SVG label fit (the longest label stays inside its box and no labels overlap), prose discipline (every figure of speech earns its place, no structure-narration), and whether every visual element earns its place.
 7. **Open the file.** On macOS: `open <artifact.html>`. Report only the path and verification state. Do not dump the artifact's contents in chat.
 
 ## Visual language
@@ -59,6 +59,10 @@ Use the reference swatches in the shell; do not freestyle colors.
 - Body should read like a calm essay: generous line-height, paragraph rhythm, no cramped dashboard density.
 - Code is always JetBrains Mono or a mono fallback.
 - Korean and mixed Korean/English are first-class. The shell uses Hahmlet because it keeps CJK prose visually close to Anthropic's serif posture without breaking Korean rendering.
+
+### Prose discipline
+
+A figure of speech earns its place the same way a diagram does — by carrying a thought the plain sentence could not. Strip the metaphor: if an insight remains, keep it; if only ornament remains, cut back to the plain statement. The cut is for noise, not substance — where the idea itself is genuinely hard, slow down and expand instead of trimming. The danger is two-sided: a flattened, dry voice is as wrong as prose that reaches for a flourish every sentence. Spend words only where they buy comprehension, and never let the writing describe its own structure — the words should be the understanding, not a description of the act of explaining.
 
 ### Cognitive-load visuals
 
@@ -100,6 +104,8 @@ The real test is comprehension. A reader should need less working memory after t
 - charts render on-palette with a paired data table, and chart/graph libraries load only on pages that use them
 - the layout is navigable: long pages have a map (`.toc`) and the reader can control depth
 - keyboard focus is visible on every interactive element; motion respects `prefers-reduced-motion`
+- SVG text fits: every label sits inside its box with padding and no label overlaps a neighbor, even with the longest label in the diagram — hand-placed coordinates overflow on a long name, so verify in the rendered browser view, not by reading the markup
+- every figure of speech earns its place: stripping the metaphor still leaves the insight; prose that leaves only style is cut, and the writing never narrates its own structure (see Prose discipline)
 
 ## Anti-patterns
 
@@ -115,6 +121,8 @@ The real test is comprehension. A reader should need less working memory after t
 - Do not load a chart/graph library "just in case". Only the element's presence triggers it.
 - Do not use bare `<pre><code>` for code examples. Add `class="language-sql"`, `language-kotlin`, `language-typescript`, etc.; otherwise Prism may leave the whole block as plain warm-white text.
 - Do not let library defaults (bright blue, drop shadows) leak through — verify charts render on-palette.
+- Do not let rhetoric signal tone without carrying meaning — if stripping a figure leaves the same point, it was decoration; narrating the document's own structure is the same noise (see Prose discipline).
+- Do not place two opposing labels on the same SVG row — a long name will cross the one facing it. Give a secondary label its own line; a lone label cannot collide regardless of length. When hand-placed labels keep overflowing, switch to CSS auto-width boxes or an auto-layout renderer.
 
 ## When you're done
 

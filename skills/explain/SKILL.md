@@ -40,6 +40,7 @@ You're not filling in a form. You're building a path from where the reader is no
 - **One thought per section.** Don't pack three insights into one section just because they're related. Let each insight breathe.
 - **Reader stuckness is a planning input.** As you draft, ask: "would a reader pause here and re-read?" That's a signal to add an analogy, a diagram, or to split the paragraph. Stuck-points are where structure happens.
 - **Cut, then cut more.** Every paragraph that doesn't move the reader closer to the headline insight is friction. If you find yourself writing background that's "nice to have" — remove it.
+- **Cut the ornament, not just the off-topic.** Relevance isn't enough — a flourish can sit on a perfectly on-point sentence and still be noise. Strip each metaphor and analogy: keep the ones that leave an insight behind, drop the ones that leave only style. Analogies are licensed here, but each must save the reader work, not merely sound literary. This is `pretty`'s prose discipline; explain inherits it — and it cuts noise, never the substance: where the idea is genuinely hard, expand.
 - **End with what they take away.** Whether you call it "lessons," "takeaways," or something else, the closing should consolidate the mental model so the reader leaves with something portable.
 
 These are heuristics, not rules. Some explanations open with a quote, some with a question, some with a code block. The right opening for *this* target is the one that pulls the reader in.

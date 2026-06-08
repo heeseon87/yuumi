@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) and other coding age
 
 `yuumi` ships two things, distributed through **one channel** — the [`skills`](https://skills.sh) CLI (`vercel-labs/skills`):
 
-- **Workflow skills** (any agent): `interview`, `edit`, `explain`, `implement`, `pretty`, `teach-me` — each a single `skills/<name>/SKILL.md` prompt.
+- **Workflow skills** (any agent): `interview`, `edit`, `explain`, `implement`, `pretty`, `teach-me`, `review` — each a single `skills/<name>/SKILL.md` prompt.
 - **A Claude Code statusline** (Claude Code only): a Tokyo Night powerline HUD, `skills/statusline-setup/assets/statusline.mjs`, plus two operational skills that install/diagnose it — `statusline-setup`, `statusline-doctor`.
 
 Users install everything with `npx skills add -g heeseon87/yuumi`. There is no build, lint, or test pipeline; the repo is `.mjs` files and `SKILL.md` prompts that agents read directly.
@@ -31,7 +31,7 @@ Publishing is "commit + push to `main`". Users pull via `npx skills add -g heese
 **Before every push**, bump the version. Two places must stay in sync:
 
 - `.claude-plugin/plugin.json` → `version`
-- `version:` frontmatter in **every** `skills/<name>/SKILL.md` (all eight)
+- `version:` frontmatter in **every** `skills/<name>/SKILL.md` (all nine)
 
 Hermes update detection uses content hashes, not the `version` field, but keeping it accurate and uniform keeps the published revision human-readable.
 
@@ -42,7 +42,7 @@ Supporting files for a skill must live **inside that skill's directory** (`refer
 After pushing `main`, sanity-check discovery (no install):
 
 ```bash
-npx skills add heeseon87/yuumi --list   # should list 8 skills with current descriptions
+npx skills add heeseon87/yuumi --list   # should list 9 skills with current descriptions
 ```
 
 Hermes and other agents pull from the same skills.sh release; there is no separate per-agent publish step.
@@ -84,7 +84,7 @@ Non-obvious invariants — do not "simplify" these without understanding why the
 
 ## Skills structure
 
-Each skill is a `skills/<name>/SKILL.md` prompt (plus optional `assets/`, `references/`, `examples/` for files the installer must carry). The YAML `name` field is `yuumi:<name>`; see "How install names map to commands" for why that becomes `/yuumi-<name>` once installed. `statusline-setup` and `statusline-doctor` are Claude Code-only operational skills (no-ops elsewhere); the other six are portable.
+Each skill is a `skills/<name>/SKILL.md` prompt (plus optional `assets/`, `references/`, `examples/` for files the installer must carry). The YAML `name` field is `yuumi:<name>`; see "How install names map to commands" for why that becomes `/yuumi-<name>` once installed. `statusline-setup` and `statusline-doctor` are Claude Code-only operational skills (no-ops elsewhere); the other seven are portable.
 
 ## Runtime requirements users must satisfy
 

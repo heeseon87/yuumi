@@ -38,6 +38,7 @@ Reach for the **sequence diagram (Pattern 2)** first — it is the canonical *sa
 4. **Empty box fills.** Most rectangles should be `fill="none"` so the cream background shows through. Fill with `var(--bg)` only to mask lines passing behind a box.
 5. **No drop shadows. No gradients.** Anthropic style is flat.
 6. **`viewBox` not fixed sizes.** Make the SVG scale to its container.
+7. **One anchor direction per line — then size to the longest label.** The usual collision is not a label hitting the box edge; it is two labels facing each other on one row, where a long left-aligned name runs into a right-aligned one. The fix is structural, not metric: don't place opposing left/right-aligned labels on the same line. Give a secondary label its own line, and no name length can ever collide, because a lone label cannot cross itself. *Only then* handle the single-axis case: if one label still overflows the box edge, widen the box; if labels grow long or numerous enough that hand-placed boxes keep breaking, move that diagram to CSS auto-width boxes or an auto-layout renderer — hand-placed line-art is the default for short, fixed labels, not a mandate. Reading the markup will not catch overflow; verify in the rendered browser view.
 
 ## When to use a diagram
 
@@ -91,6 +92,7 @@ Three or four entity boxes connected by labeled lines. Use this for "what tables
 - Highlight primary keys with `<tspan fill="var(--accent-deep)" font-weight="600">`.
 - Use dashed borders (`stroke-dasharray="4 3"`) on join/bridge tables to set them apart.
 - Add a section label above each cluster (`Domain (MySQL)`, `Object Storage (GCS)`) using `.svg-text-dim`.
+- The header pairs a left-anchored `entity_name` with a right-anchored `label` — fine while both are short, but a long name runs into the right-anchored one (principle 7). Prefer moving the secondary label to its own line below the fields: a lone label never collides, whatever the name's length. Widening the box only buys room until the next longer name.
 
 ## Pattern 2 — Sequence diagram
 

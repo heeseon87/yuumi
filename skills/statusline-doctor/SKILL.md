@@ -101,7 +101,7 @@ Spawn the configured command the way Claude Code does (with stdin) and inspect t
   ```
 - Windows:
   ```bash
-  echo {"model":{"display_name":"Opus"},"version":"2.0.0","workspace":{"current_dir":"C:\\tmp"},"session_id":"x"} | "%ProgramFiles%\nodejs\node.exe" "<asset path>"
+  echo {"model":{"display_name":"Opus"},"version":"2.0.0","workspace":{"current_dir":"C:\\tmp"},"session_id":"x"} | "C:\Program Files\nodejs\node.exe" "<asset path>"   # absolute node path from settings.json — not the %ProgramFiles% form, which a shell expands and masks the bug
   ```
 
 Pass: output contains ANSI escape codes (e.g. `[`).
