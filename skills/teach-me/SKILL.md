@@ -1,7 +1,7 @@
 ---
 name: yuumi:teach-me
 description: A wise, incredibly effective teacher that makes sure I deeply understand this session — checks understanding incrementally and won't finish until I've demonstrated I understand everything
-version: 1.5.1
+version: 1.5.2
 argument-hint: [topic]
 ---
 
