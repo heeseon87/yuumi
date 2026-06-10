@@ -1,7 +1,7 @@
 ---
 name: yuumi:explain
-description: Render an Anthropic-style HTML explainer of the target — structure designed per-target with cognitive-load-focused visuals
-version: 1.5.2
+description: Use when a file, endpoint, module, system, or concept needs to be genuinely understood, not skimmed — renders a single-file Anthropic-style HTML explainer that installs a mental model in one read
+version: 1.5.3
 argument-hint: [target]
 ---
 
@@ -27,7 +27,7 @@ If a reader has to re-read a paragraph, you've already lost. If they get stuck a
 
 3. **Design the page structure yourself.** Do NOT follow a fixed template. The structure you choose should serve *this specific target*. Some explanations are best as a single long essay. Others as a sequence of numbered acts. Others as a single chart with prose around it. There is no canonical section list — there is the structure this particular target needs.
 
-4. **Render with `yuumi:pretty`.** A single-file `.html` file in the project's current working directory. Use the shared pretty assets (`../pretty/assets/shell.html`, `../pretty/references/components.md`, `../pretty/references/svg-patterns.md`) for the fixed Anthropic-style visual language; the shell loads pinned PrismJS CDN scripts by default for marketplace scan-safety. Inline those scripts only if the user explicitly needs offline/self-contained delivery; the *content structure* is yours to invent each time.
+4. **Render with `yuumi:pretty`.** A single-file `.html` file in the project's current working directory. Use the shared pretty assets — `assets/shell.html`, `references/components.md`, `references/svg-patterns.md` in the pretty skill's directory (see "What to use from the style assets" for locating it) — for the fixed Anthropic-style visual language; the shell loads pinned PrismJS CDN scripts by default for marketplace scan-safety. Inline those scripts only if the user explicitly needs offline/self-contained delivery; the *content structure* is yours to invent each time.
 
 5. **Verify, then open in browser.** Check that the saved HTML opens cleanly, has no console errors, and reads correctly in the first viewport. Then `open {slug}-explained.html` on macOS. Tell the user the file path. Don't re-explain the contents in chat — the artifact is the deliverable.
 
@@ -70,17 +70,13 @@ Place each visual where the reader would otherwise pause and re-read. The captio
 
 The Anthropic visual style is a **palette of materials**, not a recipe. You should know what's available and reach for what fits.
 
-- **`../pretty/assets/shell.html`** — the empty starting file. Copy this to `<slug>-explained.html`, then write your content into the body. It contains the design tokens, fonts, and every component's CSS, but no prescribed content sections.
-- **`../pretty/references/components.md`** — a catalog of what each visual component is *for*. Use this to answer "I want to convey X — what component fits?" Not to answer "what should come next in my doc?" (That's your call.)
-- **`../pretty/references/svg-patterns.md`** — diagram patterns you can drop in when a relationship is hard to express in prose. Includes battle-tested traps to avoid in SVG animations.
+The assets live in the pretty skill's directory — a sibling of this skill's directory (named `yuumi-pretty` when installed, `pretty` in the source repo). If no such sibling exists, glob `*/assets/shell.html` under the skills root; if that also fails, tell the user the pretty skill isn't installed instead of freestyling the HTML without it.
+
+- **`<pretty>/assets/shell.html`** — the empty starting file. Copy this to `<slug>-explained.html`, then write your content into the body. It contains the design tokens, fonts, and every component's CSS, but no prescribed content sections.
+- **`<pretty>/references/components.md`** — a catalog of what each visual component is *for*. Use this to answer "I want to convey X — what component fits?" Not to answer "what should come next in my doc?" (That's your call.)
+- **`<pretty>/references/svg-patterns.md`** — diagram patterns you can drop in when a relationship is hard to express in prose. Includes battle-tested traps to avoid in SVG animations.
 
 These are reference materials, not a workflow. Read them when you have a specific question, not before you've thought about the target.
-
-## What's preserved from the original explain skill
-
-The original mission stays: plain-language explanation of architecture, technologies, decisions, lessons, bugs, pitfalls, how good engineers think. Engaging, not textbook-flavored. Analogies and anecdotes where they help. Voice is essayist, not bureaucratic.
-
-What's *changed* is that the structure is no longer prescribed. The original skill let you write a free-form explanation; the previous HTML version started to constrain that with a fixed section template. This version returns the structural freedom while keeping the visual style.
 
 ## File output
 

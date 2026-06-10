@@ -1,7 +1,7 @@
 ---
 name: yuumi:pretty
-description: Create Anthropic-style HTML artifacts with the shared Yuumi visual system — navigable layouts, progressive disclosure, optional interactive widgets and data charts, a component catalog, SVG patterns, and cognitive-load-focused visual QA
-version: 1.5.2
+description: Use when a deliverable should be a polished, self-contained HTML page — a report, explainer, design note, comparison, or anything too long or too visual for chat — rendered in the shared Anthropic-style Yuumi visual system
+version: 1.5.3
 argument-hint: [brief]
 ---
 
@@ -19,20 +19,20 @@ A reader should grasp the headline insight and the shape of the whole in one gla
 
 A complete `.html` file in the current working directory unless the user names another path.
 
-Use:
+Use the files shipped in **this skill's own directory**, resolved relative to this SKILL.md wherever it is installed:
 
-- `skills/pretty/assets/shell.html` — blank HTML shell with tokens, typography, CSS components, and the optional SVG animation controller.
-- `skills/pretty/references/components.md` — component catalog. It tells you what each component is for; it is not a section template.
-- `skills/pretty/references/svg-patterns.md` — line-art SVG patterns for relationships that prose cannot carry.
-- `skills/pretty/references/interaction-patterns.md` — navigation scaffold (TOC, fold, tabs) and active widgets (before/after, stepper, filterable table). Everything degrades gracefully without JS.
-- `skills/pretty/references/data-viz.md` — when to reach past inline SVG to Chart.js (quantitative) or Mermaid (large graphs), and how the shell lazy-loads + themes them.
+- `assets/shell.html` — blank HTML shell with tokens, typography, CSS components, and the optional SVG animation controller.
+- `references/components.md` — component catalog. It tells you what each component is for; it is not a section template.
+- `references/svg-patterns.md` — line-art SVG patterns for relationships that prose cannot carry.
+- `references/interaction-patterns.md` — navigation scaffold (TOC, fold, tabs) and active widgets (before/after, stepper, filterable table). Everything degrades gracefully without JS.
+- `references/data-viz.md` — when to reach past inline SVG to Chart.js (quantitative) or Mermaid (large graphs), and how the shell lazy-loads + themes them.
 
 Use the shell and references as a shared visual system, not as a score target. There is no numeric style gate; quality comes from browser verification, source fidelity, restrained visual language, and whether the structure lowers reader effort.
 
 ## Workflow
 
 1. **Understand the artifact.** Identify the reader, the one idea they must leave with, and the structure that will get them there. Ask only if a missing decision changes the artifact.
-2. **Start from the shell.** Copy `skills/pretty/assets/shell.html` to the output path and write content inside `<div class="container">`.
+2. **Start from the shell.** Copy this skill's `assets/shell.html` to the output path and write content inside `<div class="container">`.
 3. **Invent the structure for this artifact.** Do not fill a fixed template. Use any component or layout that improves comprehension. The catalog is a palette, not a checklist.
 4. **Plan navigation for length.** If the artifact is long (4+ major sections or 3+ viewports), give the reader a map and a way to control depth: a `.toc`, `.fold` for optional depth, `.tabs` for parallel views. Do not cram a long artifact into one flat scroll. Keep the headline insight on the first screen — never fold the main point. The shell can auto-build a fallback `.toc` from 4+ `<h2>` sections if you forget, but that is a safety net, not the standard: write an explicit `<nav class="toc">` with matching section ids when the map is part of the intended reading path.
 5. **Keep the visual language fixed.** Warm parchment background, near-black ink, clay accent, serif editorial headings, JetBrains Mono for code, hairline rules, soft ring borders, restrained dark code blocks.
@@ -72,7 +72,7 @@ Before adding any visual or interaction — `<figure>`, a chart, a tab group, a 
 
 **Climb the modality ladder.** The same idea costs the reader less working memory as it moves from prose to a static diagram to motion, so motion (an animated SVG, a stepped reveal) is a first-class tool, not a last resort — there is no count-cap on it. But each climb pays two tolls: the *named burden* above, and *truthfulness* — motion asserts time, order, causality, or parallelism, so animate only where those are real (a sequence reveal is honest because the page already flows in time; animating independent items to look parallel is not). Every animation must degrade to a meaningful still frame with JS off and under `prefers-reduced-motion`. In a self-contained artifact, "motion" is controlled SVG/CSS animation and steppers — never embedded video. See `svg-patterns.md` for the ladder and the one-instance limit on the turnkey fan-out/join controller.
 
-Inline SVG is the default. For final pretty artifacts, prefer self-contained inline SVG styled with the shell tokens. When the data is genuinely quantitative use Chart.js, and for large auto-laid or draft graphs use Mermaid — the shell lazy-loads both from a pinned CDN only when the page contains the element (`[data-chart]` on a `<canvas>`, or `.mermaid`). See `data-viz.md`.
+Inline SVG is the default. For final pretty artifacts, prefer self-contained inline SVG styled with the shell tokens. When the data is genuinely quantitative use Chart.js, and for large auto-laid graphs use Mermaid — as a drafting tool: a final artifact embeds the pre-rendered static SVG, never a runtime `.mermaid` div, which degrades to raw source with JS off. The shell lazy-loads both libraries from a pinned CDN only when the page contains the element (`[data-chart]` on a `<canvas>`, or `.mermaid`). See `data-viz.md`.
 
 Active widgets (before/after, stepper, filterable table) are progressive enhancements — the page must be fully usable, and the main point fully visible, with JS disabled. Always pair a chart with its source data table.
 

@@ -1,7 +1,7 @@
 ---
 name: yuumi:implement
-description: Implement a spec while keeping a running context-slugged HTML decision log that captures reviewer-facing decisions, tradeoffs, open questions, and cognitive-load-reducing visuals
-version: 1.5.2
+description: Use when implementing a spec whose reviewer will need the decision trail — resolved ambiguities, deviations, tradeoffs, open questions — not just the diff; keeps a running single-file HTML decision log alongside the code
+version: 1.5.3
 argument-hint: [spec]
 ---
 
@@ -86,11 +86,11 @@ Do not draw decorative architecture. Do not invent nodes, domains, steps, or rel
 
 ## Style assets
 
-The visual language is provided as a palette of materials:
+The visual language is provided as a palette of materials. The assets live in the pretty skill's directory — a sibling of this skill's directory (named `yuumi-pretty` when installed, `pretty` in the source repo). If no such sibling exists, glob `*/assets/shell.html` under the skills root; if that also fails, tell the user the pretty skill isn't installed instead of freestyling the HTML without it.
 
-- **`../pretty/assets/shell.html`** — the empty starting file. Copy this to `<topic-slug>-implementation-notes.html`, then write your content into the body container. Contains the design tokens, fonts, and every component's CSS, but no prescribed content sections.
-- **`../pretty/references/components.md`** — a catalog of what each visual component is *for*. Use this when you ask "I want to convey X — what fits?" — not to answer "what should come next?"
-- **`../pretty/references/svg-patterns.md`** — line-art SVG patterns for relationships that would otherwise force the reviewer to hold branches, timelines, input/output contracts, verification state, or data mappings in their head.
+- **`<pretty>/assets/shell.html`** — the empty starting file. Copy this to `<topic-slug>-implementation-notes.html`, then write your content into the body container. Contains the design tokens, fonts, and every component's CSS, but no prescribed content sections.
+- **`<pretty>/references/components.md`** — a catalog of what each visual component is *for*. Use this when you ask "I want to convey X — what fits?" — not to answer "what should come next?"
+- **`<pretty>/references/svg-patterns.md`** — line-art SVG patterns for relationships that would otherwise force the reviewer to hold branches, timelines, input/output contracts, verification state, or data mappings in their head.
 
 Read these when you have a specific question, not as a checklist.
 

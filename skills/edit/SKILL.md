@@ -1,7 +1,7 @@
 ---
 name: yuumi:edit
 description: Use when editing long drafts or multiple files where copy-paste workflow is tedious, when you have scattered edit instructions across a document, or when edits across files need to stay consistent with each other
-version: 1.5.2
+version: 1.5.3
 ---
 
 # Edit (Spatial Editing)
@@ -22,16 +22,18 @@ version: 1.5.2
 ## The Command
 
 ```
-/edit                    # Currently open file or search for {thoughts}
+/edit                    # File under discussion, or search for {thoughts}
 /edit draft.md           # Specific file
 /edit draft.md notes.md  # Multiple files
 ```
 
-If no file specified and nothing open, searches vault for `{thoughts}`:
+If no file is specified and none is obvious from the conversation, search the working directory for marker comments:
 
 ```bash
 rg "\{[^}]+\}" --type md -l
 ```
+
+The search defaults to documents because code files are full of literal braces. A code file the user explicitly names is fair game — handled by the instruction-vs-literal rule below.
 
 ## Syntax
 
@@ -53,10 +55,11 @@ The solution is simple
 ## Processing Rules
 
 1. **Read the file** and identify all `{...}` comments
-2. **Each comment applies to its surrounding context** (paragraph, sentence, or section)
-3. **Apply edits** based on the instruction
-4. **Remove the `{...}` markers** after processing
-5. **Output summary** of changes made
+2. **Tell instructions apart from literal braces.** A `{...}` is an edit instruction only when it reads as a natural-language note to the editor. Braces that belong to the content itself — code, template variables, JSON, math — are not instructions. When genuinely ambiguous, leave the text untouched and list the marker in the summary instead of guessing.
+3. **Each comment applies to its surrounding context** (paragraph, sentence, or section)
+4. **Apply edits** based on the instruction
+5. **Remove the `{...}` markers** after processing
+6. **Output summary** of changes made
 
 ## Output Format
 
