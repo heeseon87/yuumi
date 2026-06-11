@@ -16,9 +16,10 @@
     },
     {
       "title": "Claude Code statusline (Claude Code only)",
-      "description": "Install and diagnose the Tokyo Night powerline statusline for Claude Code — a HUD with 5h/7d rate-limit bars, context usage, model, git branch, and IME state. These two skills wire and repair settings.json; they are no-ops on other agents.",
+      "description": "Install and diagnose the Tokyo Night powerline statusline for Claude Code — a HUD with 5h/7d rate-limit bars, context usage, model, git branch, and IME state. These skills wire and repair settings.json; they are no-ops on other agents. The -ad variant installs the HUD alongside a statusline-owning ad extension (Kickbacks/vibe-ads) instead of fighting it.",
       "skills": [
         "statusline-setup",
+        "statusline-setup-ad",
         "statusline-doctor"
       ]
     }

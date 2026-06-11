@@ -24,7 +24,7 @@ Two things:
 |------------|:-----------:|:------------:|
 | `interview` · `edit` · `explain` · `implement` · `pretty` · `teach-me` · `review` | ✅ | ✅ |
 | Tokyo Night statusline HUD | ✅ | — |
-| `statusline-setup` · `statusline-doctor` | ✅ | no-op |
+| `statusline-setup` · `statusline-setup-ad` · `statusline-doctor` | ✅ | no-op |
 
 One install path for everyone: **`npx skills add -g heeseon87/yuumi`**. The workflow skills work everywhere; the statusline is a Claude Code feature, so the `statusline-*` skills only do anything there.
 
@@ -77,6 +77,9 @@ Reviewing a change is hard because the real work is *understanding* it, and unde
 
 #### `/yuumi-statusline-setup` — one-time statusline install
 Wires Claude Code to the Tokyo Night statusline that ships inside this skill. It points `settings.json` `statusLine` **directly** at the installed `statusline.mjs` (no `~/.claude/hud/` copy, no SessionStart hook) and backs up your prior settings. Run it once after `npx skills add -g heeseon87/yuumi`; updates then flow through `npx skills update` with nothing to re-run.
+
+#### `/yuumi-statusline-setup-ad` — statusline install alongside an ad extension
+For when a statusline-owning ad extension (Kickbacks/vibe-ads) keeps reverting the normal install. Replaces the extension's statusline script with a combined renderer — Yuumi HUD plus the live ad as a final line — and locks the file immutable so the extension's rewrites bounce off while its ad cache keeps refreshing. `--restore` hands the slot back to the extension. macOS/Linux only.
 
 #### `/yuumi-statusline-doctor` — diagnose & auto-fix the statusline
 Runs an OS-aware checklist (node availability, the installed statusline asset, executable bit, `settings.json` shape, legacy marketplace-era config) and **fixes anything fixable**, then prints a pass/fail report.
