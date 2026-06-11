@@ -1,7 +1,7 @@
 ---
 name: yuumi:implement
 description: Use when implementing a spec whose reviewer will need the decision trail — resolved ambiguities, deviations, tradeoffs, open questions — not just the diff; keeps a running single-file HTML decision log alongside the code
-version: 1.5.3
+version: 1.5.4
 argument-hint: [spec]
 ---
 
@@ -113,6 +113,7 @@ After writing `<topic-slug>-implementation-notes.html`, verify the artifact inst
 
 - The file exists and opens in the browser.
 - Browser console has no errors.
+- Every shell component matches its markup contract in `components.md` and renders as designed — checked in the rendered view, not by reading the markup: a collapsed grid or unstyled list is console-silent.
 - The first screen tells the reviewer the status, scope, and most consequential decision.
 - Every figure removes a real mental stack; no diagram is decorative filler.
 - Visual structure follows code facts. Function lanes, data maps, and ownership arrows are verified against the actual code before being drawn.

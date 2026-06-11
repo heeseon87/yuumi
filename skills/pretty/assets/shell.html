@@ -300,6 +300,11 @@
 	}
 	.meta dd { margin: 0; font-size: 15px; color: var(--text); line-height: 1.5; }
 	.meta dd code { font-size: 13.5px; }
+	/* Wrapper tolerance: the grid lays out DIRECT children only, so a nested
+	   <dl> (the easy markup guess: <div class="meta"><dl>…) would otherwise
+	   collapse whole into the 110px label column. display:contents promotes
+	   its dt/dd back to grid items. The contract is still <dl class="meta">. */
+	.meta > dl { display: contents; }
 
 	.method-tag {
 		display: inline-block;

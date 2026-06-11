@@ -1,7 +1,7 @@
 ---
 name: yuumi:pretty
 description: Use when a deliverable should be a polished, self-contained HTML page — a report, explainer, design note, comparison, or anything too long or too visual for chat — rendered in the shared Anthropic-style Yuumi visual system
-version: 1.5.3
+version: 1.5.4
 argument-hint: [brief]
 ---
 
@@ -36,7 +36,7 @@ Use the shell and references as a shared visual system, not as a score target. T
 3. **Invent the structure for this artifact.** Do not fill a fixed template. Use any component or layout that improves comprehension. The catalog is a palette, not a checklist.
 4. **Plan navigation for length.** If the artifact is long (4+ major sections or 3+ viewports), give the reader a map and a way to control depth: a `.toc`, `.fold` for optional depth, `.tabs` for parallel views. Do not cram a long artifact into one flat scroll. Keep the headline insight on the first screen — never fold the main point. The shell can auto-build a fallback `.toc` from 4+ `<h2>` sections if you forget, but that is a safety net, not the standard: write an explicit `<nav class="toc">` with matching section ids when the map is part of the intended reading path.
 5. **Keep the visual language fixed.** Warm parchment background, near-black ink, clay accent, serif editorial headings, JetBrains Mono for code, hairline rules, soft ring borders, restrained dark code blocks.
-6. **Run the visual QA pass.** Check the saved artifact for browser errors, first-screen comprehension, CJK typography when relevant, source-fact fidelity, restrained palette/type/spacing, SVG label fit (the longest label stays inside its box and no labels overlap), prose discipline (every figure of speech earns its place, no structure-narration), and whether every visual element earns its place.
+6. **Run the visual QA pass.** Check the saved artifact for browser errors, first-screen comprehension, CJK typography when relevant, source-fact fidelity, restrained palette/type/spacing, component markup contracts (each component matches its skeleton in `components.md` and renders as designed — a collapsed grid or unstyled list throws no console error, so this is a rendered-view check), SVG label fit (the longest label stays inside its box and no labels overlap), prose discipline (every figure of speech earns its place, no structure-narration), and whether every visual element earns its place.
 7. **Open the file.** On macOS: `open <artifact.html>`. Report only the path and verification state. Do not dump the artifact's contents in chat.
 
 ## Visual language
@@ -99,6 +99,7 @@ The real test is comprehension. A reader should need less working memory after t
 - branches, timelines, contracts, and verification stacks are visualized only when prose would make the reader calculate
 - visuals are source-grounded and captioned with the actual insight
 - the browser renders cleanly with no console errors
+- components render as components: each matches its markup contract in `components.md` — verified in the rendered browser view, because a collapsed grid, an unstyled list, or a missing rule line produces no console error
 - interactions work and degrade: tabs switch, steppers step, folds toggle, and with JS off every panel/step is visible and the main point is on the first screen
 - code blocks are language-classed (`<pre><code class="language-…">`) and Prism produced token spans; no bare `<pre><code>` blocks remain unless intentionally plain text and labeled as such
 - charts render on-palette with a paired data table, and chart/graph libraries load only on pages that use them
@@ -123,6 +124,7 @@ The real test is comprehension. A reader should need less working memory after t
 - Do not let library defaults (bright blue, drop shadows) leak through — verify charts render on-palette.
 - Do not let rhetoric signal tone without carrying meaning — if stripping a figure leaves the same point, it was decoration; narrating the document's own structure is the same noise (see Prose discipline).
 - Do not place two opposing labels on the same SVG row — a long name will cross the one facing it. Give a secondary label its own line; a lone label cannot collide regardless of length. When hand-placed labels keep overflowing, switch to CSS auto-width boxes or an auto-layout renderer.
+- Do not wrap a component's root element in an extra container. The markup contracts in `components.md` are exact: grid and counter components lay out direct children only, and one stray wrapper collapses the layout without any console error.
 
 ## When you're done
 

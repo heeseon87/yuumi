@@ -6,6 +6,8 @@ This catalog is a palette, not a checklist. If readability wants a component not
 
 Read this when you have a question like *"I want to convey X — what fits?"* — not before you've thought about what the page needs to say.
 
+Structural components state their **markup contract** — the exact element shape the CSS expects. The class sits on the element shown, and the children shown must be *direct* children: several components are CSS grids or counter lists that lay out direct children only, so one extra wrapper silently collapses the layout with **no console error**. Copy the skeleton, then fill it.
+
 ---
 
 ## Primitives (always available, used as needed)
@@ -51,25 +53,72 @@ Small Hahmlet line (13px, tracked) for context (subject path, file location, dat
 ### `.meta` — definition list
 Borderless `<dl>` with hairline rules above and below, two-column grid. Use when you have a small set of *named facts* a reader wants at a glance — endpoint metadata, configuration parameters, identifier mappings. Don't use it for prose; use it for *short labeled values*.
 
+```html
+<dl class="meta">
+  <dt>Label</dt><dd>Value</dd>
+  <dt>Label</dt><dd>Value</dd>
+</dl>
+```
+
+The `<dl>` **is** the component — the grid places its direct `dt`/`dd` children into label/value columns. Wrapped in an extra `<div class="meta">`, the whole list collapses into the narrow label column.
+
 ### `.method-tag`
 Small dark pill for HTTP methods (`POST`, `GET`, etc.) inside `.meta`. Only when explaining an HTTP endpoint.
 
 ### `.steps` — ordered list with hanging numerals
 Each item gets an italic serif number and a hairline connector to the next. Use when something happens *in order* and the order matters. Don't use it for an unordered set of facts (use prose or `.callout` instead).
 
+```html
+<ol class="steps">
+  <li><span class="step-title">What happens</span>
+      <span class="step-desc">Optional detail line.</span></li>
+</ol>
+```
+
+The class sits on the list element itself; numbering and connectors target direct `<li>` children. Plain text inside `<li>` is fine too.
+
 ### `.nest` — nested sub-group
 A left accent rail around a deeper inner ordered list. Use when one step in `.steps` contains several sub-steps (e.g., a transaction encloses four operations). Pass `data-label="..."` to label the rail (`TRANSACTION`, `PHASE 2`, etc.); omit for an unlabeled group.
+
+```html
+<div class="nest" data-label="PHASE 2">
+  <ol>
+    <li><strong>Substep</strong><span class="desc">Detail.</span></li>
+  </ol>
+</div>
+```
 
 ### `.callout` — left-accent callout
 A minimal block: italic serif label + compact clay bullet list. Use it for **2-3 sentences of insight that earn their own breathing room** — the surprising point, the non-obvious connection. Don't overuse: more than 4-5 per document and they stop being callouts. If everything is a callout, nothing is.
 
 Suggested labels (you choose what fits): `Insight`, `Surprise`, `Why it matters`, `Key idea`. A label that names the *intent* of the callout beats a generic one.
 
+```html
+<div class="callout">
+  <div class="callout-label">Insight</div>
+  <ul><li>The point that earns the rail.</li></ul>
+</div>
+```
+
 ### `.aside` — softer side note
 Like `.callout` but with a gray border instead of accent. Use for caution, edge cases, or "the shadow side" — content that's important but tonally quieter than an insight. The visual softness signals "this is a complication, not a revelation."
 
+```html
+<div class="aside">
+  <div class="aside-label">Caution</div>
+  <p>The complication, in quiet prose.</p>
+</div>
+```
+
 ### `.lesson` — takeaway
 Inline italic tag + serif title + dim body. Use for portable lessons — what a senior would tell a junior. Tag with roman numerals (`i.`, `ii.`), prose categories (`Pattern`, `Caution`), or any short marker. Useful as a closing block, but not the only way to close.
+
+```html
+<div class="lesson">
+  <span class="lesson-tag">i.</span><span class="lesson-title">The portable lesson</span>
+  <p class="lesson-body">Why it generalizes.</p>
+</div>
+```
 
 ---
 
@@ -85,6 +134,15 @@ Hairline rows, no zebra striping. Use for genuinely tabular data — 3+ columns 
 
 ### `.tree` — file/path hierarchy
 Two-column CSS grid: left column is monospace path (with ASCII tree connectors), right column is italic serif annotations. The grid handles alignment automatically — never use whitespace padding to align comments (especially with CJK characters, where it always breaks). See the inner spans `.path .dir`, `.path .var`, `.path .branch`, `.note` for styling parts of each row.
+
+```html
+<div class="tree">
+  <div class="path"><span class="branch">├── </span><span class="dir">src/</span>main.kt</div><div class="note">entry point</div>
+  <div class="path"><span class="branch">└── </span>config.yml</div><div class="note"></div>
+</div>
+```
+
+Each row is a `.path` + `.note` pair as **direct** children of the grid (same direct-children rule as `.meta`); the empty `.note` cell is still required.
 
 ---
 
@@ -105,6 +163,14 @@ For quantitative charts (Chart.js) or large auto-laid graphs (Mermaid), see `dat
 
 ### `.footnotes`
 Numbered footnotes at the document end with a thin rule above. Reference from the body with `<sup><a href="#fn1">1</a></sup>`. Use for tangents, prior art, citations — content that would interrupt the body if inline. Also a good place for a final "Source · `path/to/file.ext`" line.
+
+```html
+<div class="footnotes">
+  <ol>
+    <li id="fn1">The tangent that would have interrupted the body.</li>
+  </ol>
+</div>
+```
 
 ### `<sup>` markers in body
 Tiny superscript reference. The link goes to the matching `<li id="fnN">` in `.footnotes`.
@@ -146,6 +212,7 @@ Visual quality comes from meaning, not catalog coverage. Do not add a fake `.cal
 
 ## Common mistakes to avoid
 
+- **Wrapping a component's root in an extra element.** The class belongs on the element shown in the markup contract (`<dl class="meta">`, `<ol class="steps">`). Grid and counter components lay out direct children only — one extra wrapper collapses them silently, with no console error. Verify components in the rendered view.
 - **Using `.callout` more than 4-5 times.** They lose their impact. Most content should be prose.
 - **Adding `.body-start` to multiple paragraphs.** Drop cap is once per document.
 - **Forcing a `<table>` for two-column data.** Prose or `.callout` is often clearer.

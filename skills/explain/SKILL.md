@@ -1,7 +1,7 @@
 ---
 name: yuumi:explain
 description: Use when a file, endpoint, module, system, or concept needs to be genuinely understood, not skimmed — renders a single-file Anthropic-style HTML explainer that installs a mental model in one read
-version: 1.5.3
+version: 1.5.4
 argument-hint: [target]
 ---
 
@@ -91,6 +91,7 @@ If the explanation is meant to carry the Anthropic visual language, do a manual 
 - Every diagram has a named comprehension job and no decorative filler.
 - Code-fact visuals are backed by actual files, calls, or data shapes you inspected.
 - Browser console is clean and the first screen establishes the mental model quickly.
+- Every shell component matches its markup contract in `components.md` and renders as designed — checked in the rendered view, since a collapsed grid or unstyled list throws no console error.
 
 ## Anti-patterns
 
