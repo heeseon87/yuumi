@@ -1,7 +1,7 @@
 ---
 name: yuumi:pretty
 description: Use when a deliverable should be a polished, self-contained HTML page — a report, explainer, design note, comparison, or anything too long or too visual for chat — rendered in the shared Anthropic-style Yuumi visual system
-version: 1.5.5
+version: 1.5.6
 argument-hint: [brief]
 ---
 

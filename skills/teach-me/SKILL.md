@@ -1,7 +1,7 @@
 ---
 name: yuumi:teach-me
 description: Use when the user wants to deeply understand this session's work or a named topic and have that understanding verified, not just explained — e.g. before presenting, reviewing, or building on it
-version: 1.5.5
+version: 1.5.6
 argument-hint: [topic]
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: yuumi:implement
 description: Use when implementing a spec whose reviewer will need the decision trail — resolved ambiguities, deviations, tradeoffs, open questions — not just the diff; keeps a running single-file HTML decision log alongside the code
-version: 1.5.5
+version: 1.5.6
 argument-hint: [spec]
 ---
 

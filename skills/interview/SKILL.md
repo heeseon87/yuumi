@@ -1,7 +1,7 @@
 ---
 name: yuumi:interview
 description: Use when a plan or spec needs pressure-testing before you build it — finds the holes through an in-depth interview rather than a passive review
-version: 1.5.5
+version: 1.5.6
 argument-hint: [plan]
 ---
 

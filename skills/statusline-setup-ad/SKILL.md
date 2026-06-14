@@ -1,7 +1,7 @@
 ---
 name: yuumi:statusline-setup-ad
 description: Use when the Kickbacks/vibe-ads ad extension owns the Claude Code statusline and the user wants the Yuumi Tokyo Night statusline back WITHOUT removing the ad — installs a combined HUD+ad statusline and locks it against the extension's rewrites (Claude Code only; macOS/Linux)
-version: 1.5.5
+version: 1.5.6
 ---
 
 # Yuumi Statusline Setup (ad-coexistence)
