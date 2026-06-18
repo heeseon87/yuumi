@@ -1,6 +1,6 @@
 # Data Visualization — when to reach past inline SVG
 
-Inline SVG (see `svg-patterns.md`) is the default for qualitative and relational diagrams — it carries the line-art Anthropic look. Reach for a library ONLY when the data is genuinely quantitative or the graph is too large to hand-draw.
+Inline SVG (see `svg-patterns.md`) is the default for qualitative and relational diagrams — it carries the line-art Yuumi look. Reach for a library ONLY when the data is genuinely quantitative or the graph is too large to hand-draw.
 
 ## Decision rule
 - **Relationship / sequence / branch / architecture** → inline SVG. Always.
@@ -9,19 +9,20 @@ Inline SVG (see `svg-patterns.md`) is the default for qualitative and relational
 - If a 3-row comparison fits a `<table>` or prose, use that. A chart for 3 numbers is slop.
 
 ## How loading works (do nothing special)
-The shell lazy-loads Chart.js / Mermaid from a pinned CDN **only when** the page contains `[data-chart]` or `.mermaid`. You just write the element; the boot script injects the library and themes it with the shell tokens. Pages without charts never fetch the library.
+Online viewing is assumed. The shell lazy-loads Chart.js / Mermaid from pinned CDNs **only when** the page contains `[data-chart]` or `.mermaid`. You just write the element; the boot script injects the library and themes it with the shell tokens. Pages without charts never fetch the library.
 
 ## Chart.js
 Put a Chart.js config (JSON) in `data-chart` **on a `<canvas>` element** (Chart.js requires a canvas — a `<div>` will silently fail to render):
 
     <canvas data-chart='{"type":"line","data":{"labels":["1월","2월"],"datasets":[{"label":"요청","data":[10,24]}]}}'></canvas>
 
+- Escape JSON for the attribute context: use single quotes around `data-chart`, double quotes inside JSON, and never paste unescaped user text into labels.
 - Colors default to the clay accent and token grid/text — leave them unset to stay on-palette.
-- **Always pair a chart with its source data table** (accessibility + JS-off fallback + fact-check).
+- **Always pair a chart with its source data table** (accessibility + library-failure fallback + fact-check).
 - Keep it one idea per chart. No dual axes unless the comparison demands it.
 
 ## Mermaid
-Mermaid is a **drafting tool** here: the fastest way to get a large graph auto-laid, but wrong as a runtime dependency in a finished page — with JS off, a `.mermaid` div degrades to raw diagram source, which fails the JS-off rule everything else on the page obeys.
+Mermaid is a **drafting tool** here: the fastest way to get a large graph auto-laid. For a polished final artifact, prefer pre-rendered static SVG; runtime `.mermaid` is acceptable only for draft/working artifacts or when the user explicitly chooses online-only runtime rendering, because JS-off readers see raw diagram source.
 
 **Drafts / working sessions** — runtime loading is fine. Put diagram source in a `<div class="mermaid">`:
 
@@ -38,7 +39,7 @@ Mermaid is a **drafting tool** here: the fastest way to get a large graph auto-l
 4. Re-theme to the shell: mmdc defaults will not match the parchment palette — set strokes, fills, and fonts to the shell tokens via a mermaid theme config or by editing the SVG's styles.
 5. Verify in the rendered browser view like any hand-drawn figure: labels fit their boxes, nothing overlaps, colors on-palette.
 
-The pre-rendered result obeys every rule inline SVG obeys — JS-off safe, self-contained, fact-checkable. If pre-rendering is impossible (no network or the renderer won't run), do not ship runtime Mermaid in a final artifact: hand-draw the part that matters as inline SVG, or carry the relationship in prose with a smaller diagram.
+The pre-rendered result obeys every rule inline SVG obeys — JS-off safe, portable inside the HTML, and fact-checkable. If pre-rendering is impossible or the renderer will not run, hand-draw the part that matters as inline SVG, carry the relationship in prose with a smaller diagram, or explicitly mark the artifact as a draft/runtime Mermaid page.
 
 ## Anti-patterns
 - A chart where a sentence would do.

@@ -1,7 +1,7 @@
 <!--
-	Anthropic-style Pretty Shell
+	Yuumi Pretty Shell
 	-------------------------------
-	A blank canvas with the shared Claude Kit visual language baked in. The body is intentionally empty —
+	A blank canvas with the shared Yuumi visual language baked in. The body is intentionally empty —
 	you, the agent, design the page structure based on the artifact you are making.
 
 	HOW TO USE:
@@ -25,12 +25,13 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Explainer</title>
+<script>document.documentElement.classList.add('js');</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 	:root {
-		/* Anthropic reference swatches observed from anthropic.com / claude.com pages. */
+		/* Yuumi reference swatches: warm paper, near-black ink, restrained clay accent. */
 		--bg: #F5F4ED;
 		--bg-deep: #EFEDE4;
 		--surface: #FAF9F5;
@@ -224,7 +225,7 @@
 		min-width: max-content;
 	}
 
-	/* PrismJS token theme tuned to Anthropic dark code blocks. */
+	/* PrismJS token theme tuned to warm dark code blocks. */
 	.token.comment,
 	.token.prolog,
 	.token.doctype,
@@ -525,8 +526,8 @@
 	th, td { overflow-wrap: normal; word-break: normal; }
 	.col-tight { white-space: nowrap; }
 
-	/* Collapsible section — progressive disclosure. Open by default in source so
-	   JS-off / print still shows everything. */
+	/* Collapsible section — progressive disclosure. Native <details> works without JS;
+	   never put the page's headline insight inside a fold. */
 	.fold { border-top: 1px solid var(--rule); margin: 8px 0; }
 	.fold > summary {
 		list-style: none; cursor: pointer; padding: 16px 0;
@@ -661,9 +662,21 @@
 	.replay:hover { border-color: var(--accent); color: var(--accent-deep); }
 	.replay svg { width: 12px; height: 12px; }
 
-	/* SVG animation primitives (JS at bottom controls dasharray) */
-	.parallel-line { opacity: 0; }
-	.parallel-line.ready { opacity: 1; }
+	/* SVG animation primitives (JS at bottom controls dasharray).
+	   Default = meaningful final still frame. JS hides only until it primes the paths. */
+	.parallel-line { opacity: 1; }
+	html.motion-ready #parallelFig .parallel-line:not(.ready) { opacity: 0; }
+	html.parallel-error #parallelFig .parallel-line {
+		opacity: 1 !important;
+		stroke-dashoffset: 0 !important;
+		transition: none !important;
+	}
+	#parallelFig #awaitNode { stroke: var(--accent); stroke-dasharray: 0; }
+	#parallelFig #commitArrow,
+	#parallelFig #commitLabel { opacity: 1; }
+	html.motion-ready #parallelFig #awaitNode:not(.ready-final) { stroke: var(--rule-strong); stroke-dasharray: 3 3; }
+	html.motion-ready #parallelFig #commitArrow:not(.ready-final),
+	html.motion-ready #parallelFig #commitLabel:not(.ready-final) { opacity: 0; }
 
 	@keyframes pulseDot {
 		0%, 100% { opacity: 0.3; r: 3; }
@@ -674,6 +687,15 @@
 	@media (prefers-reduced-motion: reduce) {
 		.parallel-line {
 			stroke-dashoffset: 0 !important;
+			transition: none !important;
+			opacity: 1 !important;
+		}
+		#parallelFig #awaitNode {
+			stroke: var(--accent) !important;
+			stroke-dasharray: 0 !important;
+		}
+		#parallelFig #commitArrow,
+		#parallelFig #commitLabel {
 			transition: none !important;
 			opacity: 1 !important;
 		}
@@ -696,15 +718,13 @@
 		figcaption { padding: 0 22px; }
 	}
 
-	/* Table of contents (scrollspy), taken OUT of normal flow (position:fixed) so
-	   it never steals width from the content — the article always renders full
-	   width. Vertically centered, ALWAYS on the side (never snapped to the top).
-	   Two modes by viewport width:
+	/* Table of contents (scrollspy). Desktop/tablet keeps the TOC out of normal flow
+	   so it never steals content width; mobile turns it into a touch-friendly inline map.
+	   Responsive modes:
 	     >= 1480px   full label rail parked in the right margin beside the column
-	     < 1480px    collapsed to a silhouette of bars at the right edge; hovering
-	                 or focusing a link expands it as an overlay ON TOP of content
-	   Never make the TOC a flex/grid column or a float — those reduce or overlap
-	   the content. Fixed positioning keeps the content width constant. */
+	     721-1479px  collapsed right-side silhouette; hover/focus expands overlay
+	     <= 720px    inline map at the top of the document
+	   Never make the desktop TOC a flex/grid column or float. */
 	.toc {
 		position: fixed;
 		top: 50%;
@@ -780,6 +800,42 @@
 		.toc a:hover { color: var(--text-dim); }
 	}
 
+	/* Touch/mobile: make the map tappable instead of a 2px side rail. */
+	@media (max-width: 720px) {
+		.toc, .toc:hover, .toc:focus-within {
+			position: static;
+			transform: none;
+			right: auto;
+			max-height: none;
+			overflow: visible;
+			padding: 14px 0;
+			margin: 0 0 36px;
+			background: none;
+			border: 0;
+			border-top: 1px solid var(--rule);
+			border-bottom: 1px solid var(--rule);
+			border-radius: 0;
+			box-shadow: none;
+		}
+		.toc a, .toc:hover a, .toc:focus-within a {
+			width: auto;
+			height: auto;
+			min-height: 40px;
+			margin: 0;
+			padding: 7px 0;
+			background: none;
+			color: var(--text-faint);
+			overflow: visible;
+			white-space: normal;
+			line-height: 1.45;
+		}
+		.toc a.active, .toc:hover a.active, .toc:focus-within a.active {
+			width: auto;
+			background: none;
+			color: var(--accent-deep);
+		}
+	}
+
 	@media (prefers-reduced-motion: reduce) { .toc, .toc a { transition: none; } }
 
 	/* Tabs — switch parallel views (e.g. language variants). JS-off shows all panels. */
@@ -839,7 +895,8 @@
 		.fold > summary::before, .toc a, .tab { transition: none !important; }
 	}
 
-	.tab:focus-visible, .stepper-nav button:focus-visible,
+	.tab:focus-visible, .stepper-nav button:focus-visible, .replay:focus-visible,
+	.ba-control input:focus-visible, .table-filter:focus-visible,
 	.toc a:focus-visible, .fold > summary:focus-visible {
 		outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px;
 	}
@@ -856,30 +913,41 @@
 </div>
 
 <!-- PrismJS-powered code blocks.
-     Loaded from pinned jsDelivr URLs so the marketplace skill package stays scan-safe.
-     If a final artifact must be fully offline, inline the same pinned PrismJS files during artifact generation after reviewing them. -->
+     Loaded lazily from pinned jsDelivr URLs only when the artifact contains code blocks. -->
 <script>
+(function () {
+	if (!document.querySelector('pre code')) return;
 	window.Prism = window.Prism || {};
 	window.Prism.manual = true;
-</script>
-<script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-core.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-markup.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-css.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-clike.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-javascript.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-typescript.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-kotlin.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-sql.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-yaml.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-json.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-bash.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-python.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-java.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-diff.min.js"></script>
-
-<!-- Pretty integration: normalize/infer PrismJS languages, then highlight + label. -->
-<script>
-	(function () {
+	const PRISM_PINS = [
+		{ src: 'https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-core.min.js', integrity: 'sha384-zLRFO4dwowZvh8kzutOb5AWhH7f39HeJp+N7PtHF1SQtTBnifRx0AtmvTYs3F4YV' },
+		{ src: 'https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-markup.min.js', integrity: 'sha384-HkMr0bZB9kBW4iVtXn6nd35kO/L/dQtkkUBkL9swzTEDMdIe5ExJChVDSnC79aNA' },
+		{ src: 'https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-css.min.js', integrity: 'sha384-0mV13Neu0xhJFylI+HV43C+XiR13bGSeL7D0/7e6hK7sJgvyvK6HVjeQwmvXTstY' },
+		{ src: 'https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-clike.min.js', integrity: 'sha384-7LHwxHIDSHTBleLmgDWZbC/IMJsfYfFVOihKhvsrxYW4j47YQcRwZja4ToFE3bA8' },
+		{ src: 'https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-javascript.min.js', integrity: 'sha384-D44bgYYKvaiDh4cOGlj1dbSDpSctn2FSUj118HZGmZEShZcO2v//Q5vvhNy206pp' },
+		{ src: 'https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-typescript.min.js', integrity: 'sha384-PeOqKNW/piETaCg8rqKFy+Pm6KEk7e36/5YZE5XO/OaFdO+/Aw3O8qZ9qDPKVUgx' },
+		{ src: 'https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-kotlin.min.js', integrity: 'sha384-zz49ukKZF8e3sr9aiW45Ju61sb9hptYyPOufuu9eutOrjwnOK3D1CGRU+eb12fGy' },
+		{ src: 'https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-sql.min.js', integrity: 'sha384-/MKWdycCDliku23mP5sYXbZNuXrzgmQO/jsVxwPFn99dVOaXRyKsqDjarqpueGAp' },
+		{ src: 'https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-yaml.min.js', integrity: 'sha384-AKAiycghK0jDCjD+aavMHzDkLzRR7Yzcwh3+xL/295cvyVMe+cxQfyQC8xxGGcI8' },
+		{ src: 'https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-json.min.js', integrity: 'sha384-RhrmFFMb0ZCHImjFMpR/UE3VEtIVTCtNrtKQqXCzqXZNJala02N3UbVhi+qzw3CY' },
+		{ src: 'https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-bash.min.js', integrity: 'sha384-9WmlN8ABpoFSSHvBGGjhvB3E/D8UkNB9HpLJjBQFC2VSQsM1odiQDv4NbEo+7l15' },
+		{ src: 'https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-python.min.js', integrity: 'sha384-WJdEkJKrbsqw0evQ4GB6mlsKe5cGTxBOw4KAEIa52ZLB7DDpliGkwdme/HMa5n1m' },
+		{ src: 'https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-java.min.js', integrity: 'sha384-DioAMZB4yk91W6LuFit5wJDh8c5Ov09f/MBvja94y0PodMqTpTZeBeejqpRUru7D' },
+		{ src: 'https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-diff.min.js', integrity: 'sha384-5MjMyjeLq48jKCQkz3wbIdVG8+jWbG3Dlh9oy9LkluQL7zDQghWEa+UYZiYi5qRJ' }
+	];
+	function injectScript(spec) {
+		return new Promise(function (resolve, reject) {
+			const s = document.createElement('script');
+			s.src = spec.src;
+			s.async = false;
+			s.crossOrigin = 'anonymous';
+			if (spec.integrity) s.integrity = spec.integrity;
+			s.onload = resolve;
+			s.onerror = function () { reject(new Error('Failed to load ' + spec.src)); };
+			document.head.appendChild(s);
+		});
+	}
+	function runPrettyPrism() {
 		try {
 			const Prism = window.Prism;
 			if (!Prism || !Prism.languages || !Prism.util) return;
@@ -895,9 +963,7 @@
 				mysql: 'sql', mariadb: 'sql', postgres: 'sql', postgresql: 'sql'
 			};
 			for (const [from, to] of Object.entries(aliases)) {
-				if (!Prism.languages[from] && Prism.languages[to]) {
-					Prism.languages[from] = Prism.languages[to];
-				}
+				if (!Prism.languages[from] && Prism.languages[to]) Prism.languages[from] = Prism.languages[to];
 			}
 
 			function canonicalLanguage(value) {
@@ -911,10 +977,8 @@
 			function explicitLanguage(code) {
 				const pre = code.closest('pre');
 				const candidates = [
-					code.getAttribute('data-lang'),
-					code.getAttribute('data-language'),
-					pre && pre.getAttribute('data-lang'),
-					pre && pre.getAttribute('data-language'),
+					code.getAttribute('data-lang'), code.getAttribute('data-language'),
+					pre && pre.getAttribute('data-lang'), pre && pre.getAttribute('data-language'),
 					Prism.util.getLanguage(code)
 				];
 				for (const candidate of candidates) {
@@ -947,7 +1011,7 @@
 			}
 
 			let missingLanguageCount = 0;
-			document.querySelectorAll('pre code').forEach((code) => {
+			document.querySelectorAll('pre code').forEach(function (code) {
 				const pre = code.closest('pre');
 				const explicit = explicitLanguage(code);
 				const inferred = explicit ? null : inferLanguage(code);
@@ -960,38 +1024,52 @@
 					missingLanguageCount += 1;
 				}
 			});
-			if (missingLanguageCount) {
-				document.documentElement.dataset.prettyCodeLangMissing = String(missingLanguageCount);
-			}
+			if (missingLanguageCount) document.documentElement.dataset.prettyCodeLangMissing = String(missingLanguageCount);
+			document.documentElement.dataset.prettyPrismLoaded = String(PRISM_PINS.length);
 			Prism.highlightAll();
 		} catch (error) {
 			document.documentElement.dataset.prettyHighlightError = error && error.message ? error.message : 'PrismJS highlighting failed';
 		}
-	})();
+	}
+	(function loadPrismSequentially(i) {
+		if (i >= PRISM_PINS.length) { runPrettyPrism(); return; }
+		injectScript(PRISM_PINS[i]).then(function () { loadPrismSequentially(i + 1); }).catch(function (error) {
+			document.documentElement.dataset.prettyPrismLoadError = error.message;
+		});
+	})(0);
+})();
 </script>
 
 <!-- Animation controller — only runs if you add an SVG figure with id="parallelFig".
-     The IIFE auto-plays once when the figure enters the viewport, and exposes
-     window.replayParallel() for an optional replay button.
-     Single instance per page: it binds one #parallelFig and one window.replayParallel,
-     so a second animated figure needs its own scoped JS (see references/svg-patterns.md).
-     If you don't add such a figure, this script is a no-op. -->
+     Auto-plays once when the figure enters the viewport, exposes window.replayParallel(),
+     and collapses to the final semantic state for JS-off or reduced-motion users. -->
 <script>
-	(function () {
+(function () {
+	try {
 		const fig = document.getElementById('parallelFig');
 		if (!fig) return;
 		const fanouts = Array.from(fig.querySelectorAll('.parallel-line.fanout'));
 		const joins = Array.from(fig.querySelectorAll('.parallel-line.join'));
+		const allLines = fanouts.concat(joins);
 		const awaitNode = fig.querySelector('#awaitNode');
 		const commitArrow = fig.querySelector('#commitArrow');
 		const commitLabel = fig.querySelector('#commitLabel');
 		const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		if (!reducedMotion) document.documentElement.classList.add('motion-ready');
+		const originals = new Map();
 
+		function dashFor(line) {
+			const own = line.getAttribute('stroke-dasharray') || '';
+			const computed = window.getComputedStyle(line).strokeDasharray || '';
+			const dash = own || computed;
+			return dash && dash !== 'none' ? dash : '';
+		}
 		function prime(lines) {
-			return lines.map((line) => {
+			return lines.map(function (line) {
 				const len = line.getTotalLength();
-				line.style.strokeDasharray = len;
-				line.style.strokeDashoffset = reducedMotion ? 0 : len;
+				originals.set(line, { dash: dashFor(line), len: len });
+				line.style.strokeDasharray = String(len);
+				line.style.strokeDashoffset = reducedMotion ? '0' : String(len);
 				line.classList.add('ready');
 				return len;
 			});
@@ -999,55 +1077,62 @@
 		const fanLens = prime(fanouts);
 		const joinLens = prime(joins);
 
-		function animate() {
-			if (reducedMotion) return;
-			fanouts.forEach((line, i) => { line.style.transition = 'none'; line.style.strokeDashoffset = fanLens[i]; });
-			joins.forEach((line, i) => { line.style.transition = 'none'; line.style.strokeDashoffset = joinLens[i]; });
+		function restoreLine(line) {
+			const meta = originals.get(line);
+			line.style.transition = 'none';
+			line.style.strokeDashoffset = '0';
+			if (meta && meta.dash) line.style.strokeDasharray = meta.dash;
+			else line.style.removeProperty('stroke-dasharray');
+			line.classList.add('ready');
+		}
+		function setFinalState() {
+			allLines.forEach(restoreLine);
 			if (awaitNode) {
 				awaitNode.style.transition = 'none';
-				awaitNode.setAttribute('stroke', 'var(--rule-strong)');
-				awaitNode.setAttribute('stroke-dasharray', '3 3');
+				awaitNode.setAttribute('stroke', 'var(--accent)');
+				awaitNode.setAttribute('stroke-dasharray', '0');
+				awaitNode.classList.add('ready-final');
 			}
-			if (commitArrow) { commitArrow.style.transition = 'none'; commitArrow.style.opacity = '0'; }
-			if (commitLabel) { commitLabel.style.transition = 'none'; commitLabel.style.opacity = '0'; }
-			void fig.getBoundingClientRect();
-
-			fanouts.forEach((line, i) => {
-				const delay = 0.05 + i * 0.12;
-				line.style.transition = 'stroke-dashoffset 0.7s ease-out ' + delay + 's';
-				line.style.strokeDashoffset = '0';
-			});
-			joins.forEach((line, i) => {
-				const delay = 0.85 + i * 0.1;
-				line.style.transition = 'stroke-dashoffset 0.55s ease-out ' + delay + 's';
-				line.style.strokeDashoffset = '0';
-			});
-
-			const allDoneAt = (joins.length ? (0.85 + (joins.length - 1) * 0.1 + 0.55) : 1.5);
-			if (awaitNode) {
-				setTimeout(() => {
-					awaitNode.style.transition = 'stroke 0.35s ease-out';
-					awaitNode.setAttribute('stroke', 'var(--accent)');
-					awaitNode.setAttribute('stroke-dasharray', '0');
-				}, allDoneAt * 1000);
-			}
-			if (commitArrow || commitLabel) {
-				setTimeout(() => {
-					if (commitArrow) { commitArrow.style.transition = 'opacity 0.35s ease-out'; commitArrow.style.opacity = '1'; }
-					if (commitLabel) { commitLabel.style.transition = 'opacity 0.35s ease-out'; commitLabel.style.opacity = '1'; }
-				}, (allDoneAt + 0.25) * 1000);
-			}
+			if (commitArrow) { commitArrow.style.transition = 'none'; commitArrow.style.opacity = '1'; commitArrow.classList.add('ready-final'); }
+			if (commitLabel) { commitLabel.style.transition = 'none'; commitLabel.style.opacity = '1'; commitLabel.classList.add('ready-final'); }
 		}
-
-		const observer = new IntersectionObserver((entries) => {
-			entries.forEach((entry) => {
-				if (entry.isIntersecting) { animate(); observer.unobserve(entry.target); }
+		function resetForAnimation() {
+			fanouts.forEach(function (line, i) { line.style.transition = 'none'; line.style.strokeDasharray = String(fanLens[i]); line.style.strokeDashoffset = String(fanLens[i]); });
+			joins.forEach(function (line, i) { line.style.transition = 'none'; line.style.strokeDasharray = String(joinLens[i]); line.style.strokeDashoffset = String(joinLens[i]); });
+			if (awaitNode) { awaitNode.classList.remove('ready-final'); awaitNode.style.transition = 'none'; awaitNode.setAttribute('stroke', 'var(--rule-strong)'); awaitNode.setAttribute('stroke-dasharray', '3 3'); }
+			if (commitArrow) { commitArrow.classList.remove('ready-final'); commitArrow.style.transition = 'none'; commitArrow.style.opacity = '0'; }
+			if (commitLabel) { commitLabel.classList.remove('ready-final'); commitLabel.style.transition = 'none'; commitLabel.style.opacity = '0'; }
+		}
+		function animate() {
+			if (reducedMotion) { setFinalState(); return; }
+			resetForAnimation();
+			void fig.getBoundingClientRect();
+			fanouts.forEach(function (line, i) { const delay = 0.05 + i * 0.12; line.style.transition = 'stroke-dashoffset 0.7s ease-out ' + delay + 's'; line.style.strokeDashoffset = '0'; });
+			joins.forEach(function (line, i) { const delay = 0.85 + i * 0.1; line.style.transition = 'stroke-dashoffset 0.55s ease-out ' + delay + 's'; line.style.strokeDashoffset = '0'; });
+			const allDoneAt = (joins.length ? (0.85 + (joins.length - 1) * 0.1 + 0.55) : 1.5);
+			setTimeout(function () { allLines.forEach(restoreLine); }, allDoneAt * 1000);
+			if (awaitNode) setTimeout(function () { awaitNode.style.transition = 'stroke 0.35s ease-out'; awaitNode.setAttribute('stroke', 'var(--accent)'); awaitNode.setAttribute('stroke-dasharray', '0'); awaitNode.classList.add('ready-final'); }, allDoneAt * 1000);
+			if (commitArrow || commitLabel) setTimeout(function () { if (commitArrow) { commitArrow.style.transition = 'opacity 0.35s ease-out'; commitArrow.style.opacity = '1'; commitArrow.classList.add('ready-final'); } if (commitLabel) { commitLabel.style.transition = 'opacity 0.35s ease-out'; commitLabel.style.opacity = '1'; commitLabel.classList.add('ready-final'); } }, (allDoneAt + 0.25) * 1000);
+		}
+		function bindReplay() {
+			document.querySelectorAll('[data-replay-parallel]').forEach(function (button) {
+				button.addEventListener('click', function (event) { event.preventDefault(); animate(); });
 			});
-		}, { threshold: 0.35 });
-		observer.observe(fig);
-
-		window.replayParallel = animate;
-	})();
+		}
+		window.replayParallel = reducedMotion ? setFinalState : animate;
+		bindReplay();
+		if (reducedMotion) { setFinalState(); return; }
+		if ('IntersectionObserver' in window) {
+			const observer = new IntersectionObserver(function (entries) { entries.forEach(function (entry) { if (entry.isIntersecting) { animate(); observer.unobserve(entry.target); } }); }, { threshold: 0.35 });
+			observer.observe(fig);
+		} else {
+			setFinalState();
+		}
+	} catch (error) {
+		document.documentElement.classList.add('parallel-error');
+		document.documentElement.dataset.prettyParallelError = error && error.message ? error.message : 'parallel animation failed';
+	}
+})();
 </script>
 
 <script>
@@ -1120,21 +1205,65 @@
 </script>
 
 <script>
-/* Tabs — progressive enhancement. Without JS all panels stay visible. */
+/* [data-tabs] — accessible progressive enhancement. Without JS all panels stay visible. */
 (function () {
+	var groupIndex = 0;
 	document.querySelectorAll('[data-tabs]').forEach(function (group) {
 		var tabs = Array.prototype.slice.call(group.querySelectorAll('.tab'));
 		var panels = Array.prototype.slice.call(group.querySelectorAll('.tab-panel'));
 		if (!tabs.length || !panels.length) return;
 		group.classList.add('tabs-on');
-		function select(id) {
-			tabs.forEach(function (t) { t.setAttribute('aria-selected', String(t.getAttribute('data-tab') === id)); });
+		var bar = group.querySelector('.tab-bar');
+		if (bar) bar.setAttribute('role', 'tablist');
+		groupIndex += 1;
+
+		function ensureId(el, fallback) {
+			if (!el.id) el.id = fallback;
+			return el.id;
+		}
+
+		tabs.forEach(function (t, index) {
+			var targetId = t.getAttribute('data-tab');
+			var panel = targetId ? document.getElementById(targetId) : panels[index];
+			if (!panel) return;
+			ensureId(panel, 'pretty-tab-panel-' + groupIndex + '-' + index);
+			if (!targetId) { targetId = panel.id; t.setAttribute('data-tab', targetId); }
+			var tabId = ensureId(t, 'pretty-tab-' + groupIndex + '-' + index);
+			t.setAttribute('role', 'tab');
+			t.setAttribute('aria-controls', targetId);
+			panel.setAttribute('role', 'tabpanel');
+			panel.setAttribute('aria-labelledby', tabId);
+			panel.setAttribute('tabindex', '0');
+		});
+
+		function select(id, shouldFocus) {
+			tabs.forEach(function (t) {
+				var selected = t.getAttribute('data-tab') === id;
+				t.setAttribute('aria-selected', String(selected));
+				t.setAttribute('tabindex', selected ? '0' : '-1');
+				if (selected && shouldFocus) t.focus();
+			});
 			panels.forEach(function (p) { p.hidden = (p.id !== id); });
 		}
+
+		function selectedIndex() {
+			return Math.max(0, tabs.findIndex(function (t) { return t.getAttribute('aria-selected') === 'true'; }));
+		}
+
 		tabs.forEach(function (t) {
-			t.addEventListener('click', function () { select(t.getAttribute('data-tab')); });
+			t.addEventListener('click', function () { select(t.getAttribute('data-tab'), false); });
+			t.addEventListener('keydown', function (event) {
+				var i = selectedIndex();
+				if (event.key === 'ArrowRight') i = (i + 1) % tabs.length;
+				else if (event.key === 'ArrowLeft') i = (i - 1 + tabs.length) % tabs.length;
+				else if (event.key === 'Home') i = 0;
+				else if (event.key === 'End') i = tabs.length - 1;
+				else return;
+				event.preventDefault();
+				select(tabs[i].getAttribute('data-tab'), true);
+			});
 		});
-		select(tabs[0].getAttribute('data-tab'));
+		select(tabs[0].getAttribute('data-tab'), false);
 	});
 })();
 </script>
@@ -1198,7 +1327,7 @@
 
 <script>
 /* Heavy-library lazy loader — only fetches Chart.js / Mermaid when the page
-   actually uses them. Pinned CDN (scan-safe, same pattern as PrismJS). */
+   actually uses them. Pinned CDN; online viewing is assumed. */
 (function () {
 	var PINS = {
 		chart: 'https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js',
@@ -1210,7 +1339,7 @@
 	}
 	function inject(src, onload) {
 		var s = document.createElement('script');
-		s.src = src; s.async = true;
+		s.src = src; s.async = true; s.crossOrigin = 'anonymous';
 		s.onload = onload;
 		s.onerror = function () { document.documentElement.dataset.prettyLibError = src; };
 		document.head.appendChild(s);

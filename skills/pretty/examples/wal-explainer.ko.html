@@ -1,36 +1,16 @@
-<!--
-	Anthropic-style Pretty Shell
-	-------------------------------
-	A blank canvas with the shared Claude Kit visual language baked in. The body is intentionally empty —
-	you, the agent, design the page structure based on the artifact you are making.
-
-	HOW TO USE:
-	1. Copy this file to the requested artifact path, usually <slug>.html in the current working directory.
-	2. Set <html lang="..."> and <title> based on the target.
-	3. Write your content inside <div class="container">. There is no prescribed order
-	   of sections — design what serves the reader.
-	4. Use components from ../references/components.md as a catalog (not a checklist).
-	5. The animation script at the bottom is opt-in: it only activates if you add an
-	   SVG figure with id="parallelFig" and paths with class="parallel-line".
-
-	Typography model:
-	- Body text (Korean and English alike): Hahmlet — a serif optimized for CJK + Latin.
-	- Code, pre, kbd, samp: JetBrains Mono.
-	- Visual hierarchy comes from size and weight within a single family,
-	  not from a serif/sans contrast.
--->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Explainer</title>
+<title>쓰기 전 로그의 일생</title>
+<script>document.documentElement.classList.add('js');</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 	:root {
-		/* Anthropic reference swatches observed from anthropic.com / claude.com pages. */
+		/* Yuumi reference swatches: warm paper, near-black ink, restrained clay accent. */
 		--bg: #F5F4ED;
 		--bg-deep: #EFEDE4;
 		--surface: #FAF9F5;
@@ -224,7 +204,7 @@
 		min-width: max-content;
 	}
 
-	/* PrismJS token theme tuned to Anthropic dark code blocks. */
+	/* PrismJS token theme tuned to warm dark code blocks. */
 	.token.comment,
 	.token.prolog,
 	.token.doctype,
@@ -300,6 +280,11 @@
 	}
 	.meta dd { margin: 0; font-size: 15px; color: var(--text); line-height: 1.5; }
 	.meta dd code { font-size: 13.5px; }
+	/* Wrapper tolerance: the grid lays out DIRECT children only, so a nested
+	   <dl> (the easy markup guess: <div class="meta"><dl>…) would otherwise
+	   collapse whole into the 110px label column. display:contents promotes
+	   its dt/dd back to grid items. The contract is still <dl class="meta">. */
+	.meta > dl { display: contents; }
 
 	.method-tag {
 		display: inline-block;
@@ -490,6 +475,11 @@
 	/* Hairline table */
 	.t-wrap { overflow-x: auto; margin: 32px 0; }
 	table { width: 100%; border-collapse: collapse; font-size: 15.5px; background: transparent; }
+	/* Keep row-label columns scannable. Auto table layout otherwise collapses the
+	   first column in fact tables; 15em is ~1.5x the natural width observed in
+	   mixed Korean/English labels, while .t-wrap still allows horizontal scroll. */
+	th:first-child,
+	td:first-child { min-width: 15em; }
 	th, td {
 		text-align: left;
 		padding: 18px 16px 18px 0;
@@ -515,8 +505,8 @@
 	th, td { overflow-wrap: normal; word-break: normal; }
 	.col-tight { white-space: nowrap; }
 
-	/* Collapsible section — progressive disclosure. Open by default in source so
-	   JS-off / print still shows everything. */
+	/* Collapsible section — progressive disclosure. Native <details> works without JS;
+	   never put the page's headline insight inside a fold. */
 	.fold { border-top: 1px solid var(--rule); margin: 8px 0; }
 	.fold > summary {
 		list-style: none; cursor: pointer; padding: 16px 0;
@@ -651,9 +641,21 @@
 	.replay:hover { border-color: var(--accent); color: var(--accent-deep); }
 	.replay svg { width: 12px; height: 12px; }
 
-	/* SVG animation primitives (JS at bottom controls dasharray) */
-	.parallel-line { opacity: 0; }
-	.parallel-line.ready { opacity: 1; }
+	/* SVG animation primitives (JS at bottom controls dasharray).
+	   Default = meaningful final still frame. JS hides only until it primes the paths. */
+	.parallel-line { opacity: 1; }
+	html.motion-ready #parallelFig .parallel-line:not(.ready) { opacity: 0; }
+	html.parallel-error #parallelFig .parallel-line {
+		opacity: 1 !important;
+		stroke-dashoffset: 0 !important;
+		transition: none !important;
+	}
+	#parallelFig #awaitNode { stroke: var(--accent); stroke-dasharray: 0; }
+	#parallelFig #commitArrow,
+	#parallelFig #commitLabel { opacity: 1; }
+	html.motion-ready #parallelFig #awaitNode:not(.ready-final) { stroke: var(--rule-strong); stroke-dasharray: 3 3; }
+	html.motion-ready #parallelFig #commitArrow:not(.ready-final),
+	html.motion-ready #parallelFig #commitLabel:not(.ready-final) { opacity: 0; }
 
 	@keyframes pulseDot {
 		0%, 100% { opacity: 0.3; r: 3; }
@@ -664,6 +666,15 @@
 	@media (prefers-reduced-motion: reduce) {
 		.parallel-line {
 			stroke-dashoffset: 0 !important;
+			transition: none !important;
+			opacity: 1 !important;
+		}
+		#parallelFig #awaitNode {
+			stroke: var(--accent) !important;
+			stroke-dasharray: 0 !important;
+		}
+		#parallelFig #commitArrow,
+		#parallelFig #commitLabel {
 			transition: none !important;
 			opacity: 1 !important;
 		}
@@ -686,15 +697,13 @@
 		figcaption { padding: 0 22px; }
 	}
 
-	/* Table of contents (scrollspy), taken OUT of normal flow (position:fixed) so
-	   it never steals width from the content — the article always renders full
-	   width. Vertically centered, ALWAYS on the side (never snapped to the top).
-	   Two modes by viewport width:
+	/* Table of contents (scrollspy). Desktop/tablet keeps the TOC out of normal flow
+	   so it never steals content width; mobile turns it into a touch-friendly inline map.
+	   Responsive modes:
 	     >= 1480px   full label rail parked in the right margin beside the column
-	     < 1480px    collapsed to a silhouette of bars at the right edge; hovering
-	                 or focusing a link expands it as an overlay ON TOP of content
-	   Never make the TOC a flex/grid column or a float — those reduce or overlap
-	   the content. Fixed positioning keeps the content width constant. */
+	     721-1479px  collapsed right-side silhouette; hover/focus expands overlay
+	     <= 720px    inline map at the top of the document
+	   Never make the desktop TOC a flex/grid column or float. */
 	.toc {
 		position: fixed;
 		top: 50%;
@@ -770,6 +779,42 @@
 		.toc a:hover { color: var(--text-dim); }
 	}
 
+	/* Touch/mobile: make the map tappable instead of a 2px side rail. */
+	@media (max-width: 720px) {
+		.toc, .toc:hover, .toc:focus-within {
+			position: static;
+			transform: none;
+			right: auto;
+			max-height: none;
+			overflow: visible;
+			padding: 14px 0;
+			margin: 0 0 36px;
+			background: none;
+			border: 0;
+			border-top: 1px solid var(--rule);
+			border-bottom: 1px solid var(--rule);
+			border-radius: 0;
+			box-shadow: none;
+		}
+		.toc a, .toc:hover a, .toc:focus-within a {
+			width: auto;
+			height: auto;
+			min-height: 40px;
+			margin: 0;
+			padding: 7px 0;
+			background: none;
+			color: var(--text-faint);
+			overflow: visible;
+			white-space: normal;
+			line-height: 1.45;
+		}
+		.toc a.active, .toc:hover a.active, .toc:focus-within a.active {
+			width: auto;
+			background: none;
+			color: var(--accent-deep);
+		}
+	}
+
 	@media (prefers-reduced-motion: reduce) { .toc, .toc a { transition: none; } }
 
 	/* Tabs — switch parallel views (e.g. language variants). JS-off shows all panels. */
@@ -829,7 +874,8 @@
 		.fold > summary::before, .toc a, .tab { transition: none !important; }
 	}
 
-	.tab:focus-visible, .stepper-nav button:focus-visible,
+	.tab:focus-visible, .stepper-nav button:focus-visible, .replay:focus-visible,
+	.ba-control input:focus-visible, .table-filter:focus-visible,
 	.toc a:focus-visible, .fold > summary:focus-visible {
 		outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px;
 	}
@@ -837,14 +883,6 @@
 </head>
 <body>
 <div class="container">
-<nav class="toc" aria-label="On this page">
-	<a href="#why">왜 먼저 기록하나</a>
-	<a href="#commit">커밋의 일생</a>
-	<a href="#modes">동기와 비동기</a>
-	<a href="#batching">그룹 커밋</a>
-	<a href="#recovery">크래시 복구</a>
-</nav>
-
 <main>
 <p class="eyebrow">Storage internals · 데이터베이스 내부</p>
 <h1>쓰기 전 로그의 일생</h1>
@@ -911,18 +949,18 @@
 <p>3단계의 <code>fsync</code>를 매 커밋마다 끝까지 기다리느냐, 아니면 응답을 먼저 주고 <code>fsync</code>를 뒤로 미루느냐 — 여기서 데이터베이스의 성격이 갈린다. 같은 코드 경로의 <strong>두 변종</strong>이라 나란히 두고 보는 게 가장 빠르다. 아래 탭은 둘 사이를 스크롤 없이 오가게 해 준다.</p>
 
 <div data-tabs>
-	<div class="tab-bar" role="tablist">
-		<button class="tab" data-tab="sync" role="tab">동기 커밋</button>
-		<button class="tab" data-tab="async" role="tab">비동기 커밋</button>
+	<div class="tab-bar">
+		<button class="tab" data-tab="sync">동기 커밋</button>
+		<button class="tab" data-tab="async">비동기 커밋</button>
 	</div>
-	<div class="tab-panel" id="sync" role="tabpanel">
+	<div class="tab-panel" id="sync">
 		<p>커밋이 로그 <code>fsync</code>가 끝날 때까지 블로킹한다. 응답이 돌아왔다면 그 트랜잭션은 디스크에 확정된 것이다 — 충돌이 나도 절대 잃지 않는다. 대신 매 커밋이 디스크 동기화 한 번의 지연을 떠안는다.</p>
 <pre><code class="language-sql">-- 기본값: 응답 = 디스크 확정 보장
 SET synchronous_commit = on;
 COMMIT;  -- WAL fsync가 끝나야 반환</code></pre>
 		<p>금융 원장처럼 “응답했으면 살아 있어야 한다”가 절대 조건인 곳의 기본값이다.</p>
 	</div>
-	<div class="tab-panel" id="async" role="tabpanel">
+	<div class="tab-panel" id="async">
 		<p>커밋이 로그를 메모리 버퍼에 적고 곧장 반환한다. <code>fsync</code>는 백그라운드가 잠시 뒤 처리한다. 응답은 빠르지만, 확정 직전에 충돌하면 마지막 수백 밀리초의 커밋은 사라질 수 있다.</p>
 <pre><code class="language-sql">-- 지연을 줄이는 대신 최근 커밋 유실 위험
 SET synchronous_commit = off;
@@ -1017,88 +1055,166 @@ COMMIT;  -- 즉시 반환, fsync는 나중에</code></pre>
 
 
 
-	<!-- The body is intentionally empty.
-	     Design your own structure based on what the artifact needs.
-	     Pull components from ../references/components.md as a catalog.
-	     Open this file's CSS above to know what classes are available. -->
-
 </main>
+
 </div>
 
 <!-- PrismJS-powered code blocks.
-     Loaded from pinned jsDelivr URLs so the marketplace skill package stays scan-safe.
-     If a final artifact must be fully offline, inline the same pinned PrismJS files during artifact generation after reviewing them. -->
+     Loaded lazily from pinned jsDelivr URLs only when the artifact contains code blocks. -->
 <script>
+(function () {
+	if (!document.querySelector('pre code')) return;
 	window.Prism = window.Prism || {};
 	window.Prism.manual = true;
-</script>
-<script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-core.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-markup.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-css.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-clike.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-javascript.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-typescript.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-kotlin.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-sql.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-yaml.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-json.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-bash.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-python.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-java.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-diff.min.js"></script>
-
-<!-- Pretty integration: fill in standard PrismJS aliases that the minified bundles drop, then highlight + label. -->
-<script>
-	(function () {
+	const PRISM_PINS = [
+		'https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-core.min.js',
+		'https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-markup.min.js',
+		'https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-css.min.js',
+		'https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-clike.min.js',
+		'https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-javascript.min.js',
+		'https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-typescript.min.js',
+		'https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-kotlin.min.js',
+		'https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-sql.min.js',
+		'https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-yaml.min.js',
+		'https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-json.min.js',
+		'https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-bash.min.js',
+		'https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-python.min.js',
+		'https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-java.min.js',
+		'https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-diff.min.js'
+	];
+	function injectScript(src) {
+		return new Promise(function (resolve, reject) {
+			const s = document.createElement('script');
+			s.src = src;
+			s.async = false;
+			s.onload = resolve;
+			s.onerror = function () { reject(new Error('Failed to load ' + src)); };
+			document.head.appendChild(s);
+		});
+	}
+	function runPrettyPrism() {
 		try {
 			const Prism = window.Prism;
-			if (!Prism) return;
+			if (!Prism || !Prism.languages || !Prism.util) return;
 
 			const aliases = {
 				html: 'markup', xml: 'markup', svg: 'markup', mathml: 'markup',
-				sh: 'bash', shell: 'bash', zsh: 'bash',
+				js: 'javascript', mjs: 'javascript', cjs: 'javascript',
+				ts: 'typescript', tsx: 'typescript',
+				kt: 'kotlin', kts: 'kotlin',
+				sh: 'bash', shell: 'bash', zsh: 'bash', console: 'bash', terminal: 'bash',
 				py: 'python',
-				mysql: 'sql', mariadb: 'sql'
+				yml: 'yaml',
+				mysql: 'sql', mariadb: 'sql', postgres: 'sql', postgresql: 'sql'
 			};
 			for (const [from, to] of Object.entries(aliases)) {
-				if (!Prism.languages[from] && Prism.languages[to]) {
-					Prism.languages[from] = Prism.languages[to];
-				}
+				if (!Prism.languages[from] && Prism.languages[to]) Prism.languages[from] = Prism.languages[to];
 			}
 
-			document.querySelectorAll('pre code').forEach((code) => {
-				const lang = Prism.util.getLanguage(code);
-				if (lang && lang !== 'none' && Prism.languages[lang]) {
-					code.parentElement.dataset.lang = lang;
+			function canonicalLanguage(value) {
+				if (!value) return null;
+				const raw = String(value).trim().toLowerCase().replace(/^(language|lang)-/, '');
+				if (!raw || raw === 'none' || raw === 'text' || raw === 'plain') return null;
+				const lang = aliases[raw] || raw;
+				return Prism.languages[lang] ? lang : null;
+			}
+
+			function explicitLanguage(code) {
+				const pre = code.closest('pre');
+				const candidates = [
+					code.getAttribute('data-lang'), code.getAttribute('data-language'),
+					pre && pre.getAttribute('data-lang'), pre && pre.getAttribute('data-language'),
+					Prism.util.getLanguage(code)
+				];
+				for (const candidate of candidates) {
+					const lang = canonicalLanguage(candidate);
+					if (lang) return lang;
+				}
+				return null;
+			}
+
+			function looksLikeJson(text) {
+				if (!/^[\[{]/.test(text)) return false;
+				try { JSON.parse(text); return true; } catch (_) { return false; }
+			}
+
+			function inferLanguage(code) {
+				const text = code.textContent.trim();
+				if (!text) return null;
+				if (/^(diff --git|@@\s)/m.test(text)) return 'diff';
+				if (looksLikeJson(text)) return 'json';
+				if (/^<\/?[a-z][\s\S]*>/i.test(text)) return 'markup';
+				if (/\b(SELECT|INSERT|UPDATE|DELETE|WITH|CREATE|ALTER|DROP|FROM|WHERE|JOIN|FOR UPDATE SKIP LOCKED)\b/i.test(text)) return 'sql';
+				if (/^(\s*[\w.-]+:\s*.+|\s*-\s+[\w.-]+:\s*.+)$/m.test(text) && !/[;{}]/.test(text)) return 'yaml';
+				if (/^(#!.*\b(?:ba|z)?sh\b|\s*(?:\$\s*)?(?:curl|git|npm|pnpm|yarn|node|python|pip|docker|kubectl|hermes|codex|claude|\.\/gradlew)\b)/m.test(text)) return 'bash';
+				if (/\b(data\s+class|suspend\s+fun|fun\s+\w+|val\s+\w+|var\s+\w+|object\s+\w+)\b/.test(text)) return 'kotlin';
+				if (/\b(public\s+class|private\s+final|System\.out|new\s+[A-Z]\w*\()\b/.test(text)) return 'java';
+				if (/\b(def\s+\w+|from\s+\w+\s+import|import\s+\w+|print\(|self\.)\b/.test(text)) return 'python';
+				if (/\b(const|let|function|interface|type|export|import)\b[\s\S]*(=>|{|;)/.test(text)) return 'typescript';
+				if (/\b([.#]?[\w-]+\s*\{|display\s*:|color\s*:|font-size\s*:)\b/.test(text)) return 'css';
+				return null;
+			}
+
+			let missingLanguageCount = 0;
+			document.querySelectorAll('pre code').forEach(function (code) {
+				const pre = code.closest('pre');
+				const explicit = explicitLanguage(code);
+				const inferred = explicit ? null : inferLanguage(code);
+				const lang = explicit || inferred;
+				if (lang) {
+					code.classList.add('language-' + lang);
+					if (pre) pre.dataset.lang = inferred ? lang + ' · inferred' : lang;
+					if (inferred) code.dataset.inferredLanguage = lang;
+				} else {
+					missingLanguageCount += 1;
 				}
 			});
+			if (missingLanguageCount) document.documentElement.dataset.prettyCodeLangMissing = String(missingLanguageCount);
+			document.documentElement.dataset.prettyPrismLoaded = String(PRISM_PINS.length);
 			Prism.highlightAll();
 		} catch (error) {
 			document.documentElement.dataset.prettyHighlightError = error && error.message ? error.message : 'PrismJS highlighting failed';
 		}
-	})();
+	}
+	(function loadPrismSequentially(i) {
+		if (i >= PRISM_PINS.length) { runPrettyPrism(); return; }
+		injectScript(PRISM_PINS[i]).then(function () { loadPrismSequentially(i + 1); }).catch(function (error) {
+			document.documentElement.dataset.prettyPrismLoadError = error.message;
+		});
+	})(0);
+})();
 </script>
 
 <!-- Animation controller — only runs if you add an SVG figure with id="parallelFig".
-     The IIFE auto-plays once when the figure enters the viewport, and exposes
-     window.replayParallel() for an optional replay button.
-     If you don't add such a figure, this script is a no-op. -->
+     Auto-plays once when the figure enters the viewport, exposes window.replayParallel(),
+     and collapses to the final semantic state for JS-off or reduced-motion users. -->
 <script>
-	(function () {
+(function () {
+	try {
 		const fig = document.getElementById('parallelFig');
 		if (!fig) return;
 		const fanouts = Array.from(fig.querySelectorAll('.parallel-line.fanout'));
 		const joins = Array.from(fig.querySelectorAll('.parallel-line.join'));
+		const allLines = fanouts.concat(joins);
 		const awaitNode = fig.querySelector('#awaitNode');
 		const commitArrow = fig.querySelector('#commitArrow');
 		const commitLabel = fig.querySelector('#commitLabel');
 		const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		if (!reducedMotion) document.documentElement.classList.add('motion-ready');
+		const originals = new Map();
 
+		function dashFor(line) {
+			const own = line.getAttribute('stroke-dasharray') || '';
+			const computed = window.getComputedStyle(line).strokeDasharray || '';
+			const dash = own || computed;
+			return dash && dash !== 'none' ? dash : '';
+		}
 		function prime(lines) {
-			return lines.map((line) => {
+			return lines.map(function (line) {
 				const len = line.getTotalLength();
-				line.style.strokeDasharray = len;
-				line.style.strokeDashoffset = reducedMotion ? 0 : len;
+				originals.set(line, { dash: dashFor(line), len: len });
+				line.style.strokeDasharray = String(len);
+				line.style.strokeDashoffset = reducedMotion ? '0' : String(len);
 				line.classList.add('ready');
 				return len;
 			});
@@ -1106,55 +1222,107 @@ COMMIT;  -- 즉시 반환, fsync는 나중에</code></pre>
 		const fanLens = prime(fanouts);
 		const joinLens = prime(joins);
 
-		function animate() {
-			if (reducedMotion) return;
-			fanouts.forEach((line, i) => { line.style.transition = 'none'; line.style.strokeDashoffset = fanLens[i]; });
-			joins.forEach((line, i) => { line.style.transition = 'none'; line.style.strokeDashoffset = joinLens[i]; });
+		function restoreLine(line) {
+			const meta = originals.get(line);
+			line.style.transition = 'none';
+			line.style.strokeDashoffset = '0';
+			if (meta && meta.dash) line.style.strokeDasharray = meta.dash;
+			else line.style.removeProperty('stroke-dasharray');
+			line.classList.add('ready');
+		}
+		function setFinalState() {
+			allLines.forEach(restoreLine);
 			if (awaitNode) {
 				awaitNode.style.transition = 'none';
-				awaitNode.setAttribute('stroke', 'var(--rule-strong)');
-				awaitNode.setAttribute('stroke-dasharray', '3 3');
+				awaitNode.setAttribute('stroke', 'var(--accent)');
+				awaitNode.setAttribute('stroke-dasharray', '0');
+				awaitNode.classList.add('ready-final');
 			}
-			if (commitArrow) { commitArrow.style.transition = 'none'; commitArrow.style.opacity = '0'; }
-			if (commitLabel) { commitLabel.style.transition = 'none'; commitLabel.style.opacity = '0'; }
-			void fig.getBoundingClientRect();
-
-			fanouts.forEach((line, i) => {
-				const delay = 0.05 + i * 0.12;
-				line.style.transition = 'stroke-dashoffset 0.7s ease-out ' + delay + 's';
-				line.style.strokeDashoffset = '0';
-			});
-			joins.forEach((line, i) => {
-				const delay = 0.85 + i * 0.1;
-				line.style.transition = 'stroke-dashoffset 0.55s ease-out ' + delay + 's';
-				line.style.strokeDashoffset = '0';
-			});
-
-			const allDoneAt = (joins.length ? (0.85 + (joins.length - 1) * 0.1 + 0.55) : 1.5);
-			if (awaitNode) {
-				setTimeout(() => {
-					awaitNode.style.transition = 'stroke 0.35s ease-out';
-					awaitNode.setAttribute('stroke', 'var(--accent)');
-					awaitNode.setAttribute('stroke-dasharray', '0');
-				}, allDoneAt * 1000);
-			}
-			if (commitArrow || commitLabel) {
-				setTimeout(() => {
-					if (commitArrow) { commitArrow.style.transition = 'opacity 0.35s ease-out'; commitArrow.style.opacity = '1'; }
-					if (commitLabel) { commitLabel.style.transition = 'opacity 0.35s ease-out'; commitLabel.style.opacity = '1'; }
-				}, (allDoneAt + 0.25) * 1000);
-			}
+			if (commitArrow) { commitArrow.style.transition = 'none'; commitArrow.style.opacity = '1'; commitArrow.classList.add('ready-final'); }
+			if (commitLabel) { commitLabel.style.transition = 'none'; commitLabel.style.opacity = '1'; commitLabel.classList.add('ready-final'); }
 		}
-
-		const observer = new IntersectionObserver((entries) => {
-			entries.forEach((entry) => {
-				if (entry.isIntersecting) { animate(); observer.unobserve(entry.target); }
+		function resetForAnimation() {
+			fanouts.forEach(function (line, i) { line.style.transition = 'none'; line.style.strokeDasharray = String(fanLens[i]); line.style.strokeDashoffset = String(fanLens[i]); });
+			joins.forEach(function (line, i) { line.style.transition = 'none'; line.style.strokeDasharray = String(joinLens[i]); line.style.strokeDashoffset = String(joinLens[i]); });
+			if (awaitNode) { awaitNode.classList.remove('ready-final'); awaitNode.style.transition = 'none'; awaitNode.setAttribute('stroke', 'var(--rule-strong)'); awaitNode.setAttribute('stroke-dasharray', '3 3'); }
+			if (commitArrow) { commitArrow.classList.remove('ready-final'); commitArrow.style.transition = 'none'; commitArrow.style.opacity = '0'; }
+			if (commitLabel) { commitLabel.classList.remove('ready-final'); commitLabel.style.transition = 'none'; commitLabel.style.opacity = '0'; }
+		}
+		function animate() {
+			if (reducedMotion) { setFinalState(); return; }
+			resetForAnimation();
+			void fig.getBoundingClientRect();
+			fanouts.forEach(function (line, i) { const delay = 0.05 + i * 0.12; line.style.transition = 'stroke-dashoffset 0.7s ease-out ' + delay + 's'; line.style.strokeDashoffset = '0'; });
+			joins.forEach(function (line, i) { const delay = 0.85 + i * 0.1; line.style.transition = 'stroke-dashoffset 0.55s ease-out ' + delay + 's'; line.style.strokeDashoffset = '0'; });
+			const allDoneAt = (joins.length ? (0.85 + (joins.length - 1) * 0.1 + 0.55) : 1.5);
+			setTimeout(function () { allLines.forEach(restoreLine); }, allDoneAt * 1000);
+			if (awaitNode) setTimeout(function () { awaitNode.style.transition = 'stroke 0.35s ease-out'; awaitNode.setAttribute('stroke', 'var(--accent)'); awaitNode.setAttribute('stroke-dasharray', '0'); awaitNode.classList.add('ready-final'); }, allDoneAt * 1000);
+			if (commitArrow || commitLabel) setTimeout(function () { if (commitArrow) { commitArrow.style.transition = 'opacity 0.35s ease-out'; commitArrow.style.opacity = '1'; commitArrow.classList.add('ready-final'); } if (commitLabel) { commitLabel.style.transition = 'opacity 0.35s ease-out'; commitLabel.style.opacity = '1'; commitLabel.classList.add('ready-final'); } }, (allDoneAt + 0.25) * 1000);
+		}
+		function bindReplay() {
+			document.querySelectorAll('[data-replay-parallel]').forEach(function (button) {
+				button.addEventListener('click', function (event) { event.preventDefault(); animate(); });
 			});
-		}, { threshold: 0.35 });
-		observer.observe(fig);
+		}
+		window.replayParallel = reducedMotion ? setFinalState : animate;
+		bindReplay();
+		if (reducedMotion) { setFinalState(); return; }
+		if ('IntersectionObserver' in window) {
+			const observer = new IntersectionObserver(function (entries) { entries.forEach(function (entry) { if (entry.isIntersecting) { animate(); observer.unobserve(entry.target); } }); }, { threshold: 0.35 });
+			observer.observe(fig);
+		} else {
+			setFinalState();
+		}
+	} catch (error) {
+		document.documentElement.classList.add('parallel-error');
+		document.documentElement.dataset.prettyParallelError = error && error.message ? error.message : 'parallel animation failed';
+	}
+})();
+</script>
 
-		window.replayParallel = animate;
-	})();
+<script>
+/* Auto TOC — if a long page forgot the rail, build one from real h2 sections.
+   Manual .toc always wins; short pages stay quiet. */
+(function () {
+	var container = document.querySelector('.container');
+	if (!container || container.querySelector('.toc')) return;
+	var headings = Array.prototype.slice.call(container.querySelectorAll('h2')).filter(function (h) {
+		return h.textContent && h.textContent.trim();
+	});
+	if (headings.length < 4) return;
+
+	var usedIds = {};
+	Array.prototype.slice.call(document.querySelectorAll('[id]')).forEach(function (el) {
+		if (el.id) usedIds[el.id] = true;
+	});
+	function labelFor(heading) {
+		var clone = heading.cloneNode(true);
+		Array.prototype.slice.call(clone.querySelectorAll('.num')).forEach(function (n) { n.remove(); });
+		return clone.textContent.trim().replace(/\s+/g, ' ');
+	}
+	function slugFor(text, index) {
+		var base = text.toLowerCase().replace(/[^a-z0-9가-힣]+/g, '-').replace(/^-+|-+$/g, '') || ('section-' + (index + 1));
+		var id = base;
+		var n = 2;
+		while (usedIds[id]) { id = base + '-' + n; n += 1; }
+		usedIds[id] = true;
+		return id;
+	}
+
+	var nav = document.createElement('nav');
+	nav.className = 'toc';
+	nav.setAttribute('aria-label', 'Table of contents');
+	headings.forEach(function (heading, index) {
+		var label = labelFor(heading) || ('Section ' + (index + 1));
+		if (!heading.id) heading.id = slugFor(label, index);
+		var a = document.createElement('a');
+		a.href = '#' + heading.id;
+		a.textContent = label;
+		nav.appendChild(a);
+	});
+	container.insertBefore(nav, container.firstElementChild);
+	document.documentElement.dataset.prettyTocAuto = String(headings.length);
+})();
 </script>
 
 <script>
@@ -1182,21 +1350,65 @@ COMMIT;  -- 즉시 반환, fsync는 나중에</code></pre>
 </script>
 
 <script>
-/* Tabs — progressive enhancement. Without JS all panels stay visible. */
+/* [data-tabs] — accessible progressive enhancement. Without JS all panels stay visible. */
 (function () {
+	var groupIndex = 0;
 	document.querySelectorAll('[data-tabs]').forEach(function (group) {
 		var tabs = Array.prototype.slice.call(group.querySelectorAll('.tab'));
 		var panels = Array.prototype.slice.call(group.querySelectorAll('.tab-panel'));
 		if (!tabs.length || !panels.length) return;
 		group.classList.add('tabs-on');
-		function select(id) {
-			tabs.forEach(function (t) { t.setAttribute('aria-selected', String(t.getAttribute('data-tab') === id)); });
+		var bar = group.querySelector('.tab-bar');
+		if (bar) bar.setAttribute('role', 'tablist');
+		groupIndex += 1;
+
+		function ensureId(el, fallback) {
+			if (!el.id) el.id = fallback;
+			return el.id;
+		}
+
+		tabs.forEach(function (t, index) {
+			var targetId = t.getAttribute('data-tab');
+			var panel = targetId ? document.getElementById(targetId) : panels[index];
+			if (!panel) return;
+			ensureId(panel, 'pretty-tab-panel-' + groupIndex + '-' + index);
+			if (!targetId) { targetId = panel.id; t.setAttribute('data-tab', targetId); }
+			var tabId = ensureId(t, 'pretty-tab-' + groupIndex + '-' + index);
+			t.setAttribute('role', 'tab');
+			t.setAttribute('aria-controls', targetId);
+			panel.setAttribute('role', 'tabpanel');
+			panel.setAttribute('aria-labelledby', tabId);
+			panel.setAttribute('tabindex', '0');
+		});
+
+		function select(id, shouldFocus) {
+			tabs.forEach(function (t) {
+				var selected = t.getAttribute('data-tab') === id;
+				t.setAttribute('aria-selected', String(selected));
+				t.setAttribute('tabindex', selected ? '0' : '-1');
+				if (selected && shouldFocus) t.focus();
+			});
 			panels.forEach(function (p) { p.hidden = (p.id !== id); });
 		}
+
+		function selectedIndex() {
+			return Math.max(0, tabs.findIndex(function (t) { return t.getAttribute('aria-selected') === 'true'; }));
+		}
+
 		tabs.forEach(function (t) {
-			t.addEventListener('click', function () { select(t.getAttribute('data-tab')); });
+			t.addEventListener('click', function () { select(t.getAttribute('data-tab'), false); });
+			t.addEventListener('keydown', function (event) {
+				var i = selectedIndex();
+				if (event.key === 'ArrowRight') i = (i + 1) % tabs.length;
+				else if (event.key === 'ArrowLeft') i = (i - 1 + tabs.length) % tabs.length;
+				else if (event.key === 'Home') i = 0;
+				else if (event.key === 'End') i = tabs.length - 1;
+				else return;
+				event.preventDefault();
+				select(tabs[i].getAttribute('data-tab'), true);
+			});
 		});
-		select(tabs[0].getAttribute('data-tab'));
+		select(tabs[0].getAttribute('data-tab'), false);
 	});
 })();
 </script>
@@ -1260,7 +1472,7 @@ COMMIT;  -- 즉시 반환, fsync는 나중에</code></pre>
 
 <script>
 /* Heavy-library lazy loader — only fetches Chart.js / Mermaid when the page
-   actually uses them. Pinned CDN (scan-safe, same pattern as PrismJS). */
+   actually uses them. Pinned CDN; online viewing is assumed. */
 (function () {
 	var PINS = {
 		chart: 'https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js',
@@ -1272,7 +1484,7 @@ COMMIT;  -- 즉시 반환, fsync는 나중에</code></pre>
 	}
 	function inject(src, onload) {
 		var s = document.createElement('script');
-		s.src = src; s.async = true;
+		s.src = src; s.async = true; s.crossOrigin = 'anonymous';
 		s.onload = onload;
 		s.onerror = function () { document.documentElement.dataset.prettyLibError = src; };
 		document.head.appendChild(s);

@@ -15,7 +15,7 @@ A diagram earns its place only when it reduces reader work. Before drawing, name
 
 If the answer is "visual interest," skip the diagram. There is no fixed count and no ceiling — the number of figures is driven by **how many genuine cognitive-load points the content has**, not by its length, and you judge that. The goal is to visualize *every* place where the reader would otherwise have to run a computation in their head: a branch to simulate, a timeline to hold, a transformation to track, a boundary to map. A page with one such point needs one figure; a page dense with them needs many; long prose with few stuck-points still needs few. The only gate is that each figure clears a named burden and none exists just to look busy — cut mediocre or decorative visuals, never the ones that remove real work. Put each figure near the text it replaces, and make the caption state the insight.
 
-Default to inline SVG. Use Mermaid, Graphviz/DOT, ELK/Dagre, D3, or Observable Plot only when the data size or layout problem justifies the dependency; for final pretty artifacts, export or translate the result back into self-contained SVG styled with the shell tokens.
+Default to inline SVG. Use Mermaid, Graphviz/DOT, ELK/Dagre, D3, or Observable Plot only when the data size or layout problem justifies the dependency; for final pretty artifacts, export or translate the result back into inline SVG styled with the shell tokens.
 
 ## The modality ladder — prose < diagram < motion
 
@@ -26,19 +26,20 @@ Two tolls govern every step up the ladder:
 1. **Burden** — climb only when a named stuck-point pays for it (a branch to simulate, a timeline to hold, a transformation to track). Motion added for "visual interest" is slop one rung worse than a decorative static diagram, because it also spends the reader's attention.
 2. **Truthfulness** — motion *asserts* what a still drawing does not: time, order, causality, parallelism. Animate only where those properties are literally real. Revealing a top-to-bottom sequence diagram in message order is truthful by construction — the page already flows in time. Animating independent items to fan out "in parallel" when they actually run sequentially or in a batch installs a false model. When unsure, stay static.
 
-**Degradation is part of the contract, not an afterthought.** Every animation must collapse to a meaningful final still frame under `prefers-reduced-motion` and with JS off — the static frame has to carry the point alone. In a self-contained pretty artifact, "motion" means controlled SVG/CSS animation and stepped reveals (`[data-stepper]`), **never** an embedded video: a single scan-safe file keeps no `.mp4` dependency.
+**Degradation is part of the contract, not an afterthought.** Every animation must collapse to a meaningful final still frame under `prefers-reduced-motion` and with JS off — the static frame has to carry the point alone. In a final pretty artifact, "motion" means controlled SVG/CSS animation and stepped reveals (`[data-stepper]`), **never** an embedded video.
 
 Reach for the **sequence diagram (Pattern 2)** first — it is the canonical *safe* motion. The turnkey **fan-out/join (Pattern 3)** is the most eye-catching but also the most truthfulness-dangerous, and the shell ships a controller for only one instance per page; treat it as a special case, not the default animation.
 
 ## Universal SVG principles
 
 1. **Single accent color.** Stroke in `var(--accent)` for emphasized elements, `var(--text)` for primary structure, `var(--text-dim)` for secondary. No fills (except `var(--bg)` to mask backgrounds behind crossing paths).
-2. **Thin strokes.** 1.2–1.5 for primary structure, 1.0 for secondary lines. Anthropic diagrams are line-art, not bold infographics.
+2. **Thin strokes.** 1.2–1.5 for primary structure, 1.0 for secondary lines. Yuumi diagrams are line-art, not bold infographics.
 3. **Serif italic labels.** Use the `.svg-text-italic` class (italic serif, accent-deep) for diagram-internal labels. Monospace `.svg-text-mono` for code identifiers inside boxes.
 4. **Empty box fills.** Most rectangles should be `fill="none"` so the cream background shows through. Fill with `var(--bg)` only to mask lines passing behind a box.
-5. **No drop shadows. No gradients.** Anthropic style is flat.
+5. **No drop shadows. No gradients.** Yuumi style is flat.
 6. **`viewBox` not fixed sizes.** Make the SVG scale to its container.
-7. **One anchor direction per line — then size to the longest label.** The usual collision is not a label hitting the box edge; it is two labels facing each other on one row, where a long left-aligned name runs into a right-aligned one. The fix is structural, not metric: don't place opposing left/right-aligned labels on the same line. Give a secondary label its own line, and no name length can ever collide, because a lone label cannot cross itself. *Only then* handle the single-axis case: if one label still overflows the box edge, widen the box; if labels grow long or numerous enough that hand-placed boxes keep breaking, move that diagram to CSS auto-width boxes or an auto-layout renderer — hand-placed line-art is the default for short, fixed labels, not a mandate. Reading the markup will not catch overflow; verify in the rendered browser view.
+7. **Accessible figure shell.** Use `<figure>`, `<svg role="img" aria-labelledby="...">`, an SVG `<title>` and `<desc>`, plus an insight-bearing `<figcaption>`. `aria-label` is acceptable for tiny throwaway diagrams, but title/desc scales better.
+8. **One anchor direction per line — then size to the longest label.** The usual collision is not a label hitting the box edge; it is two labels facing each other on one row, where a long left-aligned name runs into a right-aligned one. The fix is structural, not metric: don't place opposing left/right-aligned labels on the same line. Give a secondary label its own line, and no name length can ever collide, because a lone label cannot cross itself. *Only then* handle the single-axis case: if one label still overflows the box edge, widen the box; if labels grow long or numerous enough that hand-placed boxes keep breaking, move that diagram to CSS auto-width boxes or an auto-layout renderer — hand-placed line-art is the default for short, fixed labels, not a mandate. Reading the markup will not catch overflow; verify in the rendered browser view.
 
 ## When to use a diagram
 
@@ -63,7 +64,9 @@ Three or four entity boxes connected by labeled lines. Use this for "what tables
 
 ```html
 <figure>
-  <svg viewBox="0 0 720 360" xmlns="http://www.w3.org/2000/svg" aria-label="Domain architecture">
+  <svg role="img" aria-labelledby="erd-title erd-desc" viewBox="0 0 720 360" xmlns="http://www.w3.org/2000/svg">
+    <title id="erd-title">Domain architecture</title>
+    <desc id="erd-desc">Entities, fields, and connector arrows show how the domain pieces relate.</desc>
     <defs>
       <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
         <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--text-dim)"/>
@@ -100,7 +103,9 @@ Time flows top-to-bottom. Each actor is a lane with a dashed lifeline. Messages 
 
 ```html
 <figure>
-  <svg viewBox="0 0 720 560" xmlns="http://www.w3.org/2000/svg">
+  <svg role="img" aria-labelledby="seq-title seq-desc" viewBox="0 0 720 560" xmlns="http://www.w3.org/2000/svg">
+    <title id="seq-title">Sequence flow</title>
+    <desc id="seq-desc">Actors exchange messages from top to bottom in time order.</desc>
     <defs>
       <marker id="arr-fwd" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
         <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--text)"/>
@@ -155,7 +160,9 @@ The SVG structure with both fan-out and join phases, plus an `awaitAll` merge no
 ```html
 <figure>
   <div id="parallelFig">
-  <svg viewBox="0 0 900 280" xmlns="http://www.w3.org/2000/svg" aria-label="Parallel work fan-out and join">
+  <svg viewBox="0 0 900 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="parallel-title parallel-desc">
+    <title id="parallel-title">Parallel work fan-out and join</title>
+    <desc id="parallel-desc">A source sends work to several targets, waits for all paths to join, then continues.</desc>
     <defs>
       <marker id="arr-final" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
         <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--text-dim)"/>
@@ -191,19 +198,19 @@ The SVG structure with both fan-out and join phases, plus an `awaitAll` merge no
     <!-- Merge node (awaitAll) -->
     <g>
       <circle id="awaitNode" cx="770" cy="158" r="26"
-        fill="var(--bg)" stroke="var(--rule-strong)" stroke-width="1.3"
-        stroke-dasharray="3 3"/>
+        fill="var(--bg)" stroke="var(--accent)" stroke-width="1.3"
+        stroke-dasharray="0"/>
       <text x="770" y="155" class="svg-text" text-anchor="middle" font-weight="600" font-size="11">await</text>
       <text x="770" y="168" class="svg-text" text-anchor="middle" font-weight="600" font-size="11">All</text>
     </g>
 
     <!-- Final arrow (fades in last) -->
-    <line x1="797" y1="158" x2="855" y2="158" stroke="var(--text-dim)" stroke-width="1" marker-end="url(#arr-final)" id="commitArrow" opacity="0"/>
-    <text x="826" y="148" class="svg-text-italic" text-anchor="middle" id="commitLabel" opacity="0">next ↩</text>
+    <line x1="797" y1="158" x2="855" y2="158" stroke="var(--text-dim)" stroke-width="1" marker-end="url(#arr-final)" id="commitArrow"/>
+    <text x="826" y="148" class="svg-text-italic" text-anchor="middle" id="commitLabel">next ↩</text>
   </svg>
   </div>
   <figcaption><span class="fig-num">Fig N</span>{{caption}}
-    <br><button class="replay" onclick="replayParallel()">
+    <br><button class="replay" type="button" data-replay-parallel aria-label="Replay parallel animation">
       <svg viewBox="0 0 16 16"><path d="M 8 3 V 1 L 4 4 L 8 7 V 5 a 3 3 0 1 1 -3 3" stroke="currentColor" stroke-width="1.3" fill="none"/></svg>
       replay
     </button>
@@ -216,9 +223,9 @@ The SVG structure with both fan-out and join phases, plus an `awaitAll` merge no
 - `.parallel-line.fanout` — paths that animate in phase 1
 - `.parallel-line.join` — paths that animate in phase 2 (optional)
 - `#awaitNode` — node that turns from dashed to solid when joins complete (optional)
-- `#commitArrow`, `#commitLabel` — final elements that fade in last (optional)
+- `#commitArrow`, `#commitLabel` — final elements that fade in last when JS runs; leave them visible in source so the JS-off still frame is complete (optional)
 
-The IIFE at the bottom of `shell.html` reads these IDs and orchestrates the 4-phase animation. Don't rewrite it — just add the elements with the right IDs.
+The IIFE at the bottom of `shell.html` reads these IDs and orchestrates the 4-phase animation. Don't rewrite it — just add the elements with the right IDs, and use `data-replay-parallel` on the replay button instead of inline `onclick`.
 
 **Animation timing** (auto-played once when figure enters viewport):
 1. **Phase 1 — fan-out** (0.05s + i×0.12s start, 0.7s duration): solid accent lines reveal from source to targets
@@ -276,7 +283,7 @@ if (reducedMotion) {
 }
 ```
 
-The template's CSS already short-circuits `.parallel-line` to its final visible state when this media query matches.
+The template's CSS and controller set the final visible state when this media query matches — reduced motion should show the finished meaning, not omit the final arrow, label, or merge state.
 
 ### Rule 5: Auto-play once via IntersectionObserver
 
@@ -294,7 +301,7 @@ const observer = new IntersectionObserver((entries) => {
 observer.observe(fig);
 ```
 
-Then expose `window.replayParallel = animate` so the replay button works.
+Then bind a `[data-replay-parallel]` button or expose a scoped replay function. Avoid inline `onclick` in final artifacts.
 
 ## Pattern 4 — Decision tree
 

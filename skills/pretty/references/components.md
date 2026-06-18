@@ -2,7 +2,7 @@
 
 A catalog of the visual components available in `../assets/shell.html` when read from this references directory, or `skills/pretty/assets/shell.html` from the repo root. **Each entry tells you what the component is *for* — when its meaning fits.** It does not tell you where to put it or what should come before or after. That is your decision, made for the specific artifact you're building.
 
-This catalog is a palette, not a checklist. If readability wants a component not listed here, make it. What must stay consistent is the Anthropic-like visual grammar: warm paper, restrained clay accents, hairline rules, serif rhythm, quiet surfaces, and generous spacing.
+This catalog is a palette, not a checklist. If readability wants a component not listed here, make it. What must stay consistent is the Yuumi visual grammar: warm paper, restrained clay accents, hairline rules, serif rhythm, quiet surfaces, and generous spacing.
 
 Read this when you have a question like *"I want to convey X — what fits?"* — not before you've thought about what the page needs to say.
 
@@ -25,7 +25,7 @@ A first letter set in large serif accent. Use it **once per document**, on the p
 A line that deserves to ring. Big italic serif with a hanging quote glyph. The quote mark is drawn by CSS — don't include literal `"` in your text. Use sparingly: 0–3 per document.
 
 ### `<pre><code>` — code excerpt
-Dark monospace block for short excerpts. Add the library-compatible language class (`class="language-<id>"`) so the shell can render and label it. Without a class the block stays plain monospace. Keep excerpts short; if the snippet is long, your prose is doing too little.
+Dark monospace block for short excerpts. Add the library-compatible language class (`class="language-<id>"`) so the shell can render and label it. Prism loads lazily only when code blocks exist; without a class the block may stay plain monospace and static QA will complain unless it is intentionally plain text. Keep excerpts short; if the snippet is long, your prose is doing too little.
 
 ### `<code>` — inline code
 Accent-colored monospace inline. Use for identifiers, file paths, short literal values.
@@ -124,8 +124,11 @@ Inline italic tag + serif title + dim body. Use for portable lessons — what a 
 
 ## Diagrams and tables
 
+### `<img>`
+Use images only when they carry meaning that prose or line-art cannot. Every meaningful image needs concise `alt`; decorative images use `alt=""`. Do not rely on color alone to convey a distinction.
+
 ### `<figure>` + `<svg>` + `<figcaption>`
-For diagrams. Caption is italic serif centered, prefixed by `<span class="fig-num">Fig N</span>`. The caption should make the *insight* explicit, not describe what's drawn — a reader who sees only the caption should still get the point.
+For diagrams. Use `<svg role="img" aria-labelledby="...">` with a `<title>` and `<desc>` unless the SVG is purely decorative. Caption is italic serif centered, prefixed by `<span class="fig-num">Fig N</span>`. The caption should make the *insight* explicit, not describe what's drawn — a reader who sees only the caption should still get the point. Meaningful SVGs should use `role="img"` with `<title>`/`<desc>` or `aria-labelledby`; decorative SVG fragments should be hidden from assistive tech.
 
 See `references/svg-patterns.md` for four patterns: ERD, sequence, fan-out/join (with animation), decision tree. Use a diagram when the relationship is spatial, temporal, branching, contractual, transformational, or evidentiary in a way that linear prose would force the reader to calculate or hold a stack in memory. Skip it when prose already makes the idea clear. A figure may also be put in motion when motion *truthfully* unloads a timeline or branch (a sequence reveal, a stepped walkthrough) — `svg-patterns.md` covers the modality ladder and the one-per-page limit on the turnkey fan-out/join controller.
 
@@ -150,9 +153,9 @@ Each row is a `.path` + `.note` pair as **direct** children of the grid (same di
 
 These live in the shell too. See `interaction-patterns.md` for the full catalog and the "name the burden" rule.
 
-- `.toc` — vertically-centered, fixed scrollspy table of contents for long pages; it is out of flow so it never reduces the content width (collapses to a silhouette + hover-overlay below 1480px). Make it a direct child of `.container`; see `interaction-patterns.md`.
-- `.fold` — collapsible `<details>` section for progressive disclosure (never fold the main point).
-- `.tabs` — switch parallel views; JS-off shows all panels.
+- `.toc` — scrollspy table of contents for long pages; desktop/tablet keeps it out of flow so it never reduces content width, and mobile turns it into an inline touch-friendly map. Make it a direct child of `.container`; see `interaction-patterns.md`.
+- `.fold` — native `<details>` section for optional depth (never fold the main point; JS-off still lets the reader open it).
+- `[data-tabs]` — switch parallel views; JS-off shows all panels stacked.
 - `[data-before-after]`, `[data-stepper]`, `[data-filter-table]` — active widgets; use only when you can name the burden removed.
 
 For quantitative charts (Chart.js) or large auto-laid graphs (Mermaid), see `data-viz.md`. Inline SVG stays the default for relational/line-art diagrams.
@@ -192,7 +195,7 @@ The components above are *tools*. The right tool depends on what you're trying t
 - A *tangent or citation* → `<sup>` + `.footnotes`
 - A *long page that needs a map* → `.toc`
 - *Optional depth that would overload the first screen* → `.fold`
-- *Parallel alternatives (same idea, different form)* → `.tabs`
+- *Parallel alternatives (same idea, different form)* → `[data-tabs]`
 - A *two-state comparison* → `[data-before-after]`
 - A *sequence worth pacing* → `[data-stepper]`
 - A *quantitative series* → Chart.js (`data-viz.md`); a *large graph* → Mermaid
