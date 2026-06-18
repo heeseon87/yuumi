@@ -1,7 +1,7 @@
 ---
 name: yuumi:explain
 description: Use when a file, endpoint, module, system, or concept needs to be genuinely understood, not skimmed — renders a single-file Anthropic-style HTML explainer that installs a mental model in one read
-version: 1.5.6
+version: 1.6.0
 argument-hint: [target]
 ---
 
