@@ -91,85 +91,6 @@ function getGitBranch(stdin) {
   }
 }
 
-function getInputMethod() {
-  const os = process.platform;
-  try {
-    if (os === 'darwin') {
-      const out = execSync(
-        `defaults read "${homedir()}/Library/Preferences/com.apple.HIToolbox.plist" AppleSelectedInputSources`,
-        { encoding: 'utf-8', timeout: 500, stdio: ['pipe', 'pipe', 'pipe'] }
-      );
-      return /han|korean/i.test(out) ? '가' : 'A';
-    }
-    if (os === 'linux') {
-      // fcitx5 → fcitx4 → ibus 순서로 시도
-      for (const [remoteCmd, nameCmd] of [
-        ['fcitx5-remote', 'fcitx5-remote -n'],
-        ['fcitx-remote', 'fcitx-remote -n'],
-      ]) {
-        try {
-          const state = execSync(remoteCmd, { encoding: 'utf-8', timeout: 500, stdio: ['pipe', 'pipe', 'pipe'] }).trim();
-          if (state === '1') return 'A';  // 직접 입력 (영문)
-          if (state === '2') {
-            const name = execSync(nameCmd, { encoding: 'utf-8', timeout: 500, stdio: ['pipe', 'pipe', 'pipe'] }).trim();
-            return /hangul|korean/i.test(name) ? '가' : 'A';
-          }
-        } catch {}
-      }
-      try {
-        const engine = execSync('ibus engine', { encoding: 'utf-8', timeout: 500, stdio: ['pipe', 'pipe', 'pipe'] }).trim();
-        return /hangul/i.test(engine) ? '가' : 'A';
-      } catch {}
-      return null;
-    }
-    if (os === 'win32') {
-      // Foreground window의 IME conversion mode를 Win32 API로 직접 조회.
-      // 한국어 키보드(langId 0x0412) + IME open + 한글 모드면 '가', 아니면 'A'.
-      // 한/영 키 토글(레이아웃은 그대로 둔 채 mode만 바뀜)도 정확히 잡음.
-      // .ps1 실행은 execution policy로 막히므로 -EncodedCommand로 인라인 전달.
-      const psScript = `
-$code = @'
-using System;
-using System.Runtime.InteropServices;
-public class IME {
-    [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
-    [DllImport("user32.dll")] public static extern IntPtr GetWindowThreadProcessId(IntPtr hwnd, IntPtr id);
-    [DllImport("user32.dll")] public static extern IntPtr GetKeyboardLayout(uint thread);
-    [DllImport("imm32.dll")] public static extern IntPtr ImmGetDefaultIMEWnd(IntPtr hWnd);
-    [DllImport("user32.dll")] public static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
-    public static string Detect() {
-        IntPtr hwnd = GetForegroundWindow();
-        if (hwnd == IntPtr.Zero) return "A";
-        uint thread = (uint)GetWindowThreadProcessId(hwnd, IntPtr.Zero);
-        IntPtr layout = GetKeyboardLayout(thread);
-        int langId = layout.ToInt32() & 0xFFFF;
-        if (langId != 0x0412) return "A";
-        IntPtr ime = ImmGetDefaultIMEWnd(hwnd);
-        if (ime == IntPtr.Zero) return "A";
-        int open = (int)SendMessage(ime, 0x0283, (IntPtr)5, IntPtr.Zero);
-        if (open == 0) return "A";
-        int mode = (int)SendMessage(ime, 0x0283, (IntPtr)1, IntPtr.Zero);
-        return ((mode & 1) == 1) ? "ko" : "A";
-    }
-}
-'@
-Add-Type -TypeDefinition $code
-[IME]::Detect()
-`;
-      const encoded = Buffer.from(psScript, 'utf16le').toString('base64');
-      const result = execSync(
-        `powershell -NoProfile -NoLogo -OutputFormat Text -EncodedCommand ${encoded}`,
-        { encoding: 'utf-8', timeout: 2500, stdio: ['pipe', 'pipe', 'pipe'] }
-      );
-      // 마지막 비어있지 않은 줄이 결과 ("ko" 또는 "A")
-      const lines = result.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-      const last = lines[lines.length - 1] || '';
-      return last === 'ko' ? '가' : 'A';
-    }
-  } catch {}
-  return null;
-}
-
 function getContextPercent(stdin) {
   const nativePercent = stdin.context_window?.used_percentage;
   if (typeof nativePercent === 'number' && !Number.isNaN(nativePercent)) {
@@ -498,11 +419,6 @@ async function main() {
 
     // ── Line 1: Model  Directory  Branch (powerline 세그먼트) ──
     const segments = [];
-
-    const ime = getInputMethod();
-    if (ime) {
-      segments.push({ text: `\uF11C ${ime}`, color: ime === '가' ? TN.coral : TN.teal });
-    }
 
     const version = stdin.version || '';
     const latest = getLatestVersion();
