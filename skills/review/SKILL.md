@@ -1,7 +1,7 @@
 ---
 name: yuumi:review
 description: Actively understand a change someone else made — a PR, branch, or diff you did not write — through a dialogue walkthrough (prediction, tracing, rough sketches) before you judge it. Use when starting a PR review or making sense of an unfamiliar diff.
-version: 1.6.13
+version: 1.6.14
 argument-hint: [PR number / branch / diff / file]
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: yuumi:design
 description: Agree on domain, package location, responsibility, and function signatures before implementing — sketch the skeleton, record a design note, hand off code to yuumi:implement. Invoke by hand.
-version: 1.6.13
+version: 1.6.14
 disable-model-invocation: true
 argument-hint: [what to build]
 ---

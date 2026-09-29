@@ -1,7 +1,7 @@
 ---
 name: yuumi:explain-fast
 description: Explain a topic like I'm one year into its field, right in the chat. Use when the user types /yuumi-explain-fast <topic> or wants the explainer fast in the terminal without an HTML artifact.
-version: 1.6.13
+version: 1.6.14
 argument-hint: [topic]
 ---
 
