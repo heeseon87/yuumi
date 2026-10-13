@@ -81,6 +81,9 @@ type Io = {
   now: () => Promise<number>
   sleep: (ms: number) => Promise<void>
   after: (ms: number, fn: () => void) => Timer
+  every: (ms: number, fn: () => void) => Timer
+  /** The session running now: a /branch forks a new id without a session.start. */
+  sessionId: () => Promise<string>
   status: (text: string | undefined) => void
   remember: (key: string, value: string) => Promise<void>
   recall: (key: string) => Promise<unknown>
@@ -315,13 +318,30 @@ export const register: Register = (on, options) => {
     return undefined
   }
 
+  /**
+   * Puts `session` and `label` on the session running now, and the poller with them.
+   * A /branch forks a new session id under a live module without a session.start, so
+   * everything that names this session to the server would otherwise keep the old id:
+   * the server sees a session that no longer polls and the page reads "no session".
+   */
+  async function ensureSession(at: Io) {
+    const id = await at.sessionId().catch(() => '')
+    if (id === '' || id === session) return
+    session = id
+    label = `${cwd.split('/').filter(p => p !== '').at(-1) ?? '~'} · ${session.slice(0, 8)}`
+    poller?.cancel()
+    poller = at.every(POLL_MS, () => void pollFeedback(at))
+  }
+
   /** Makes this session the one that receives the map's feedback. */
   async function own(at: Io, name: string) {
+    await ensureSession(at)
     await api(at, `/api/${name}/own`, { session, label }).catch(() => undefined)
   }
 
   /** The session that receives the map's feedback now, when it is not this one and still listens. */
   async function otherOwner(at: Io, name: string): Promise<string | undefined> {
+    await ensureSession(at)
     try {
       const res = await at.fetch(`${base}/api/${name}/feedback`)
       if (!res.ok) return undefined
@@ -707,6 +727,8 @@ export const register: Register = (on, options) => {
       now: () => $.clock.now(),
       sleep: ms => $.clock.sleep(ms),
       after: (ms, fn) => $.clock.after(ms, fn),
+      every: (ms, fn) => $.clock.every(ms, fn),
+      sessionId: () => $.session.id(),
       status: text => $.ui.status(text),
       remember: (key, value) => $.store.set(key, value),
       recall: key => $.store.get(key),
@@ -755,6 +777,16 @@ export const register: Register = (on, options) => {
   })
 
   on('turn.start', async ($, e, next) => {
+    // A /branch forks a new session id without a session.start, leaving `session` on the
+    // forked-from one: the server then waits on a session that never polls again. This turn
+    // runs in the session that matters, so take its id here and put the poller back on it.
+    const running = await $.session.id()
+    if (running !== '' && running !== session && io !== undefined) {
+      session = running
+      label = `${cwd.split('/').filter(p => p !== '').at(-1) ?? '~'} · ${session.slice(0, 8)}`
+      poller?.cancel()
+      poller = $.clock.every(POLL_MS, () => void pollFeedback(io as Io))
+    }
     const ids = feedbackIdsOf(e.text)
     const doc = await read($, docAtom)
     const progress = await read($, progressAtom)
