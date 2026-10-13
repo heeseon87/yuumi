@@ -1,102 +1,86 @@
 # yuumi 🐱
 
-> A Tokyo Night statusline for Claude Code, and a pack of workflow skills for any agent — installed with one `npx skills` command.
+> A Claude Code plugin marketplace: a Tokyo Night statusline, a handful of workflow skills, and a live design map of what your agent is building.
 > Your agent does the carrying. You ride along like Yuumi — slurping cup ramen, and (let's be honest) taking the credit.
 
 ## Why "yuumi"?
 
 In *League of Legends*, **Yuumi** is the cat who attaches to a teammate and rides into battle on their back. She doesn't walk the lane — she gets carried. The AD carry does the work; Yuumi tosses out a heal, a little speed, the occasional poke, and somehow finishes the game convinced *she* hard-carried. (She was eating cup ramen behind the ADC the whole time.)
 
-That's the whole idea — and in this story, **you're Yuumi.** Your coding **agent is the ADC**: it walks the lane, takes the fights, does the carrying. You attach to it, ride along, toss out the occasional buff (a prompt, a nudge, a skill), and come away having "carried." This plugin is your Yuumi kit — a statusline to watch the lane for you, and a set of skills to buff the agent doing the work. Now sit back, eat your cup ramen, and shout it one more time: "Carry!" 😎
+That's the whole idea — and in this story, **you're Yuumi.** Your coding **agent is the ADC**: it walks the lane, takes the fights, does the carrying. You attach to it, ride along, toss out the occasional buff (a prompt, a nudge, a skill), and come away having "carried." This marketplace is your Yuumi kit — a statusline to watch the lane for you, a few skills to buff the agent doing the work, and a live map of what it is building. Now sit back, eat your cup ramen, and shout it one more time: "Carry!" 😎
 
-Works on **macOS, Linux, and Windows**.
+Claude Code only. The statusline works on **macOS, Linux, and Windows**; design-map currently runs on **macOS**.
 
 ---
 
 ## What you get
 
-Two things:
+Two plugins, from one marketplace:
 
-1. **A statusline (HUD)** — a Tokyo Night powerline readout for your session. *Claude Code only.*
-2. **Workflow skills** — authoring, planning, code-review, and HTML-artifact helpers. They run on **any agent** the [`skills`](https://skills.sh) CLI supports (Claude Code, Codex, Cursor, Hermes, and dozens more).
+| Plugin | What it is | Platforms |
+|--------|------------|-----------|
+| **`yuumi`** | Tokyo Night statusline (HUD) + workflow skills: `interview`, `edit`, `explain`, `review`, plus `statusline-setup` / `statusline-doctor` | macOS · Linux · Windows |
+| **`design-map`** | A live design map: Claude keeps a class or sequence diagram of the design in sync as it works, drawn in your browser, with a firefly showing where it is looking | macOS |
 
-| Capability | Claude Code | Other agents |
-|------------|:-----------:|:------------:|
-| `interview` · `edit` · `explain` · `explain-fast` · `explain-detail` · `implement` · `pretty` · `teach-me` · `review` | ✅ | ✅ |
-| `update` — refresh just the yuumi pack | ✅ | ✅ |
-| Tokyo Night statusline HUD | ✅ | — |
-| `statusline-setup` · `statusline-doctor` | ✅ | no-op |
+## Install
 
-One install path for everyone: **`npx skills add -g heeseon87/yuumi`**. The workflow skills work everywhere; the statusline is a Claude Code feature, so the `statusline-*` skills only do anything there.
+Inside Claude Code (terminal):
+
+```
+/plugin marketplace add heeseon87/yuumi
+/plugin install yuumi@yuumi
+/plugin install design-map@yuumi
+```
+
+Install either or both. Then turn on the statusline once:
+
+```
+/yuumi:statusline-setup
+```
+
+and restart Claude Code. The statusline appears at the bottom of the screen.
+
+## Update
+
+```
+/plugin update yuumi@yuumi
+```
+
+No setup re-run needed. The statusline runs from a fixed copy at `~/.claude/hud/statusline.mjs`; the plugin's session-start hook refreshes that copy from the new version at the next session start.
 
 ---
 
-## The skills
+## The yuumi skills
 
-A skill runs when you type its command. Installed via the `skills` CLI, the command is the skill's directory name — **`/yuumi-<name>`** (e.g. `/yuumi-explain`). The examples below use that form.
+Plugin skills are called as **`/yuumi:<name>`**.
 
-### Authoring & planning — portable (any agent)
-
-#### `/yuumi-interview [plan-file]` — pressure-test a plan before you build it
+#### `/yuumi:interview [plan-file]` — pressure-test a plan before you build it
 Reads a plan/spec file and **interviews you in depth** with pointed, non-obvious questions: technical implementation, UX, edge cases, tradeoffs, the things you haven't thought about yet. It keeps probing until the plan is solid, then writes the refined spec back to the file.
 - **Use it when** you have a rough plan and want the holes found *before* you write code.
 - **Output:** a sharpened spec, written to your plan file.
 
-#### `/yuumi-edit [files…]` — edit in place with `{curly-brace}` notes
+#### `/yuumi:edit [files…]` — edit in place with `{curly-brace}` notes
 **Position is context.** Instead of copy-pasting text back and forth, you leave instructions *where they belong* — drop `{make this hit harder}` or `{too vague}` or `{cut}` right next to the line, and the skill applies each edit in context and removes the markers. Handles one file, several files, or (with no argument) finds every `{note}` in your docs.
 - **Use it when** you're revising long drafts or making consistent edits across multiple files and the copy-paste loop is tedious.
 - **Output:** the edited file(s) plus a short summary of every change made.
 
-#### `/yuumi-explain [topic]` — explain like I'm one year into the field
-Explains a topic pitched at a first-year junior in its field, as a **single-file HTML page (via `pretty`) with big pictures and few words**.- **Use it when** you want a dead-simple explainer of a concept, not a deep-dive document.
-- **Output:** an HTML explainer artifact.
-
-#### `/yuumi-explain-fast [topic]` — the same explainer, right in the chat
-Same pitch as `explain`, but rendered as **big ASCII diagrams and few words in the chat**, with the prose set as marginalia beside each line. No HTML artifact, no browser.
+#### `/yuumi:explain [topic]` — explain like I'm one year into the field, right in the chat
+Explains a topic pitched at a first-year junior in its field, as **big ASCII diagrams and few words in the chat**, with the prose set as marginalia beside each line. No HTML, no browser.
 - **Use it when** you want the picture now, in the terminal.
 - **Output:** the explanation in the conversation itself.
 
-#### `/yuumi-explain-detail [target]` — an Anthropic-style HTML explainer
-Investigates a target (a file, endpoint, module, system, or concept), then renders a **single-file HTML explainer** designed to install an accurate mental model in one read. It traces the real code, explains the *why* behind decisions, and uses sparse line-art diagrams only where prose would make you do mental bookkeeping. Engaging essay, not dry docs.
-- **Use it when** you (or a teammate) need to actually *understand* a piece of the system.
-- **Output:** `<slug>-explained.html` in the working directory, opened in your browser.
-
-#### `/yuumi-implement [spec]` — implement a spec, with a live decision log
-Implements the spec while keeping a **running HTML notes file** that captures exactly what a reviewer needs: design decisions, deliberate deviations from the spec, tradeoffs considered, and open questions for you. The log is updated *as the work happens*, so you can open it mid-flight to check direction — and a reviewer can scan it in 30 seconds before merging.
-- **Use it when** you want the implementation *and* a reviewer-facing record of every non-obvious choice.
-- **Output:** the code, plus `<slug>-implementation-notes.html` (it tells you how many open questions are waiting).
-
-#### `/yuumi-pretty [brief]` — the house visual system for HTML artifacts
-Turns a brief into a polished, **single-file Anthropic-style HTML artifact** — warm paper background, clay accent, editorial serif type, hairline rules, line-art SVG diagrams, restrained dark code blocks. This is the shared visual language that `explain-detail` and `implement` build on, so every artifact feels like the same family.
-
-For longer material it goes past a static page: a **sticky table of contents** with scrollspy, **progressive disclosure** (collapsible sections and tabs), optional **interactive widgets** (before/after slider, step-through walkthroughs, filterable tables), and **data charts that lazy-load only when used** (Chart.js for quantitative data, Mermaid for large graphs) — all themed to the same palette, and every interaction degrades gracefully with JavaScript off. It ships component, interaction-pattern, and data-viz catalogs, and is tuned for cognitive-load-focused visual QA (Korean / mixed CJK text is first-class).
-- **Use it when** you want a beautiful, self-contained — and now navigable, explorable — page for a concept, doc, or report.
-- **Output:** a `.html` file in the working directory, opened in your browser.
-
-#### `/yuumi-teach-me [topic]` — learn the session until you actually understand it
-Turns the agent into a **wise, incremental teacher** for whatever you just built (or any `[topic]`). It keeps a running checklist of what you should grasp — the problem and the branches not taken, the solution with its design decisions and edge cases, and why the change matters — then has you restate your understanding first, quizzes you with `AskUserQuestion`, shows you the real code, and drills the *whys*. It won't wrap up until you've demonstrated you can reason about it on your own.
-- **Use it when** you want to *own* a change, not just ship it — onboarding, post-implementation review, or understanding someone else's work.
-- **Output:** a `<topic-slug>-understanding.md` checklist, plus a verified mental model in your head.
-
-#### `/yuumi-review [PR number / branch / diff / file]` — understand someone else's change before you judge it
+#### `/yuumi:review [PR number / branch / diff / file]` — understand someone else's change before you judge it
 Reviewing a change is hard because the real work is *understanding* it, and understanding has to come before any verdict. This walks you top-down through a PR, branch, or diff you didn't write, **building the mental model in dialogue** instead of handing you a passive summary: it opens with *why* the change exists before *what* it did, lays out a route through the parts so you always know where you are, draws rough ASCII sketches wherever you'd otherwise juggle structure in your head, and hands *you* the next prediction to make rather than making it for you. The judgment that follows stays yours — it builds the understanding, it doesn't rubber-stamp a verdict into your hands.
 - **Use it when** you have to review, or just get your head around, code someone else wrote — a PR, an unfamiliar diff, a branch.
 - **Output:** an accurate mental model of the change, built actively in your terminal — no passive essay to skim.
 
-### Maintenance — portable (any agent)
+### Statusline maintenance
 
-#### `/yuumi-update` — refresh just the yuumi skills
-`npx skills update` refreshes *every* skill from *every* source you have installed. This scopes the update to the yuumi pack alone: it asks the CLI which `yuumi:*` skills are installed and updates exactly those, leaving your other skill sources untouched.
-- **Use it when** you want the latest yuumi skills without sweeping every other pack along with them.
-- **Output:** each yuumi skill reported as updated or already current. *(Claude Code: the statusline refreshes in place — no re-setup needed.)*
+#### `/yuumi:statusline-setup` — one-time statusline install
+Copies the Tokyo Night statusline shipped in the plugin to `~/.claude/hud/statusline.mjs`, points `settings.json` `statusLine` at it, and backs up what it replaces. Run it once after installing.
 
-### HUD maintenance — Claude Code only
-
-#### `/yuumi-statusline-setup` — one-time statusline install
-Wires Claude Code to the Tokyo Night statusline that ships inside this skill. It points `settings.json` `statusLine` **directly** at the installed `statusline.mjs` (no `~/.claude/hud/` copy, no SessionStart hook) and backs up your prior settings. Run it once after `npx skills add -g heeseon87/yuumi`; updates then flow through `npx skills update` with nothing to re-run.
-
-#### `/yuumi-statusline-doctor` — diagnose & auto-fix the statusline
-Runs an OS-aware checklist (node availability, the installed statusline asset, executable bit, `settings.json` shape, legacy marketplace-era config) and **fixes anything fixable**, then prints a pass/fail report.
+#### `/yuumi:statusline-doctor` — diagnose & auto-fix the statusline
+Runs an OS-aware checklist (node, the installed copy, executable bit, `settings.json` path, leftovers from the old `npx skills` install) and **fixes anything fixable**, then prints a pass/fail report.
 - **Use it when** the statusline is blank, stale, or misbehaving.
 
 ---
@@ -112,33 +96,15 @@ The rate-limit bars are **allocation-aware**: the color isn't a fixed percentage
 
 ---
 
-## Install
+## design-map
 
-One channel for every agent — the [`skills`](https://skills.sh) CLI:
+Claude draws a design map (a Mermaid class or sequence diagram) while you discuss or build a change, and keeps it true as it works. The map lives in your browser at `http://127.0.0.1:7777`, with decisions, progress and a feedback thread beside it; what you write there reaches the Claude session. Boxes glide when the map changes, a firefly flies to whatever Claude is reading or editing, and a time-machine slider replays how the design grew.
 
-```bash
-npx skills add -g heeseon87/yuumi
-```
+Ask Claude to open one ("이 변경을 설계 지도로 그려줘"), or run `/design-map`. Details: [`plugins/design-map/README.md`](plugins/design-map/README.md) (Korean).
 
-It detects your agent(s) and installs the skills globally (`-g`). Pick the skills/agents you want, or take them all. This works on Claude Code, Codex, Cursor, Hermes, and [dozens more](https://skills.sh).
+Requires **Node 22.6+** and `npm i -g @mermaid-js/mermaid-cli` (its Mermaid bundle feeds the browser page). macOS only for now (it opens pages with `open`).
 
-### Claude Code — turn on the statusline (one extra step)
-
-The statusline is a Claude Code feature, so wiring it needs one command **inside Claude Code** after the install above:
-
-```
-/yuumi-statusline-setup
-```
-
-Then restart Claude Code once — the statusline appears at the bottom of the screen. (The `skills` CLI can place files but can't edit Claude Code's `settings.json`; this skill does that part. It requires the **global** install above.)
-
-## Update
-
-```bash
-npx skills update
-```
-
-That's it — **no setup re-run needed**. The statusline lives at a stable path inside the installed skill, so `npx skills update` refreshes it in place and the next statusline refresh picks it up.
+---
 
 ## Requirements
 
@@ -149,16 +115,14 @@ That's it — **no setup re-run needed**. The statusline lives at a stable path 
 ## Troubleshooting
 
 ```
-/yuumi-statusline-doctor
+/yuumi:statusline-doctor
 ```
 
-Checks node availability, the installed statusline asset, the executable bit, `settings.json` configuration, and legacy marketplace-era config (old `~/.claude/hud/` path or leftover SessionStart hook) — and auto-fixes anything fixable.
-
-> **Migrating from an older marketplace install?** Just run `npx skills add -g heeseon87/yuumi` then `/yuumi-statusline-setup` — setup repoints `settings.json` at the new skill-dir statusline and removes the obsolete SessionStart hook. Run `/yuumi-statusline-doctor` if anything looks off.
+> **Coming from the old `npx skills` install (yuumi 1.x)?** Install the plugin, run `/yuumi:statusline-setup` (it repoints `settings.json` at `~/.claude/hud/`), then remove the old skill folders with `npx skills remove -g` for the `yuumi-*` skills — otherwise every skill shows up twice. Skills dropped in 2.0: `design`, `explain-detail`, `implement`, `pretty`, `teach-me`, `update`; the old `explain-fast` is now `explain`.
 
 ## Platform notes
 
-On macOS/Linux, `statusLine.command` is the statusline path run via its `#!/usr/bin/env node` shebang (setup restores the executable bit the installer drops). On Windows there is no shebang, so the command is an absolute `node.exe` + the path — it prefers `%ProgramFiles%\nodejs\node.exe` and falls back to the node binary that ran setup. If you switch node installations, re-run `/yuumi-statusline-setup` once to refresh the reference.
+On macOS/Linux, `statusLine.command` is the copy's path run via its `#!/usr/bin/env node` shebang (setup sets the executable bit). On Windows there is no shebang, so the command is an absolute `node.exe` + the path — it prefers `%ProgramFiles%\nodejs\node.exe` and falls back to the node binary that ran setup. If you switch node installations, re-run `/yuumi:statusline-setup` once.
 
 ## Nerd Font setup
 
@@ -197,4 +161,4 @@ Then set your terminal font to `JetBrainsMono Nerd Font`.
 
 ---
 
-*Your agent carries — on Claude Code, Codex, and wherever else you ride. You take the credit. That's the yuumi way. 🐱*
+*Your agent carries. You take the credit. That's the yuumi way. 🐱*
