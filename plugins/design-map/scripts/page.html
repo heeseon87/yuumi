@@ -1,0 +1,2409 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>design map</title>
+<style>
+  :root { --bg: #ffffff; --panel: #f6f7f9; --line: #e2e5ea; --text: #1d2228; --dim: #6b7280; --accent: #6a45a8; --blue: #2563eb; --teal: #0d9488; --green: #30a657; --red: #a63830; --warn-bg: #fff4f2; --warn-line: #f3c7c2; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 14px/1.5 system-ui, -apple-system, "Apple SD Gothic Neo", sans-serif; }
+  #app { display: grid; grid-template-columns: 1fr 380px; grid-template-rows: auto auto 1fr; height: 100%; }
+  header { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; padding: 8px 14px; border-bottom: 1px solid var(--line); min-width: 0; }
+  header h1 { font-size: 15px; margin: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  header .meta { color: var(--dim); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  header .tools { margin-left: auto; display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+  #activity { grid-column: 1 / -1; padding: 4px 14px; font-size: 12px; color: var(--dim); border-bottom: 1px solid var(--line); background: #fbfcfd; min-height: 26px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #activity .now { color: var(--teal); font-weight: 600; }
+  #activity .off { color: var(--red); font-weight: 600; }
+  #activity .sep { margin: 0 8px; color: var(--line); }
+  .chip { font-size: 12px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); white-space: nowrap; }
+  .chip.on { color: var(--green); border-color: #b7e3c5; background: #f1fbf4; }
+  .chip.busy { color: var(--accent); border-color: #d9cbf2; background: #f7f3fd; }
+  .chip.off { color: var(--dim); }
+  button { font: inherit; font-size: 12px; padding: 3px 9px; border: 1px solid var(--line); background: #fff; border-radius: 6px; cursor: pointer; color: var(--text); }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.urgent { border-color: var(--red); color: var(--red); }
+  button:disabled { opacity: .5; cursor: default; }
+  #stage { position: relative; overflow: hidden; cursor: grab; background: #fbfbfc; user-select: none; -webkit-user-select: none; }
+  #stage.dragging { cursor: grabbing; }
+  #canvas { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+  #canvas svg { display: block; overflow: visible; }
+  #canvas g.node, #canvas .edge-hit, #canvas g.cluster > rect, #canvas g.edgeLabel { cursor: pointer; }
+  #canvas .edge-hit { stroke: transparent; stroke-width: 14px; fill: none; pointer-events: stroke; }
+  #canvas .edge-picked { stroke-width: 3.5px !important; filter: drop-shadow(0 0 3px rgba(106, 69, 168, .9)); }
+  #canvas .node.picked rect, #canvas .node.picked path, #canvas .cluster.picked > rect { filter: drop-shadow(0 0 6px rgba(106, 69, 168, .9)); }
+  #canvas .node.unseen > rect, #canvas .node.unseen > path { stroke: var(--blue) !important; stroke-dasharray: 5 3; }
+  #canvas .node.trail { filter: drop-shadow(0 0 4px rgba(13, 148, 136, .45)); }
+  #canvas .node.focus-read { animation: pulse-read 1.4s ease-in-out infinite; }
+  #canvas .node.focus-edit { animation: pulse-edit 1s ease-in-out infinite; }
+  @keyframes pulse-read { 0%, 100% { filter: drop-shadow(0 0 2px rgba(104, 196, 184, .35)); } 50% { filter: drop-shadow(0 0 13px rgba(104, 196, 184, .95)); } }
+  @keyframes pulse-edit { 0%, 100% { filter: drop-shadow(0 0 2px rgba(236, 150, 128, .35)); } 50% { filter: drop-shadow(0 0 13px rgba(236, 150, 128, .95)); } }
+  #canvas .node.breathing { animation: breathe 3.6s ease-in-out infinite; }
+  @keyframes breathe { 0%, 100% { filter: drop-shadow(0 0 1px rgba(181, 162, 217, .2)); } 50% { filter: drop-shadow(0 0 9px rgba(181, 162, 217, .85)); } }
+  #overlay { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 2; }
+  #firefly { position: absolute; left: 0; top: 0; width: 14px; height: 14px; margin: -7px 0 0 -7px; opacity: 0; transition: opacity .7s; }
+  #firefly.on { opacity: 1; }
+  #firefly i { display: block; width: 100%; height: 100%; border-radius: 50%; background: radial-gradient(circle at 42% 40%, #fff 0, #a6e6db 38%, rgba(166, 230, 219, 0) 72%); box-shadow: 0 0 14px 5px rgba(120, 208, 194, .5); animation: bob 2.6s ease-in-out infinite; }
+  #firefly.edit i { background: radial-gradient(circle at 42% 40%, #fff 0, #f8c6b6 38%, rgba(248, 198, 182, 0) 72%); box-shadow: 0 0 14px 5px rgba(240, 162, 140, .5); }
+  @keyframes bob { 0%, 100% { transform: translate(0, 0) scale(1); } 30% { transform: translate(2px, -3px) scale(1.08); } 65% { transform: translate(-2px, 1px) scale(.94); } }
+  .spark { position: absolute; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 50%; background: radial-gradient(circle, rgba(140, 214, 202, .95), rgba(140, 214, 202, 0) 70%); animation: spark .9s ease-out forwards; }
+  .spark.edit { background: radial-gradient(circle, rgba(244, 178, 158, .95), rgba(244, 178, 158, 0) 70%); }
+  @keyframes spark { from { opacity: .9; transform: scale(1); } to { opacity: 0; transform: scale(.25); } }
+  #caption { position: absolute; left: 0; top: 0; transform: translateX(-50%); padding: 3px 10px; border-radius: 999px; background: rgba(255, 255, 255, .86); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 4px 16px rgba(70, 60, 100, .1), 0 0 0 1px rgba(104, 196, 184, .35); font-size: 12px; color: #3f6f69; white-space: nowrap; opacity: 0; transition: opacity .4s; }
+  #caption.on { opacity: 1; }
+  #caption.edit { color: #8a4f42; box-shadow: 0 4px 16px rgba(70, 60, 100, .1), 0 0 0 1px rgba(236, 150, 128, .4); }
+  .bubble { position: absolute; left: 0; top: 0; max-width: 300px; transform: translate(-50%, calc(-100% - 12px)); padding: 9px 12px; border-radius: 16px; background: #fff; box-shadow: 0 10px 30px rgba(70, 60, 100, .16), 0 0 0 1px rgba(181, 162, 217, .35); font-size: 13px; line-height: 1.45; color: var(--text); pointer-events: auto; cursor: pointer; animation: pop .45s cubic-bezier(.2, 1.4, .4, 1); }
+  .bubble::after { content: ''; position: absolute; left: 50%; bottom: -6px; width: 12px; height: 12px; background: #fff; transform: translateX(-50%) rotate(45deg); box-shadow: 1px 1px 0 rgba(181, 162, 217, .35); }
+  .bubble b { color: #7d6aa8; margin-right: 4px; }
+  .bubble.out { opacity: 0; transition: opacity .5s; }
+  @keyframes pop { from { opacity: 0; transform: translate(-50%, calc(-100% - 4px)) scale(.7); } to { opacity: 1; transform: translate(-50%, calc(-100% - 12px)) scale(1); } }
+  #notify.quiet { opacity: .55; }
+  #canvas .node.lifted { filter: drop-shadow(0 10px 16px rgba(70, 60, 100, .28)); transition: filter .2s; }
+  #canvas .node.connect-target { filter: drop-shadow(0 0 10px rgba(181, 162, 217, 1)); }
+  #rubber { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; opacity: 0; transition: opacity .15s; }
+  #rubber.on { opacity: 1; }
+  #rubber path { fill: none; stroke: #b5a2d9; stroke-width: 2; stroke-dasharray: 6 5; stroke-linecap: round; animation: march .6s linear infinite; }
+  #rubber circle { fill: #fff; stroke: #b5a2d9; stroke-width: 2; }
+  @keyframes march { to { stroke-dashoffset: -11; } }
+  .badge { position: absolute; left: 0; top: 0; transform: translate(-30%, -55%); padding: 1px 7px; border-radius: 999px; font-size: 11px; background: #fff; color: #5f9c86; box-shadow: 0 2px 8px rgba(70, 60, 100, .14), 0 0 0 1px #c9e7d6; pointer-events: auto; cursor: pointer; white-space: nowrap; }
+  .badge.open { color: #7d6aa8; box-shadow: 0 2px 8px rgba(70, 60, 100, .14), 0 0 0 1px #dccff2; }
+  #popover { position: absolute; left: 0; top: 0; width: 300px; transform: translate(-50%, 12px); padding: 10px 12px; border-radius: 14px; background: rgba(255, 255, 255, .94); backdrop-filter: blur(16px) saturate(1.3); -webkit-backdrop-filter: blur(16px) saturate(1.3); box-shadow: 0 14px 40px rgba(70, 60, 100, .2), 0 0 0 1px rgba(181, 162, 217, .4); pointer-events: auto; animation: pop-in .3s cubic-bezier(.2, 1.3, .4, 1); }
+  #popover[hidden] { display: none; }
+  #popover .title { font-weight: 600; font-size: 13px; }
+  #popover .sub { font-size: 12px; color: var(--dim); margin-bottom: 6px; }
+  #popover textarea { width: 100%; min-height: 58px; resize: vertical; font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+  #popover textarea:focus { outline: none; border-color: #b5a2d9; }
+  #popover .row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 6px; }
+  #popover .row .spacer { flex: 1; }
+  @keyframes pop-in { from { opacity: 0; transform: translate(-50%, 4px) scale(.94); } to { opacity: 1; transform: translate(-50%, 12px) scale(1); } }
+  #impact { position: absolute; left: 0; top: 0; max-width: 280px; transform: translate(-50%, calc(-100% - 10px)); padding: 7px 11px; border-radius: 12px; background: #fff; box-shadow: 0 8px 24px rgba(70, 60, 100, .15), 0 0 0 1px rgba(181, 162, 217, .45); font-size: 12px; white-space: pre-wrap; opacity: 0; transition: opacity .2s; }
+  #impact.on { opacity: 1; }
+  #canvas .hush, #canvas .dimmed { opacity: .22; transition: opacity .35s; }
+  #canvas .ghosted { opacity: .62; filter: drop-shadow(0 0 9px rgba(181, 162, 217, .95)); transition: opacity .35s; }
+  #canvas svg.filtering g.edgePaths, #canvas svg.filtering g.edgeLabels { opacity: .3; }
+  #pills, #filecaps { position: absolute; inset: 0; transition: opacity .35s; }
+  #pills.off, #filecaps.off { opacity: 0; }
+  .pill { position: absolute; left: 0; top: 0; transform: translate(-50%, -50%); padding: 4px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; color: #3b3a40; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 3px 12px rgba(70, 60, 100, .12); }
+  #canvas.zoom-far .members-group, #canvas.zoom-far .methods-group, #canvas.zoom-far .label-group, #canvas.zoom-far .annotation-group, #canvas.zoom-far g.edgeLabels { opacity: 0; transition: opacity .35s; }
+  .filecap { position: absolute; left: 0; top: 0; transform: translateX(-50%); padding: 2px 8px; border-radius: 8px; background: rgba(255, 255, 255, .85); font: 11px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; color: #6b665e; white-space: nowrap; box-shadow: 0 0 0 1px rgba(200, 192, 178, .6); }
+  #canvas .unfocused { opacity: .28; transition: opacity .35s; }
+  #canvas path.relation.flowing { stroke-dasharray: 7 5 !important; animation: flow .9s linear infinite; stroke-width: 1.6px !important; stroke: #9a86c6 !important; }
+  @keyframes flow { to { stroke-dashoffset: -24; } }
+  #canvas .pulse { fill: #fff; stroke: #b5a2d9; stroke-width: 2.5px; filter: drop-shadow(0 0 6px rgba(181, 162, 217, 1)); }
+  #canvas .arrive { animation: arrive .9s ease-out; }
+  @keyframes arrive { 0% { filter: drop-shadow(0 0 14px rgba(181, 162, 217, 1)); } 100% { filter: none; } }
+  #canvas .node.foggy { filter: saturate(.2) blur(.7px); opacity: .62; }
+  #canvas .node { transition: opacity .35s; }
+  #flow.on { color: #7d6aa8; border-color: #b5a2d9; background: #f7f3fd; }
+  #rings { position: relative; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 11px; color: var(--dim); }
+  #rings[hidden] { display: none; }
+  #rings svg { width: 30px; height: 30px; transform: rotate(-90deg); overflow: visible; }
+  #rings circle { fill: none; stroke-width: 3.2; stroke-linecap: round; transition: stroke-dashoffset .9s cubic-bezier(.3, .8, .2, 1); }
+  #rings circle.track { stroke: #efeaf6; }
+  .burst { position: absolute; left: 15px; top: 50%; width: 5px; height: 5px; margin: -2.5px; border-radius: 50%; pointer-events: none; animation: burst .9s ease-out forwards; }
+  @keyframes burst { from { opacity: 1; transform: translate(0, 0) scale(1); } to { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(.4); } }
+  #canvas .stamp-face { transform-box: fill-box; transform-origin: center; }
+  #canvas .stamp circle.face { fill: #eaf7ef; stroke: #9fd1b1; stroke-width: 1.2; }
+  #canvas .stamp circle.rim { fill: none; stroke: #b9e2c8; stroke-width: .8; stroke-dasharray: 2 1.6; }
+  #canvas .stamp text { font: 700 8px system-ui, -apple-system, sans-serif; fill: #3f7a57; letter-spacing: .5px; }
+  #canvas .stamp .wave { fill: none; stroke: #9fd1b1; stroke-width: 1.5; transform-box: fill-box; transform-origin: center; }
+  #filter-chip { border-radius: 999px; color: #7d6aa8; border-color: #dccff2; background: #f7f3fd; }
+  #spot-open { color: var(--dim); font-size: 11px; }
+  #spotlight { position: fixed; inset: 0; z-index: 10; background: rgba(40, 36, 60, .18); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); display: flex; justify-content: center; align-items: flex-start; padding-top: 14vh; }
+  #spotlight[hidden] { display: none; }
+  #spotlight .panel { width: min(560px, 90vw); border-radius: 16px; background: rgba(255, 255, 255, .96); box-shadow: 0 24px 60px rgba(40, 36, 60, .28), 0 0 0 1px rgba(181, 162, 217, .4); overflow: hidden; animation: pop-down .22s cubic-bezier(.2, 1.2, .4, 1); }
+  @keyframes pop-down { from { opacity: 0; transform: translateY(-8px) scale(.98); } to { opacity: 1; transform: none; } }
+  #spot-input { width: 100%; border: none; outline: none; font: inherit; font-size: 17px; padding: 14px 18px; border-bottom: 1px solid var(--line); background: transparent; }
+  #spot-list { max-height: 50vh; overflow: auto; padding: 6px; }
+  .spot-item { display: flex; gap: 10px; align-items: baseline; padding: 7px 12px; border-radius: 10px; cursor: pointer; }
+  .spot-item.on { background: #f1ebfb; }
+  .spot-item .kind { font-size: 11px; color: var(--dim); min-width: 34px; }
+  .spot-item .sub { margin-left: auto; font-size: 11px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 45%; }
+  #spotlight .hint { font-size: 11px; color: var(--dim); padding: 6px 14px 9px; border-top: 1px solid var(--line); }
+  #notify { border: none; background: none; font-size: 14px; padding: 0 2px; }
+  #canvas .seq { cursor: pointer; }
+  #canvas .msg-hit { stroke: transparent; stroke-width: 14px; fill: none; pointer-events: stroke; cursor: pointer; }
+  #canvas .seq.picked { filter: drop-shadow(0 0 6px rgba(106, 69, 168, .9)); }
+  #canvas line.seq.picked, #canvas path.seq.picked { stroke-width: 3.5px !important; }
+  #canvas .seq.unseen { filter: drop-shadow(0 0 5px rgba(37, 99, 235, .95)); }
+  #canvas .seq.trail { filter: drop-shadow(0 0 4px rgba(13, 148, 136, .45)); }
+  #canvas .seq.focus-read { animation: pulse-read 1.4s ease-in-out infinite; }
+  #canvas .seq.focus-edit { animation: pulse-edit 1s ease-in-out infinite; }
+  #canvas .flash { animation: flash 1.6s ease-out; }
+  #canvas .flash-reply { animation: flash-reply 2.2s ease-out; }
+  @keyframes flash { 0% { filter: drop-shadow(0 0 10px rgba(48, 166, 87, 1)); } 100% { filter: none; } }
+  @keyframes flash-reply { 0% { filter: drop-shadow(0 0 12px rgba(37, 99, 235, 1)); } 100% { filter: none; } }
+  aside { border-left: 1px solid var(--line); background: var(--panel); overflow: auto; padding: 10px 14px 24px; }
+  aside h2 { font-size: 13px; margin: 16px 0 6px; color: var(--dim); font-weight: 600; }
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; }
+  .card .q { font-weight: 600; }
+  .card ul { margin: 4px 0 0; padding-left: 18px; }
+  .banner { border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; font-size: 13px; }
+  .banner.drift { background: var(--warn-bg); border: 1px solid var(--warn-line); }
+  .banner.unseen { background: #f3f6fd; border: 1px solid #c9d7f7; }
+  .banner .row { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+  .banner:empty { display: none; }
+  .dim { color: var(--dim); font-size: 12px; }
+  code { font-size: 12px; background: #eef0f3; padding: 0 4px; border-radius: 4px; }
+  #composer { position: sticky; top: 0; z-index: 2; box-shadow: 0 1px 0 var(--line); }
+  #composer .target { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; font-size: 12px; }
+  #composer .target b { font-weight: 600; }
+  #composer .target button { padding: 0 6px; }
+  #composer textarea { width: 100%; min-height: 64px; resize: vertical; font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; }
+  #composer textarea:focus { outline: none; border-color: var(--accent); }
+  #composer .row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 6px; }
+  #composer .row .spacer { flex: 1; }
+  #detail:empty { display: none; }
+  .file { display: flex; gap: 6px; align-items: center; margin-top: 3px; }
+  .file code { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .item { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; margin-bottom: 6px; cursor: pointer; }
+  .item.fresh { border-color: var(--blue); box-shadow: 0 0 0 2px rgba(37, 99, 235, .15); }
+  .item .head { display: flex; gap: 6px; align-items: center; font-size: 12px; color: var(--dim); }
+  .item .head .status { margin-left: auto; }
+  .item .text { white-space: pre-wrap; margin-top: 2px; }
+  .item .reply { white-space: pre-wrap; margin-top: 6px; padding: 6px 8px; background: #f3f6fd; border-radius: 6px; font-size: 13px; }
+  .status { font-size: 11px; padding: 0 6px; border-radius: 999px; border: 1px solid var(--line); }
+  .status.sent { color: var(--dim); }
+  .status.working { color: var(--accent); border-color: #d9cbf2; }
+  .status.answered, .status.done { color: var(--green); border-color: #b7e3c5; }
+  .status.failed { color: var(--red); }
+  .decision .opt { display: flex; gap: 6px; align-items: flex-start; margin-top: 4px; }
+  .decision .opt .body { flex: 1; }
+  .chosen { color: var(--green); font-weight: 600; }
+  .legend span { display: inline-flex; align-items: center; gap: 4px; margin: 0 10px 4px 0; font-size: 12px; }
+  .legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; border: 1px solid; }
+  .legend-lines { margin-top: 4px; padding-top: 6px; border-top: 1px solid var(--line); }
+  .steps { padding-left: 0 !important; }
+  .steps li { list-style: none; }
+  #error { color: var(--red); white-space: pre-wrap; font-size: 12px; }
+  #scrubber { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; padding: 6px 14px; border-radius: 999px; background: rgba(255, 255, 255, .78); backdrop-filter: blur(14px) saturate(1.4); -webkit-backdrop-filter: blur(14px) saturate(1.4); box-shadow: 0 8px 28px rgba(70, 60, 100, .12), 0 0 0 1px rgba(70, 60, 100, .07); font-size: 12px; color: var(--dim); opacity: .6; transition: opacity .25s; z-index: 3; white-space: nowrap; }
+  #scrubber[hidden] { display: none; }
+  #scrubber:hover, #scrubber.playing, #scrubber:focus-within { opacity: 1; }
+  #scrubber input[type=range] { width: 240px; accent-color: #b5a2d9; }
+  #scrubber button { border: none; background: none; font-size: 13px; padding: 0 2px; color: #7d6aa8; }
+  #toast { position: fixed; left: 50%; bottom: 74px; transform: translateX(-50%); background: #1d2228; color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 13px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  #toast.show { opacity: .92; }
+  /* the drawer: one page for a design map (with Claude) and for a plain diagram (the person's own) */
+  body[data-kind="diagram"] .map-only { display: none !important; }
+  body:not([data-kind="diagram"]) .diagram-only { display: none !important; }
+  header .back { color: var(--dim); text-decoration: none; font-size: 13px; white-space: nowrap; }
+  header .back:hover { color: var(--accent); }
+  header .pin { border: none; background: none; font-size: 17px; line-height: 1; padding: 0 2px; color: #b6bcc6; }
+  header .pin.pinned { color: #d99a06; }
+  header h1 { cursor: text; border-radius: 4px; padding: 1px 3px; }
+  header h1:hover { background: var(--panel); }
+  #title-input { font: inherit; font-size: 15px; font-weight: 600; padding: 1px 6px; border: 1px solid var(--accent); border-radius: 6px; min-width: 260px; outline: none; }
+  /* the stage and the side keep the last row even when the activity bar above them is hidden */
+  #stage, aside { grid-row: 3; min-height: 0; }
+  #app.editing { grid-template-columns: 1fr minmax(420px, 44%); }
+  #editor textarea { width: 100%; height: calc(100vh - 250px); min-height: 220px; resize: vertical; font: 12.5px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; tab-size: 2; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: #fcfcfd; }
+  #editor textarea:focus { outline: none; border-color: var(--accent); background: #fff; }
+  #editor .row { display: flex; gap: 6px; align-items: center; margin-top: 6px; flex-wrap: wrap; }
+  #editor-status { font-size: 12px; white-space: pre-wrap; margin-top: 4px; min-height: 18px; }
+  #editor-status.ok { color: var(--green); }
+  #editor-status.bad { color: var(--red); }
+  #preview-bar { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); display: none; gap: 8px; align-items: center; background: #1d2228; color: #fff; padding: 6px 8px 6px 12px; border-radius: 10px; font-size: 13px; z-index: 3; box-shadow: 0 6px 20px rgba(0, 0, 0, .18); white-space: nowrap; }
+  #preview-bar.show { display: flex; }
+  #preview-bar button { background: transparent; color: #fff; border-color: rgba(255, 255, 255, .35); }
+  #preview-bar button.primary { background: var(--accent); border-color: var(--accent); }
+  body.previewing #composer, body.previewing #detail, body.previewing #edit { opacity: .4; pointer-events: none; }
+  body[data-kind="gone"] .map-only, body[data-kind="gone"] #drawer-sections, body[data-kind="gone"] header .pin { display: none !important; }
+  aside h2.with-tools { display: flex; align-items: center; gap: 6px; }
+  aside h2 .link { border: none; background: none; color: var(--accent); padding: 0 2px; font-size: 12px; font-weight: 400; }
+  .memo-view { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 13px; cursor: text; overflow-wrap: anywhere; }
+  .memo-view.empty { color: var(--dim); font-size: 12px; }
+  .memo-view h3, .memo-view h4, .memo-view h5 { margin: 6px 0 2px; font-size: 13px; }
+  .memo-view ul { margin: 2px 0; padding-left: 18px; }
+  .memo-view p { margin: 2px 0; }
+  .memo-view pre { background: #eef0f3; padding: 6px 8px; border-radius: 6px; overflow: auto; margin: 4px 0; }
+  .memo-view a { color: var(--blue); }
+  #memo-text { width: 100%; min-height: 150px; resize: vertical; font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--accent); border-radius: 6px; outline: none; }
+  .memo-row { display: flex; gap: 6px; align-items: center; margin-top: 6px; }
+  .tagchips { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+  .tagchips:empty { display: none; }
+  .tagchip { font-size: 12px; color: var(--accent); background: #f4effc; border: 1px solid #dccff2; border-radius: 999px; padding: 0 4px 0 8px; display: inline-flex; align-items: center; gap: 2px; }
+  .tagchip button { border: none; background: none; padding: 0 3px; font-size: 11px; color: var(--accent); }
+  #tag-input { font: inherit; font-size: 12px; padding: 3px 9px; border: 1px solid var(--line); border-radius: 999px; width: 160px; }
+  #tag-input:focus { outline: none; border-color: var(--accent); }
+  .version { display: flex; gap: 8px; align-items: center; padding: 3px 8px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+  .version:hover { background: #fff; }
+  .version.on { background: #fff; box-shadow: inset 0 0 0 1px var(--accent); }
+  .version .when { color: var(--dim); }
+  .version .now { margin-left: auto; color: var(--green); font-size: 11px; }
+  .manage { display: flex; gap: 6px; flex-wrap: wrap; }
+  button.danger { color: var(--red); border-color: #f0c9c5; }
+  #gone { text-align: center; padding: 18px 10px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <a class="back" href="/" title="다이어그램 서랍으로">← 서랍</a>
+    <button class="pin" id="pin" title="서랍 맨 위에 고정">☆</button>
+    <h1 id="title" title="클릭해서 이름 바꾸기">…</h1>
+    <input id="title-input" maxlength="200" hidden>
+    <span class="meta" id="meta"></span>
+    <div class="tools">
+      <span id="rings" class="map-only" hidden></span>
+      <button id="notify" class="map-only quiet" title="Claude가 답하면 작은 소리와 알림으로 알려 줘">🔕</button>
+      <span class="chip off map-only" id="link">세션 확인 중</span>
+      <button id="connect" class="map-only" hidden></button>
+      <button id="edit" class="diagram-only" title="e">원문 편집</button>
+      <button id="filter-chip" class="map-only" hidden title="필터 풀기"></button>
+      <button id="flow" class="map-only" title="호출 흐름을 순서대로 재생 (p)">▶ 흐름</button>
+      <button id="spot-open" class="map-only" title="⌘K · 상자, 멤버, 파일, 결정, 명령 찾기">⌘K</button>
+      <span class="meta" id="zoom"></span>
+      <button id="fit" title="f">맞춤</button>
+      <button id="actual" title="1">100%</button>
+    </div>
+  </header>
+  <div id="activity" class="map-only">활동 없음</div>
+  <div id="stage"><div id="canvas"></div><div id="overlay"><svg id="rubber"><path d=""/><circle r="5"/></svg><div id="pills"></div><div id="filecaps"></div><div id="badges"></div><div id="firefly"><i></i></div><div id="caption"></div><div id="impact"></div><div id="popover" class="no-pan" hidden></div></div><div id="preview-bar" class="no-pan"></div>
+    <div id="scrubber" class="no-pan" hidden title="[ ] 키로 한 버전씩"><button id="scrub-play" title="처음부터 재생">▶</button><input id="scrub-range" type="range" min="0" max="1" step="1"><span id="scrub-label"></span></div>
+  </div>
+  <aside>
+    <div id="gone" class="card" hidden>이 다이어그램은 휴지통에 있거나 없어졌어.<div style="margin-top:8px"><a href="/">서랍으로 가기</a></div></div>
+    <div id="editor" class="card diagram-only" hidden>
+      <textarea id="editor-text" spellcheck="false" placeholder="Mermaid 원문"></textarea>
+      <div id="editor-status"></div>
+      <div class="row">
+        <button id="editor-save" class="primary" title="⌘S">저장</button>
+        <button id="editor-close">닫기</button>
+        <span class="dim">⌘S 저장 · 입력하는 대로 왼쪽에 그려져</span>
+      </div>
+    </div>
+    <div id="composer" class="card map-only">
+      <div class="target"><span class="dim">대상</span> <b id="target-name">지도 전체</b> <button id="target-clear" title="지도 전체로">✕</button></div>
+      <textarea id="text" placeholder="피드백이나 질문을 적어 줘. ⌘+Enter로 보내기"></textarea>
+      <div class="row" id="actions"></div>
+    </div>
+    <div id="drift" class="banner drift map-only"></div>
+    <div id="unseen" class="banner unseen map-only"></div>
+    <div id="detail" class="card map-only"></div>
+    <div id="error"></div>
+    <div id="map-sections" class="map-only">
+      <h2 id="thread-title">대화</h2><div id="thread"></div>
+      <h2 id="decisions-title">결정</h2><div id="decisions"></div>
+      <h2 id="progress-title">진행</h2><div id="progress"></div>
+      <h2>범례</h2><div class="legend" id="legend"></div>
+    </div>
+    <div id="drawer-sections">
+      <h2 class="with-tools">메모 <button class="link" id="memo-edit">편집</button></h2>
+      <div id="memo" class="memo-view"></div>
+      <div id="memo-form" hidden>
+        <textarea id="memo-text" placeholder="이 다이어그램이 무엇을 보여 주는지, 왜 만들었는지, 출처는 어디인지 적어 둬. 마크다운을 쓸 수 있어."></textarea>
+        <div class="memo-row"><button id="memo-save" class="primary">저장</button><button id="memo-cancel">취소</button><span class="dim">⌘+Enter 저장</span></div>
+      </div>
+      <h2>태그</h2>
+      <div id="tags" class="tagchips"></div>
+      <input id="tag-input" list="all-tags" maxlength="40" placeholder="태그 추가 (Enter)">
+      <datalist id="all-tags"></datalist>
+      <h2 id="versions-title">버전</h2>
+      <div id="versions"></div>
+      <h2>관리</h2>
+      <div class="manage"><button id="duplicate">복제</button><button id="trash" class="danger">휴지통으로</button></div>
+    </div>
+  </aside>
+</div>
+<div id="toast"></div>
+<div id="spotlight" hidden><div class="panel"><input id="spot-input" placeholder="상자, 멤버, 파일, 결정, 명령 찾기" autocomplete="off" spellcheck="false"><div id="spot-list"></div><div class="hint">↑↓ 고르기 · Enter 열기 · Esc 닫기</div></div></div>
+<script src="/mermaid.js"></script>
+<script>
+const NAME = '__NAME__'
+const TOKEN = '__TOKEN__'
+const VERSION = '__VERSION__'
+const stage = document.getElementById('stage')
+const canvas = document.getElementById('canvas')
+const $ = id => document.getElementById(id)
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
+mermaid.initialize({ startOnLoad: false, securityLevel: 'strict', suppressErrorRendering: true, class: { useMaxWidth: false } })
+
+const TYPE_NAMES = {
+  sequenceDiagram: '시퀀스', flowchart: '플로차트', graph: '플로차트', classDiagram: '클래스', stateDiagram: '상태',
+  'stateDiagram-v2': '상태', erDiagram: 'ER', gantt: '간트', mindmap: '마인드맵', timeline: '타임라인', pie: '파이', journey: '여정', gitGraph: 'git',
+}
+const LOCAL = ['expand', 'collapse', 'hide', 'reset', 'decide', 'open']
+/** Folds the server keeps out of the thread once applied. */
+const VIEW_ONLY = ['expand', 'collapse']
+/** The revision shown instead of the current one, while looking back. */
+let previewRev = null
+let versions = []
+let isAllVersions = false
+/** A plain diagram's source editor: open, changed since the last save, and the revision it started from. */
+let editing = false
+let dirty = false
+let editBase = null
+const isMap = () => page !== null && page.kind === 'map'
+/** What makes a Claude Code session the one that receives this map's feedback. */
+const CONNECT = '/design-map ' + NAME
+
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text)
+    return true
+  } catch {}
+  // Without clipboard access (an unfocused page), the older copy command still works.
+  const area = document.createElement('textarea')
+  area.value = text
+  area.style.cssText = 'position:fixed;opacity:0'
+  document.body.appendChild(area)
+  area.select()
+  const isCopied = document.execCommand('copy')
+  area.remove()
+  return isCopied
+}
+$('connect').innerHTML = '<code>' + esc(CONNECT) + '</code> 복사'
+$('connect').title = 'Claude Code 세션에 붙여 넣고 실행하면 그 세션이 이 지도의 피드백을 받아'
+$('connect').onclick = async () => {
+  toast(await copyText(CONNECT)
+    ? '복사했어. Claude Code 세션에 붙여 넣고 실행하면 그 세션이 피드백을 받아'
+    : '복사하지 못했어. 직접 입력해 줘: ' + CONNECT)
+}
+let view = { x: 20, y: 20, k: 1 }
+let page = null
+let thread = { items: [], isListening: false, isBusy: false, owner: null }
+let activity = { sessions: [] }
+let target = { kind: 'map' }
+let isFirst = true
+let renderCount = 0
+let freshIds = new Set()
+
+// ---------------------------------------------------------------- zoom and pan
+function apply() {
+  canvas.style.transform = 'translate(' + view.x + 'px,' + view.y + 'px) scale(' + view.k + ')'
+  $('zoom').textContent = Math.round(view.k * 100) + '%'
+  layoutOverlay()
+}
+function size() {
+  const svg = canvas.querySelector('svg')
+  if (!svg) return { w: 1, h: 1 }
+  const box = svg.viewBox.baseVal
+  return { w: box.width || 1, h: box.height || 1 }
+}
+function fit() {
+  const { w, h } = size()
+  const k = Math.min((stage.clientWidth - 40) / w, (stage.clientHeight - 40) / h, 2)
+  view = { k, x: (stage.clientWidth - w * k) / 2, y: 20 }
+  apply()
+}
+function zoomAt(factor, cx, cy) {
+  const k = Math.min(8, Math.max(0.05, view.k * factor))
+  view.x = cx - (cx - view.x) * (k / view.k)
+  view.y = cy - (cy - view.y) * (k / view.k)
+  view.k = k
+  apply()
+}
+stage.addEventListener('wheel', e => {
+  e.preventDefault()
+  const r = stage.getBoundingClientRect()
+  if (e.ctrlKey || e.metaKey || Math.abs(e.deltaY) > Math.abs(e.deltaX) && !e.shiftKey) {
+    zoomAt(Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0015)), e.clientX - r.left, e.clientY - r.top)
+  } else {
+    view.x -= e.deltaX; view.y -= e.deltaY; apply()
+  }
+}, { passive: false })
+let drag = null
+/** Holding still on a box this long lifts it: pulling it then draws a line to another box. */
+const LIFT_MS = 260
+/** Holding still this long opens the box's own speech bubble. */
+const HOLD_MS = 560
+const canConnect = () => isMap() && !isSeq() && previewRev === null && !editing
+function endDrag() {
+  if (!drag) return
+  for (const timer of drag.timers) clearTimeout(timer)
+  if (drag.node) drag.node.classList.remove('lifted')
+  canvas.querySelectorAll('.connect-target').forEach(n => n.classList.remove('connect-target'))
+  $('rubber').classList.remove('on')
+  drag = null
+  stage.classList.remove('dragging')
+}
+const boxUnder = (x, y) => {
+  const hit = document.elementFromPoint(x, y)
+  const node = hit && hit.closest && hit.closest('#canvas g.node')
+  const id = node ? idOf(node) : null
+  return id && page && page.elements[id] ? { id, node } : null
+}
+stage.addEventListener('pointerdown', e => {
+  // The bars and popovers over the stage have their own controls: capturing the pointer would take their clicks.
+  if (e.target.closest && e.target.closest('.no-pan')) return
+  if (e.button !== 0) return
+  closePopover()
+  const box = canConnect() ? boxUnder(e.clientX, e.clientY) : null
+  drag = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y, moved: false, from: box && box.id, node: box && box.node, mode: box && e.altKey ? 'connect' : 'pan', timers: [] }
+  if (box && drag.mode === 'pan') {
+    drag.timers.push(setTimeout(() => { if (drag && !drag.moved) { drag.mode = 'lifted'; box.node.classList.add('lifted') } }, LIFT_MS))
+    drag.timers.push(setTimeout(() => { if (drag && !drag.moved) { endDrag(); openBoxPopover(box.id) } }, HOLD_MS))
+  }
+  stage.setPointerCapture(e.pointerId)
+})
+stage.addEventListener('pointermove', e => {
+  if (!drag) return
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y
+  const isFar = Math.abs(dx) + Math.abs(dy) > 4
+  if (drag.mode === 'lifted' && isFar) drag.mode = 'connect'
+  if (drag.mode === 'connect') {
+    if (isFar) { drag.moved = true; for (const timer of drag.timers) clearTimeout(timer) }
+    drawRubber(drag.from, e.clientX, e.clientY)
+    return
+  }
+  if (drag.mode === 'lifted') return
+  if (isFar && !drag.moved) { drag.moved = true; stage.classList.add('dragging'); for (const timer of drag.timers) clearTimeout(timer) }
+  if (drag.moved) { view.x = drag.vx + dx; view.y = drag.vy + dy; apply() }
+})
+stage.addEventListener('pointerup', e => {
+  if (!drag) return
+  const was = drag
+  endDrag()
+  if (was.mode === 'connect' && was.moved) {
+    const to = boxUnder(e.clientX, e.clientY)
+    if (to && to.id !== was.from) openConnectPopover(was.from, to.id)
+    return
+  }
+  if (was.moved || !isMap() || previewRev !== null) return
+  // Pointer capture keeps the browser from seeing a double click: a second click on the same box soon after is one.
+  const box = was.from && boxUnder(e.clientX, e.clientY)
+  const now = performance.now()
+  if (box && lastClick && lastClick.id === box.id && now - lastClick.at < 380) {
+    lastClick = null
+    openBoxPopover(box.id)
+    return
+  }
+  lastClick = box ? { id: box.id, at: now } : null
+  // Pointer capture makes the stage the target; ask what is really under the pointer.
+  pick(document.elementFromPoint(e.clientX, e.clientY) || stage)
+})
+stage.addEventListener('pointercancel', endDrag)
+let lastClick = null
+$('fit').onclick = fit
+$('actual').onclick = () => { const r = stage.getBoundingClientRect(); zoomAt(1 / view.k, r.width / 2, r.height / 2) }
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
+  const r = stage.getBoundingClientRect()
+  if (e.key === 'f') fit()
+  if (e.key === '1') zoomAt(1 / view.k, r.width / 2, r.height / 2)
+  if (e.key === '+' || e.key === '=') zoomAt(1.25, r.width / 2, r.height / 2)
+  if (e.key === '-') zoomAt(0.8, r.width / 2, r.height / 2)
+  if (e.key === 'e' && !e.metaKey && !e.ctrlKey && page && page.kind === 'diagram') { e.preventDefault(); startEdit() }
+})
+addEventListener('resize', () => { if (isFirst) fit() })
+
+// ---------------------------------------------------------------- picking a target
+const nodeOf = id => canvas.querySelector('[id*="-classId-' + CSS.escape(id) + '-"]')
+const isSeq = () => isMap() && page.diagram === 'sequence'
+/**
+ * A sequence map's drawn pieces of one item: a participant's top and bottom boxes, a message's
+ * line and text, a note, a frame. Mermaid writes each kind in a fixed order (page.order says it).
+ */
+function seqNodesOf(id) {
+  if (!page || !page.order) return []
+  const all = selector => [...canvas.querySelectorAll(selector)]
+  if (page.elements[id]) {
+    const top = all('[data-et="participant"]').filter(n => n.dataset.id === id)
+    const bottom = all('.actor-bottom').filter(n => n.getAttribute('name') === id).map(n => n.tagName === 'rect' ? n.parentNode : n)
+    return [...top, ...bottom]
+  }
+  const line = page.order.lines.indexOf(id)
+  if (line >= 0) return [all('[data-et="message"]')[line], all('text.messageText')[line]].filter(Boolean)
+  const note = page.order.notes.indexOf(id)
+  if (note >= 0) return [all('[data-et="note"]')[note]].filter(Boolean)
+  const frame = page.order.frames.indexOf(id)
+  if (frame >= 0) return [all('[data-et="control-structure"]')[frame]].filter(Boolean)
+  return []
+}
+/** What lights for an id: a class map's box, or a sequence map's pieces. */
+function nodesOf(id) {
+  if (isSeq()) return seqNodesOf(id)
+  const node = nodeOf(id)
+  return node ? [node] : []
+}
+/** A sequence item's text, for the pane and the thread: "3번 저장", a note's or a frame's label. */
+function seqName(id) {
+  const m = page && page.messages && page.messages[id]
+  if (m) return (m.number ? m.number + '번 ' : '노트 ') + (m.label || (m.from + ' → ' + (m.to || m.from)))
+  const f = page && page.fragments && page.fragments[id]
+  if (f) return (f.kind === 'section' ? '구간 ' : f.kind + ' ') + (f.label || f.id)
+  return id
+}
+/** Tags each drawn piece with its id, lays wide hit lines under the arrows, paints the participants. */
+function decorateSequence() {
+  for (const id of Object.keys(page.elements)) {
+    for (const n of seqNodesOf(id)) { n.dataset.part = id; n.classList.add('seq') }
+  }
+  for (const id of [...page.order.lines, ...page.order.notes, ...page.order.frames]) {
+    for (const n of seqNodesOf(id)) { n.dataset.msg = id; n.classList.add('seq') }
+  }
+  page.order.lines.forEach(id => {
+    const line = seqNodesOf(id)[0]
+    if (!line) return
+    const hit = line.cloneNode(false)
+    for (const a of ['id', 'data-et', 'data-id', 'marker-end', 'marker-start', 'style']) hit.removeAttribute(a)
+    hit.setAttribute('class', 'msg-hit')
+    hit.dataset.msg = id
+    line.parentNode.insertBefore(hit, line)
+  })
+  // Mermaid cannot style a participant: its change color goes on here, as on a class map's box.
+  const open = new Set(page.decisions.filter(d => !d.chosen).map(d => d.id))
+  for (const [id, el] of Object.entries(page.elements)) {
+    const p = page.palette[el.change || 'keep']
+    const isOpen = el.decision && open.has(el.decision)
+    for (const n of canvas.querySelectorAll('.actor, .actor-man')) {
+      if (n.getAttribute('name') !== id) continue
+      const shapes = n.tagName === 'rect' ? [n] : [...n.querySelectorAll('circle, line')]
+      for (const shape of shapes) {
+        if (shape.tagName !== 'line') shape.style.fill = p.fill
+        shape.style.stroke = p.stroke
+        shape.style.strokeWidth = p.width
+        if (isOpen) shape.style.strokeDasharray = '6 4'
+      }
+    }
+  }
+}
+const clusterOf = id => [...canvas.querySelectorAll('g.cluster')].find(c => groupIdOf(c) === id)
+function idOf(node) {
+  const m = /classId-(.+)-\d+$/.exec(node.id || '')
+  return m ? m[1] : null
+}
+/** A cluster's id is "<svg id>-<group id>"; the svg id is dm<n>. */
+function groupIdOf(cluster) {
+  const m = /^dm\d+-(.+)$/.exec(cluster.id || '')
+  return m ? m[1] : null
+}
+/** A line's index in page.edges: from its hit area, the line itself, or its label ("id_A_B_<n>"). */
+function edgeIndexOf(hit) {
+  if (!hit.closest) return undefined
+  const line = hit.closest('.edge-hit, path.relation')
+  if (line && line.dataset.edge !== undefined) return Number(line.dataset.edge)
+  const label = hit.closest('g.edgeLabel')
+  const id = label && label.querySelector('g.label') ? label.querySelector('g.label').dataset.id : undefined
+  const m = /_(\d+)$/.exec(id || '')
+  return m ? Number(m[1]) - 1 : undefined
+}
+function pick(hit) {
+  if (isSeq()) {
+    const item = hit.closest && hit.closest('[data-msg]')
+    if (item && (page.messages[item.dataset.msg] || page.fragments[item.dataset.msg])) return setTarget({ kind: 'message', id: item.dataset.msg })
+    const part = hit.closest && hit.closest('[data-part]')
+    if (part && page.elements[part.dataset.part]) return setTarget({ kind: 'element', id: part.dataset.part })
+    return setTarget({ kind: 'map' })
+  }
+  const index = edgeIndexOf(hit)
+  if (index !== undefined && page && page.edges[index]) {
+    const drawn = page.edges[index]
+    return setTarget({ kind: 'relation', from: drawn.from, to: drawn.to, label: drawn.label })
+  }
+  const node = hit.closest && hit.closest('g.node')
+  const id = node ? idOf(node) : null
+  if (id && page && page.elements[id]) return setTarget({ kind: 'element', id })
+  const cluster = hit.closest && hit.closest('g.cluster')
+  const group = cluster ? groupIdOf(cluster) : null
+  if (group && page && page.elements[group]) return setTarget({ kind: 'element', id: group })
+  setTarget({ kind: 'map' })
+}
+function setTarget(next) {
+  target = next
+  canvas.querySelectorAll('.picked').forEach(n => n.classList.remove('picked'))
+  canvas.querySelectorAll('.edge-picked').forEach(n => n.classList.remove('edge-picked'))
+  if (isSeq() && (target.kind === 'element' || target.kind === 'message')) {
+    for (const n of seqNodesOf(target.id)) n.classList.add('picked')
+  } else if (target.kind === 'element') {
+    const node = nodeOf(target.id) || clusterOf(target.id)
+    if (node) node.classList.add('picked')
+  }
+  if (target.kind === 'relation') {
+    const index = page.edges.findIndex(e => e.from === target.from && e.to === target.to)
+    const path = canvas.querySelector('path.relation[data-edge="' + index + '"]')
+    if (path) path.classList.add('edge-picked')
+  }
+  applyFocus()
+  composer()
+  detail()
+}
+function targetName(t) {
+  if (!t || t.kind === 'map') return '지도 전체'
+  if (t.kind === 'decision') return t.id + ' 결정'
+  if (t.kind === 'relation') return t.from + ' → ' + t.to + (t.label ? ' (' + t.label + ')' : '')
+  if (t.kind === 'message') return seqName(t.id)
+  const el = page && page.elements[t.id]
+  return el ? (el.label || el.id) : t.id
+}
+$('target-clear').onclick = () => setTarget({ kind: 'map' })
+
+// ---------------------------------------------------------------- sending feedback
+async function post(path, body) {
+  const res = await fetch(path, { method: 'POST', headers: { 'content-type': 'application/json', 'x-design-map-token': TOKEN }, body: JSON.stringify(body || {}) })
+  const text = await res.text()
+  let value = {}
+  try { value = JSON.parse(text) } catch { value = { error: text } }
+  if (!res.ok) throw Object.assign(new Error(value.error || text), { status: res.status, value })
+  return value
+}
+/**
+ * Sends one item. `from` gives the target and text outright (a popover over the map);
+ * without it they come from the side composer. Resolves whether it was sent.
+ */
+async function sendFeedback(action, extra, from) {
+  // Only what goes to Claude takes the typed text; view changes and picks leave it for later.
+  const text = from ? from.text : ['comment', 'explain'].includes(action) ? $('text').value.trim() : ''
+  if (action === 'comment' && text === '') { if (!from) $('text').focus(); return false }
+  const body = Object.assign({ action, text, target: from ? from.target : target }, extra || {})
+  try {
+    await post('/api/' + NAME + '/feedback', body)
+    if (!from && (action === 'comment' || action === 'explain')) $('text').value = ''
+    const isQuick = LOCAL.includes(action)
+    // A fold shows itself on the map; only say something when it has to wait for a session.
+    if (!(VIEW_ONLY.includes(action) && thread.isListening)) {
+      toast(!thread.isListening ? '보냈어. 받을 세션이 없어서 기다리는 중이야. Claude Code에서 ' + CONNECT + ' 명령을 실행하면 전달돼'
+        : body.urgent ? '진행 중인 작업에 바로 넣었어'
+        : thread.isBusy && !isQuick ? 'Claude가 지금 작업 중이라, 끝나면 전달할게' : '보냈어')
+    }
+    await loadThread()
+    return true
+  } catch (error) {
+    $('error').textContent = '보내기 실패: ' + error.message
+    return false
+  }
+}
+$('text').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); sendFeedback('comment') }
+})
+function button(label, onClick, kind) {
+  const b = document.createElement('button')
+  b.textContent = label
+  if (kind) b.className = kind
+  b.onclick = onClick
+  return b
+}
+function composer() {
+  $('target-name').textContent = targetName(target)
+  $('target-clear').style.visibility = target.kind === 'map' ? 'hidden' : 'visible'
+  const row = $('actions')
+  row.innerHTML = ''
+  const collapsed = new Set((page && page.view && page.view.collapse) || [])
+  if (isSeq() && (target.kind === 'element' || target.kind === 'message')) {
+    row.appendChild(button('설명해 줘', () => sendFeedback('explain')))
+  } else if (target.kind === 'element' && page) {
+    const el = page.elements[target.id]
+    row.appendChild(button('설명해 줘', () => sendFeedback('explain')))
+    if (el && el.kind === 'group' && collapsed.has(el.id)) row.appendChild(button('펼치기', () => sendFeedback('expand')))
+    if (el && el.kind === 'group' && !collapsed.has(el.id)) row.appendChild(button('접기', () => sendFeedback('collapse')))
+    if (el && el.kind !== 'group' && el.parent && !collapsed.has(el.parent)) row.appendChild(button('그룹 접기', () => sendFeedback('collapse', { target: { kind: 'element', id: el.parent } })))
+    row.appendChild(button('숨기기', () => sendFeedback('hide')))
+  } else if (target.kind === 'relation') {
+    row.appendChild(button('설명해 줘', () => sendFeedback('explain')))
+  } else if (page && page.view && Object.keys(page.view).some(k => k === 'collapse' || k === 'hide')) {
+    row.appendChild(button('보기 초기화', () => sendFeedback('reset')))
+  }
+  const spacer = document.createElement('span')
+  spacer.className = 'spacer'
+  row.appendChild(spacer)
+  if (thread.isBusy) row.appendChild(button('지금 끼어들기', () => sendFeedback('comment', { urgent: true }), 'urgent'))
+  row.appendChild(button(thread.isBusy ? '끝나면 보내기' : '보내기', () => sendFeedback('comment'), 'primary'))
+}
+/** Files with an open button each: only the session that owns the map can open them. */
+function filesHtml(files) {
+  const canOpen = thread.isListening && page.repo
+  return (files || []).map(f => '<div class="file"><code title="' + esc(f) + '">' + esc(f) + '</code><button data-open="' + esc(f) + '"' + (canOpen ? '' : ' disabled title="' + (page.repo ? '지도를 연 Claude 세션이 연결돼야 열 수 있어' : '지도에 repo가 없어서 경로를 알 수 없어') + '"') + '>열기</button></div>').join('')
+}
+function wireOpen(target) {
+  $('detail').querySelectorAll('button[data-open]').forEach(b => {
+    b.onclick = async () => {
+      try {
+        await post('/api/' + NAME + '/feedback', { action: 'open', text: b.dataset.open, target })
+        toast('편집기로 여는 중')
+      } catch (error) {
+        $('error').textContent = '열기 실패: ' + error.message
+      }
+    }
+  })
+}
+function seqDetail() {
+  const KINDS = { call: '호출', reply: '응답', async: '비동기', note: '노트' }
+  const m = page.messages[target.id]
+  const f = page.fragments[target.id]
+  const decision = x => x.decision ? '결정 ' + x.decision : ''
+  if (m) {
+    const files = filesHtml(m.files)
+    $('detail').innerHTML = '<div class="q">' + esc(seqName(m.id)) + '</div>' +
+      '<div class="dim">' + esc([KINDS[m.kind || 'call'], m.from + ' → ' + (m.to || m.from), page.changeNames[m.change || 'keep'], m.steps && m.steps.length ? '스텝 ' + m.steps.join('·') : '', m.done ? '완료' : m.working ? '작업 중' : '', decision(m)].filter(Boolean).join(' · ')) + '</div>' +
+      (m.note ? '<div>' + esc(m.note) + '</div>' : '') +
+      (files ? '<div class="dim" style="margin-top:6px">호출 위치</div>' + files : '')
+    wireOpen({ kind: 'message', id: m.id })
+    return
+  }
+  if (f) {
+    const name = id => seqName(id)
+    $('detail').innerHTML = '<div class="q">' + esc(seqName(f.id)) + '</div>' +
+      '<div class="dim">' + esc([page.changeNames[f.change || 'keep'], decision(f)].filter(Boolean).join(' · ')) + '</div>' +
+      '<div>' + esc(name(f.first) + ' ~ ' + name(f.last)) + '</div>' +
+      ((f.branches || []).length ? '<ul>' + f.branches.map(b => '<li>' + esc((f.kind === 'par' ? 'and ' : 'else ') + (b.label || '') + ' · ' + name(b.at) + '부터') + '</li>').join('') + '</ul>' : '')
+    return
+  }
+  $('detail').innerHTML = ''
+}
+function detail() {
+  if (isSeq() && target.kind === 'message') return seqDetail()
+  const el = target.kind === 'element' && page && page.elements[target.id]
+  if (target.kind === 'relation' && page) {
+    const drawn = page.edges.find(e => e.from === target.from && e.to === target.to)
+    const sources = drawn ? drawn.sources.map(s => '<li><code>' + esc(s.from) + '</code> → <code>' + esc(s.to) + '</code></li>').join('') : ''
+    $('detail').innerHTML = '<div class="q">' + esc(targetName(target)) + '</div><div class="dim">관계' + (drawn && drawn.sources.length > 1 ? ' · 합쳐진 관계 ' + drawn.sources.length + '개' : '') + '</div>' + (sources ? '<ul>' + sources + '</ul>' : '')
+    return
+  }
+  if (!el) { $('detail').innerHTML = ''; return }
+  const members = (el.members || []).map(m => '<li>' + esc((m.done ? '✅ ' : '') + ({ modify: '✏ ', add: '➕ ', delete: '➖ ' }[m.change] || '') + m.text) + '</li>').join('')
+  const canOpen = thread.isListening && page.repo
+  const files = (el.files || []).map(f => '<div class="file"><code title="' + esc(f) + '">' + esc(f) + '</code><button data-open="' + esc(f) + '"' + (canOpen ? '' : ' disabled title="' + (page.repo ? '지도를 연 Claude 세션이 연결돼야 열 수 있어' : '지도에 repo가 없어서 경로를 알 수 없어') + '"') + '>열기</button></div>').join('')
+  $('detail').innerHTML =
+    '<div class="q">' + esc(el.label || el.id) + '</div>' +
+    '<div class="dim">' + esc([el.kind || (isSeq() ? 'participant' : 'class'), page.changeNames[el.change || 'keep'], el.steps && el.steps.length ? '스텝 ' + el.steps.join('·') : '', el.done ? '완료' : el.working ? '작업 중' : '', el.decision ? '결정 ' + el.decision : ''].filter(Boolean).join(' · ')) + '</div>' +
+    (el.note ? '<div>' + esc(el.note) + '</div>' : '') +
+    (members ? '<ul>' + members + '</ul>' : '') +
+    (files ? '<div class="dim" style="margin-top:6px">파일</div>' + files : '')
+  $('detail').querySelectorAll('button[data-open]').forEach(b => {
+    b.onclick = async () => {
+      try {
+        await post('/api/' + NAME + '/feedback', { action: 'open', text: b.dataset.open, target: { kind: 'element', id: el.id } })
+        toast('편집기로 여는 중')
+      } catch (error) {
+        $('error').textContent = '열기 실패: ' + error.message
+      }
+    }
+  })
+}
+
+// ---------------------------------------------------------------- the thread
+const ACTION_NAMES = { comment: '', explain: '설명 요청', expand: '펼치기', collapse: '접기', hide: '숨기기', reset: '보기 초기화', decide: '결정' }
+function statusOf(item) {
+  if (item.status === 'sent') return thread.isListening ? (thread.isBusy && !item.urgent ? '작업 끝나면 전달' : '전달 중') : '받을 세션 기다리는 중'
+  if (item.status === 'working') return LOCAL.includes(item.action) && item.action !== 'decide' ? '반영 중' : 'Claude 작업 중'
+  return { answered: '답변', done: '반영됨', failed: '실패' }[item.status] || item.status
+}
+function renderThread() {
+  const link = $('link')
+  const who = thread.owner ? thread.owner.label : ''
+  // With nobody listening, the last owner's name would read as where feedback goes: say who waits instead.
+  const waiting = thread.items.filter(i => i.status === 'sent').length
+  link.className = 'chip ' + (thread.isBusy ? 'busy' : thread.isListening ? 'on' : 'off')
+  link.textContent = thread.isBusy ? '● Claude 작업 중 · ' + who
+    : thread.isListening ? '● Claude 연결됨 · ' + who
+    : '○ 받을 세션 없음' + (waiting ? ' · 대기 ' + waiting : '')
+  link.title = thread.isListening
+    ? '피드백을 받는 세션: ' + who
+    : '이 지도를 열어 둔 Claude 세션이 없어. Claude Code에서 ' + CONNECT + ' 명령을 실행하면 그 세션이 피드백을 받고, 기다리던 피드백도 그때 전달돼.'
+  $('connect').hidden = thread.isListening
+  const items = [...thread.items].reverse()
+  const open = thread.items.filter(i => i.status === 'sent' || i.status === 'working').length
+  $('thread-title').textContent = '대화' + (open ? ' · 진행 중 ' + open : '')
+  $('thread').innerHTML = items.length === 0 ? '<div class="dim">상자나 관계선을 클릭하고 피드백을 남기면 ' + (thread.isListening ? 'Claude에게 바로 전달돼.' : '받을 세션이 생길 때 전달돼.') + '</div>' : items.map(i => {
+    const what = ACTION_NAMES[i.action]
+    return '<div class="item' + (freshIds.has(i.id) ? ' fresh' : '') + '" data-id="' + i.id + '">' +
+      '<div class="head"><b>#' + i.id + '</b> ' + esc(i.action === 'decide' ? (i.target.id + ' → ' + i.target.option) : targetName(i.target)) + (what ? ' · ' + esc(what) : '') + (i.urgent ? ' · 끼어들기' : '') +
+      '<span class="status ' + esc(i.status) + '">' + esc(statusOf(i)) + '</span></div>' +
+      (i.text ? '<div class="text">' + esc(i.text) + '</div>' : '') +
+      (i.reply ? '<div class="reply">' + esc(i.reply) + '</div>' : '') +
+      '</div>'
+  }).join('')
+  $('thread').querySelectorAll('.item').forEach(div => {
+    div.onclick = () => {
+      const item = thread.items.find(i => String(i.id) === div.dataset.id)
+      if (item && item.target && (item.target.kind === 'element' || item.target.kind === 'relation' || item.target.kind === 'message')) setTarget(item.target)
+    }
+  })
+  composer()
+  detail()
+  layoutOverlay()
+}
+async function loadThread() {
+  const res = await fetch('/api/' + NAME + '/feedback', { cache: 'no-store' })
+  if (!res.ok) return
+  const next = await res.json()
+  const before = new Map(thread.items.map(i => [i.id, i]))
+  thread = next
+  // An answer or a change that just landed: light its box and its card.
+  const landed = next.items.filter(i => {
+    const old = before.get(i.id)
+    return old && old.status !== i.status && (i.status === 'answered' || i.status === 'done')
+  })
+  freshIds = new Set(landed.map(i => i.id))
+  renderThread()
+  for (const item of landed) {
+    if (item.target && (item.target.kind === 'element' || item.target.kind === 'message')) {
+      for (const node of nodesOf(item.target.id)) { node.classList.remove('flash-reply'); void node.getBBox(); node.classList.add('flash-reply') }
+    }
+  }
+  const answered = landed.filter(i => i.status === 'answered' && i.reply)
+  for (const item of answered) replyBubble(item)
+  if (answered.length) notifyAnswer(answered[answered.length - 1])
+  else if (landed.length) toast('지도에 반영했어')
+}
+let toastTimer = null
+function toast(text) {
+  const t = $('toast')
+  t.textContent = text
+  t.classList.add('show')
+  clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200)
+}
+
+// ---------------------------------------------------------------- what the sessions are doing
+const KIND_NAMES = { read: '읽는 중', edit: '고치는 중', search: '찾는 중' }
+async function loadActivity() {
+  const res = await fetch('/api/' + NAME + '/activity', { cache: 'no-store' })
+  if (!res.ok) return
+  activity = await res.json()
+  renderActivity()
+}
+function renderActivity() {
+  canvas.querySelectorAll('.focus-read, .focus-edit, .trail').forEach(n => n.classList.remove('focus-read', 'focus-edit', 'trail'))
+  const lines = []
+  let drift = null
+  for (const s of activity.sessions) {
+    const who = esc(s.label) + (s.isOwner ? '' : ' (다른 세션)')
+    const c = s.isRunning ? s.current : null
+    if (c) {
+      const names = (c.ids || []).map(id => page && page.elements[id] ? (page.elements[id].label || id) : isSeq() ? seqName(id) : id)
+      const where = names.length ? names.join(', ') : c.outside ? '<span class="off">지도 밖 파일</span>' : ''
+      lines.push('<span class="now">' + who + ' · ' + esc(KIND_NAMES[c.kind] || c.kind) + '</span> ' + (where ? where + ' · ' : '') + '<code>' + esc(c.path || c.pattern || '') + '</code>')
+      for (const id of c.ids || []) {
+        for (const node of nodesOf(id)) node.classList.add(c.kind === 'edit' ? 'focus-edit' : 'focus-read')
+      }
+    } else if (s.isRunning) {
+      lines.push('<span class="now">' + who + ' · 생각하는 중</span>')
+    }
+    for (const step of (s.trail || []).slice(-8)) {
+      for (const id of step.ids || []) {
+        for (const node of nodesOf(id)) {
+          if (!node.classList.contains('focus-read') && !node.classList.contains('focus-edit')) node.classList.add('trail')
+        }
+      }
+    }
+    if (s.drift && !drift) drift = s.drift
+  }
+  const looking = activity.sessions.find(s => s.isRunning && s.current && (s.current.ids || []).some(id => nodesOf(id).length > 0))
+  const focusId = looking ? looking.current.ids.find(id => nodesOf(id).length > 0) : null
+  moveFirefly(focusId, looking ? looking.current : null)
+  $('activity').innerHTML = lines.length ? lines.join('<span class="sep">|</span>') : '<span class="dim">Claude가 지금 이 지도와 관련된 파일을 보고 있지 않아</span>'
+  renderDrift(drift)
+  applyFog(drift)
+}
+function renderDrift(drift) {
+  if (!drift || !drift.files || drift.files.length === 0) { $('drift').innerHTML = ''; return }
+  const files = drift.files.slice(0, 6).map(f => '<code>' + esc(f) + '</code>').join(' ')
+  $('drift').innerHTML = '⚠ 코드는 바뀌었는데 지도는 그대로야 (안개 낀 상자): ' + files + (drift.files.length > 6 ? ' 외 ' + (drift.files.length - 6) + '개' : '') +
+    '<div class="row"><button id="drift-ask">지도에 반영해 달라고 하기</button></div>'
+  $('drift-ask').onclick = () => {
+    $('text').value = '방금 바뀐 코드(' + drift.files.slice(0, 6).join(', ') + ')를 지도에 반영해 줘.'
+    const saved = target
+    target = { kind: 'map' }
+    sendFeedback('comment').finally(() => { target = saved; composer() })
+  }
+}
+
+// ---------------------------------------------------------------- since you last looked
+const seenKey = 'design-map-seen-' + NAME
+function facts(p) {
+  const elements = {}
+  for (const [id, el] of Object.entries(Object.assign({}, p.elements, p.messages || {}, p.fragments || {}))) {
+    const { working, number, ...fact } = el
+    elements[id] = JSON.stringify(fact)
+  }
+  return { revision: p.revision, elements, relations: p.relations.map(r => r.from + '>' + r.to + ':' + (r.kind || '') + ':' + (r.label || '')) }
+}
+function readSeen() {
+  try { return JSON.parse(localStorage.getItem(seenKey) || 'null') } catch { return null }
+}
+function markSeen() {
+  try { localStorage.setItem(seenKey, JSON.stringify(facts(page))) } catch {}
+  renderUnseen()
+}
+function renderUnseen() {
+  canvas.querySelectorAll('.unseen').forEach(n => n.classList.remove('unseen'))
+  const seen = readSeen()
+  if (!page) return
+  if (!seen) { markSeen(); return }
+  const now = facts(page)
+  const changed = Object.keys(now.elements).filter(id => seen.elements[id] !== undefined && seen.elements[id] !== now.elements[id])
+  const added = Object.keys(now.elements).filter(id => seen.elements[id] === undefined)
+  const removed = Object.keys(seen.elements).filter(id => now.elements[id] === undefined)
+  const relAdded = now.relations.filter(r => !seen.relations.includes(r)).length
+  const relRemoved = seen.relations.filter(r => !now.relations.includes(r)).length
+  if (changed.length + added.length + removed.length + relAdded + relRemoved === 0) { $('unseen').innerHTML = ''; return }
+  for (const id of [...changed, ...added]) {
+    for (const node of nodesOf(id)) node.classList.add('unseen')
+  }
+  const parts = []
+  const noun = isSeq() ? '항목' : '상자'
+  if (changed.length) parts.push('바뀐 ' + noun + ' ' + changed.length)
+  if (added.length) parts.push('새 ' + noun + ' ' + added.length)
+  if (removed.length) parts.push('지운 ' + noun + ' ' + removed.length + ' (' + removed.map(esc).join(', ') + ')')
+  if (relAdded) parts.push('새 관계 ' + relAdded)
+  if (relRemoved) parts.push('지운 관계 ' + relRemoved)
+  $('unseen').innerHTML = '마지막으로 확인한 rev ' + seen.revision + ' 뒤로 바뀐 것: ' + parts.join(' · ') + (isSeq() ? ' (파랗게 빛나는 항목)' : ' (파란 점선 상자)') +
+    '<div class="row"><button id="seen-ok">확인했어</button></div>'
+  $('seen-ok').onclick = markSeen
+}
+
+// ---------------------------------------------------------------- overlay: drawn over the map at screen size
+const overlay = $('overlay')
+/** A drawn piece's box on the stage, in stage pixels. */
+function screenBox(n) {
+  const r = n.getBoundingClientRect()
+  const s = stage.getBoundingClientRect()
+  return { x: r.left - s.left, y: r.top - s.top, w: r.width, h: r.height }
+}
+/** Re-run whenever the view moves or the drawing changes: each places its piece of the overlay. */
+const overlayHooks = []
+let overlayFrame = 0
+function layoutOverlay() {
+  cancelAnimationFrame(overlayFrame)
+  overlayFrame = requestAnimationFrame(() => { for (const hook of overlayHooks) hook() })
+}
+/** Moving boxes settle over ~0.6s: place the overlay again as they land. */
+function settleOverlay() {
+  for (const ms of [0, 250, 700]) setTimeout(layoutOverlay, ms)
+}
+/** Where a target sits on screen: a box's top centre, a line's middle, the stage's top for the map. */
+function anchorOf(t) {
+  if (t && (t.kind === 'element' || t.kind === 'message')) {
+    const node = nodesOf(t.id)[0] || (t.kind === 'element' && clusterOf(t.id))
+    if (node) { const b = screenBox(node); return { x: b.x + b.w / 2, y: b.y } }
+  }
+  if (t && t.kind === 'relation' && page && page.edges) {
+    const index = page.edges.findIndex(e => e.from === t.from && e.to === t.to)
+    const path = canvas.querySelector('path.relation[data-edge="' + index + '"]')
+    if (path) { const b = screenBox(path); return { x: b.x + b.w / 2, y: b.y + b.h / 2 } }
+  }
+  return { x: stage.clientWidth / 2, y: 70 }
+}
+
+// ---------------------------------------------------------------- the firefly: where Claude is looking
+const firefly = { id: null, pos: null, kind: 'read', isFlying: false, flight: 0, idleTimer: null }
+const baseName = path => String(path || '').split('/').pop()
+function fireflyAnchor() {
+  const node = firefly.id && nodesOf(firefly.id)[0]
+  if (!node) return null
+  const b = screenBox(node)
+  return { x: b.x + b.w - 4, y: b.y - 2 }
+}
+function placeFirefly(p) {
+  firefly.pos = p
+  $('firefly').style.transform = 'translate(' + p.x + 'px,' + p.y + 'px)'
+}
+/** One glowing speck left where the firefly passed; it fades on its own. */
+function spark(x, y) {
+  const s = document.createElement('i')
+  s.className = 'spark' + (firefly.kind === 'edit' ? ' edit' : '')
+  s.style.left = x + 'px'
+  s.style.top = y + 'px'
+  overlay.appendChild(s)
+  s.addEventListener('animationend', () => s.remove())
+}
+/** Flies on an arc over the boxes to wherever the target box is now, dropping sparks. */
+function fly(from) {
+  const mine = ++firefly.flight
+  const start = performance.now()
+  const duration = 950
+  let lastSpark = 0
+  firefly.isFlying = true
+  const step = now => {
+    if (mine !== firefly.flight) return
+    const to = fireflyAnchor() || from
+    const t = Math.min(1, (now - start) / duration)
+    const e = 1 - Math.pow(1 - t, 3)
+    const cx = (from.x + to.x) / 2
+    const cy = Math.min(from.y, to.y) - Math.min(140, 40 + Math.hypot(to.x - from.x, to.y - from.y) / 4)
+    const x = (1 - e) * (1 - e) * from.x + 2 * (1 - e) * e * cx + e * e * to.x
+    const y = (1 - e) * (1 - e) * from.y + 2 * (1 - e) * e * cy + e * e * to.y
+    placeFirefly({ x, y })
+    if (now - lastSpark > 32 && t < 0.97) { spark(x, y); lastSpark = now }
+    if (t < 1) requestAnimationFrame(step)
+    else firefly.isFlying = false
+  }
+  requestAnimationFrame(step)
+}
+function moveFirefly(id, current) {
+  const el = $('firefly')
+  const caption = $('caption')
+  clearTimeout(firefly.idleTimer)
+  if (!id) {
+    caption.classList.remove('on')
+    firefly.idleTimer = setTimeout(() => { el.classList.remove('on'); firefly.id = null }, 4000)
+    return
+  }
+  const kind = current && current.kind === 'edit' ? 'edit' : 'read'
+  const isNew = id !== firefly.id
+  firefly.id = id
+  firefly.kind = kind
+  el.classList.toggle('edit', kind === 'edit')
+  caption.classList.toggle('edit', kind === 'edit')
+  const where = current && (current.path || current.pattern)
+  caption.textContent = (KIND_NAMES[current && current.kind] || '보는 중') + (where ? ' · ' + baseName(where) : '')
+  caption.classList.add('on')
+  const to = fireflyAnchor()
+  if (!to) return
+  const wasOn = el.classList.contains('on')
+  el.classList.add('on')
+  if (isNew && wasOn && firefly.pos && !REDUCED.matches) fly(firefly.pos)
+  else if (!firefly.isFlying) placeFirefly(to)
+  layoutOverlay()
+}
+overlayHooks.push(() => {
+  if (!firefly.id) return
+  const to = fireflyAnchor()
+  if (to && !firefly.isFlying) placeFirefly(to)
+  const node = nodesOf(firefly.id)[0]
+  if (node) {
+    const b = screenBox(node)
+    const caption = $('caption')
+    caption.style.left = (b.x + b.w / 2) + 'px'
+    caption.style.top = (b.y + b.h + 8) + 'px'
+  }
+})
+
+// ---------------------------------------------------------------- breathing boxes: work in progress
+/** Boxes whose files changed and are not done breathe slowly; the title keeps no 🔧. */
+function breathe() {
+  canvas.querySelectorAll('.breathing').forEach(n => n.classList.remove('breathing'))
+  if (!isMap() || isSeq() || previewRev !== null) return
+  for (const [id, state] of Object.entries(page.states || {})) {
+    if (!state.isWorking) continue
+    const node = nodeOf(id)
+    if (node) node.classList.add('breathing')
+  }
+}
+
+// ---------------------------------------------------------------- answers arriving: a bubble, and if asked, a chime
+const bubbles = []
+function replyBubble(item) {
+  const b = document.createElement('div')
+  b.className = 'bubble no-pan'
+  const text = item.reply.length > 150 ? item.reply.slice(0, 150).trimEnd() + '…' : item.reply
+  b.innerHTML = '<b>Claude</b>' + esc(text)
+  const entry = { el: b, target: item.target }
+  b.onclick = () => { showThreadItem(item.id); dismiss() }
+  const dismiss = () => {
+    b.classList.add('out')
+    setTimeout(() => { b.remove(); bubbles.splice(bubbles.indexOf(entry), 1) }, 500)
+  }
+  overlay.appendChild(b)
+  bubbles.push(entry)
+  setTimeout(dismiss, 9000)
+  layoutOverlay()
+}
+overlayHooks.push(() => {
+  for (const { el, target: t } of bubbles) {
+    const a = anchorOf(t)
+    el.style.left = Math.max(160, Math.min(stage.clientWidth - 160, a.x)) + 'px'
+    el.style.top = Math.max(120, a.y) + 'px'
+  }
+})
+function showThreadItem(id) {
+  const div = $('thread').querySelector('.item[data-id="' + id + '"]')
+  if (!div) return
+  div.scrollIntoView({ behavior: REDUCED.matches ? 'auto' : 'smooth', block: 'center' })
+  div.classList.add('fresh')
+}
+const notifyKey = 'design-map-notify'
+let isNotifying = (() => { try { return localStorage.getItem(notifyKey) === '1' } catch { return false } })()
+let audio = null
+/** Two soft high notes, quick to fade: heard, not noticed. */
+function chime() {
+  try {
+    audio = audio || new AudioContext()
+    const t = audio.currentTime
+    for (const [freq, delay] of [[1318.5, 0], [1975.5, 0.1]]) {
+      const osc = audio.createOscillator()
+      const gain = audio.createGain()
+      osc.type = 'sine'
+      osc.frequency.value = freq
+      gain.gain.setValueAtTime(0, t + delay)
+      gain.gain.linearRampToValueAtTime(0.045, t + delay + 0.012)
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + delay + 0.7)
+      osc.connect(gain).connect(audio.destination)
+      osc.start(t + delay)
+      osc.stop(t + delay + 0.75)
+    }
+  } catch {}
+}
+function renderNotify() {
+  $('notify').textContent = isNotifying ? '🔔' : '🔕'
+  $('notify').classList.toggle('quiet', !isNotifying)
+  $('notify').title = isNotifying ? 'Claude가 답하면 소리와 알림으로 알려 줘 (끄려면 클릭)' : 'Claude가 답할 때 소리와 알림 켜기'
+}
+$('notify').onclick = async () => {
+  isNotifying = !isNotifying
+  try { localStorage.setItem(notifyKey, isNotifying ? '1' : '0') } catch {}
+  renderNotify()
+  if (!isNotifying) return
+  chime()
+  if ('Notification' in window && Notification.permission === 'default') {
+    try { await Notification.requestPermission() } catch {}
+  }
+  toast('Claude가 답하면 작은 소리로 알려 줄게. 이 창을 보고 있지 않으면 알림도 띄울게')
+}
+renderNotify()
+function notifyAnswer(item) {
+  if (!isNotifying) return
+  chime()
+  if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+    try {
+      const n = new Notification('Claude가 답했어 · ' + (page ? page.title : NAME), { body: item.reply.slice(0, 160), tag: 'design-map-' + NAME })
+      n.onclick = () => { window.focus(); showThreadItem(item.id); n.close() }
+    } catch {}
+  }
+}
+
+// ---------------------------------------------------------------- talking to a box, and drawing a line between two
+/** The rubber line from a lifted box to the pointer; the box under the pointer lights up. */
+function drawRubber(fromId, x, y) {
+  const node = nodeOf(fromId)
+  if (!node) return
+  const b = screenBox(node)
+  const s = stage.getBoundingClientRect()
+  const sx = b.x + b.w / 2, sy = b.y + b.h / 2
+  const ex = x - s.left, ey = y - s.top
+  const rubber = $('rubber')
+  rubber.querySelector('path').setAttribute('d', 'M' + sx + ',' + sy + ' Q' + ((sx + ex) / 2) + ',' + (Math.min(sy, ey) - 30) + ' ' + ex + ',' + ey)
+  rubber.querySelector('circle').setAttribute('cx', ex)
+  rubber.querySelector('circle').setAttribute('cy', ey)
+  rubber.classList.add('on')
+  canvas.querySelectorAll('.connect-target').forEach(n => n.classList.remove('connect-target'))
+  const to = boxUnder(x, y)
+  if (to && to.id !== fromId) to.node.classList.add('connect-target')
+}
+let popoverAnchor = null
+function closePopover() {
+  const pop = $('popover')
+  if (pop.hidden) return
+  pop.hidden = true
+  pop.innerHTML = ''
+  popoverAnchor = null
+}
+/** A small card over the map, held to `anchor` as the view moves; Esc or a click elsewhere closes it. */
+function openPopover({ title, sub, anchor, placeholder, buttons }) {
+  const pop = $('popover')
+  pop.innerHTML = '<div class="title">' + esc(title) + '</div>' + (sub ? '<div class="sub">' + esc(sub) + '</div>' : '') +
+    '<textarea placeholder="' + esc(placeholder) + '"></textarea><div class="row"></div>'
+  const area = pop.querySelector('textarea')
+  const row = pop.querySelector('.row')
+  for (const b of buttons) {
+    if (b === 'spacer') { const sp = document.createElement('span'); sp.className = 'spacer'; row.appendChild(sp); continue }
+    row.appendChild(button(b.label, async () => { if (await b.run(area.value.trim())) closePopover() }, b.kind))
+  }
+  area.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { e.preventDefault(); closePopover() }
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); const main = buttons.find(b => b.kind === 'primary'); if (main) main.run(area.value.trim()).then(ok => { if (ok) closePopover() }) }
+  })
+  popoverAnchor = anchor
+  pop.hidden = false
+  layoutOverlay()
+  setTimeout(() => area.focus(), 30)
+}
+overlayHooks.push(() => {
+  if (!popoverAnchor) return
+  const a = popoverAnchor()
+  const pop = $('popover')
+  pop.style.left = Math.max(160, Math.min(stage.clientWidth - 160, a.x)) + 'px'
+  pop.style.top = Math.max(10, Math.min(stage.clientHeight - 200, a.y)) + 'px'
+})
+addEventListener('keydown', e => { if (e.key === 'Escape' && !$('popover').hidden) closePopover() })
+function openBoxPopover(id) {
+  const el = page && page.elements[id]
+  if (!el) return
+  setTarget({ kind: 'element', id })
+  const talks = thread.items.filter(i => i.target && i.target.kind === 'element' && i.target.id === id && ['comment', 'explain'].includes(i.action))
+  const at = { kind: 'element', id }
+  openPopover({
+    title: el.label || el.id,
+    sub: [page.changeNames[el.change || 'keep'], talks.length ? '이 상자의 대화 ' + talks.length : ''].filter(Boolean).join(' · '),
+    anchor: () => { const node = nodeOf(id) || clusterOf(id); if (!node) return { x: stage.clientWidth / 2, y: 80 }; const b = screenBox(node); return { x: b.x + b.w / 2, y: b.y + b.h } },
+    placeholder: '이 상자에 대해 묻거나 고칠 점을 적어 줘. ⌘+Enter로 보내기',
+    buttons: [
+      { label: '설명해 줘', run: text => sendFeedback('explain', undefined, { target: at, text }) },
+      'spacer',
+      { label: '보내기', kind: 'primary', run: text => sendFeedback('comment', undefined, { target: at, text }) },
+    ],
+  })
+}
+function openConnectPopover(from, to) {
+  const name = id => (page.elements[id] && (page.elements[id].label || id)) || id
+  const existing = page.relations.find(r => (r.from === from && r.to === to) || (r.from === to && r.to === from))
+  const at = { kind: 'relation', from, to, label: existing && existing.label }
+  const said = (lead, text) => lead + (text ? '\n' + text : '')
+  openPopover({
+    title: name(from) + ' → ' + name(to),
+    sub: existing ? '이미 이어져 있어' + (existing.label ? ' · ' + existing.label : '') : '아직 이어지지 않았어',
+    anchor: () => {
+      const a = nodeOf(from), b = nodeOf(to)
+      if (!a || !b) return { x: stage.clientWidth / 2, y: 80 }
+      const ra = screenBox(a), rb = screenBox(b)
+      return { x: (ra.x + ra.w / 2 + rb.x + rb.w / 2) / 2, y: (ra.y + ra.h / 2 + rb.y + rb.h / 2) / 2 }
+    },
+    placeholder: '묻고 싶은 것이나 제안을 적어 줘 (비워 둬도 돼)',
+    buttons: [
+      { label: existing ? '왜 이어져?' : '왜 안 이어져?', run: text => sendFeedback('comment', undefined, { target: at, text: said(name(from) + '와(과) ' + name(to) + '은(는) ' + (existing ? '왜 이렇게 이어져 있어?' : '왜 이어져 있지 않아?'), text) }) },
+      { label: '관계 추가해 줘', run: text => sendFeedback('comment', undefined, { target: at, text: said(name(from) + ' → ' + name(to) + ' 관계를 지도에 추가해 줘.', text) }) },
+      'spacer',
+      { label: '보내기', kind: 'primary', run: text => sendFeedback('comment', undefined, { target: at, text }) },
+    ],
+  })
+}
+
+// ---------------------------------------------------------------- 💬 badges: the thread, on the boxes it is about
+overlayHooks.push(() => {
+  const host = $('badges')
+  if (!isMap() || previewRev !== null) { host.innerHTML = ''; return }
+  const counts = new Map()
+  for (const i of thread.items) {
+    if (!i.target || i.target.kind !== 'element' || !['comment', 'explain'].includes(i.action)) continue
+    const c = counts.get(i.target.id) || { n: 0, isOpen: false, last: i.id }
+    c.n += 1
+    c.isOpen = c.isOpen || i.status === 'sent' || i.status === 'working'
+    c.last = i.id
+    counts.set(i.target.id, c)
+  }
+  const keep = new Set()
+  for (const [id, c] of counts) {
+    const node = nodesOf(id)[0] || clusterOf(id)
+    if (!node) continue
+    keep.add(id)
+    let badge = host.querySelector('[data-badge="' + CSS.escape(id) + '"]')
+    if (!badge) {
+      badge = document.createElement('div')
+      badge.className = 'badge no-pan'
+      badge.dataset.badge = id
+      badge.onclick = () => { setTarget({ kind: 'element', id }); showThreadItem(Number(badge.dataset.last)) }
+      host.appendChild(badge)
+    }
+    badge.dataset.last = String(c.last)
+    badge.textContent = '💬 ' + c.n
+    badge.classList.toggle('open', c.isOpen)
+    badge.title = c.isOpen ? '답을 기다리는 대화가 있어' : '이 상자의 대화 ' + c.n
+    const b = screenBox(node)
+    badge.style.left = b.x + 'px'
+    badge.style.top = b.y + 'px'
+  }
+  for (const badge of [...host.children]) if (!keep.has(badge.dataset.badge)) badge.remove()
+})
+
+// ---------------------------------------------------------------- the camera: fly to a box
+let flight = 0
+function flyTo(id) {
+  const node = nodesOf(id)[0] || clusterOf(id)
+  if (!node) return
+  const b = screenBox(node)
+  const cx = (b.x + b.w / 2 - view.x) / view.k
+  const cy = (b.y + b.h / 2 - view.y) / view.k
+  const k = Math.min(1.6, Math.max(view.k, 0.85))
+  const goal = { k, x: stage.clientWidth / 2 - cx * k, y: stage.clientHeight / 2 - cy * k }
+  if (REDUCED.matches) { view = goal; apply(); return }
+  const from = { ...view }
+  const mine = ++flight
+  const start = performance.now()
+  const step = now => {
+    if (mine !== flight) return
+    const t = Math.min(1, (now - start) / 560)
+    const e = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
+    view = { k: from.k + (goal.k - from.k) * e, x: from.x + (goal.x - from.x) * e, y: from.y + (goal.y - from.y) * e }
+    apply()
+    if (t < 1) requestAnimationFrame(step)
+  }
+  requestAnimationFrame(step)
+}
+
+// ---------------------------------------------------------------- filters: show only some boxes
+let boxFilter = null
+function setFilter(next) {
+  boxFilter = next
+  applyFilter()
+}
+function applyFilter() {
+  canvas.querySelectorAll('.dimmed').forEach(n => n.classList.remove('dimmed'))
+  const svg = canvas.querySelector('svg')
+  if (svg) svg.classList.toggle('filtering', !!boxFilter)
+  $('filter-chip').hidden = !boxFilter
+  if (!boxFilter || !isMap()) return
+  $('filter-chip').textContent = boxFilter.name + ' ✕'
+  for (const node of canvas.querySelectorAll('g.node')) {
+    const id = idOf(node)
+    if (id && !boxFilter.keep(id, node)) node.classList.add('dimmed')
+  }
+}
+$('filter-chip').onclick = () => setFilter(null)
+const FILTERS = {
+  added: { name: '새 코드만', keep: id => (page.elements[id] || {}).change === 'add' },
+  changed: { name: '바뀐 것만', keep: id => ((page.elements[id] || {}).change || 'keep') !== 'keep' },
+  unseen: { name: '안 본 변경만', keep: (id, node) => node.classList.contains('unseen') },
+  working: { name: '작업 중만', keep: id => !!(page.states && page.states[id] && page.states[id].isWorking) },
+}
+
+// ---------------------------------------------------------------- decisions, previewed on the map
+function clearDecisionPreview() {
+  canvas.querySelectorAll('.ghosted, .hush').forEach(n => n.classList.remove('ghosted', 'hush'))
+  $('impact').classList.remove('on')
+  impactAnchor = null
+}
+let impactAnchor = null
+/** Hovering a decision lights what it would change and dims the rest, with the option's impact beside it. */
+function previewDecision(id, optionId) {
+  if (!page || previewRev !== null) return
+  const d = page.decisions.find(x => x.id === id)
+  if (!d) return
+  clearDecisionPreview()
+  const tagged = [...Object.values(page.elements), ...Object.values(page.messages || {}), ...Object.values(page.fragments || {})]
+    .filter(x => x.decision === id).map(x => x.id)
+  const lit = new Set(tagged.flatMap(t => nodesOf(t)))
+  if (!isSeq()) for (const node of canvas.querySelectorAll('g.node')) node.classList.add(lit.has(node) ? 'ghosted' : 'hush')
+  else for (const node of lit) node.classList.add('ghosted')
+  const option = optionId && (d.options || []).find(o => o.id === optionId)
+  $('impact').textContent = option ? option.id + ' · ' + option.text + (option.impact ? '\n영향: ' + option.impact : '') : d.id + ' · ' + d.question + (tagged.length ? '' : '\n지도에 이 결정이 붙은 상자가 없어')
+  impactAnchor = () => tagged.length ? anchorOf({ kind: nodesOf(tagged[0]).length && page.elements[tagged[0]] ? 'element' : 'message', id: tagged[0] }) : { x: stage.clientWidth / 2, y: 90 }
+  $('impact').classList.add('on')
+  layoutOverlay()
+}
+overlayHooks.push(() => {
+  if (!impactAnchor) return
+  const a = impactAnchor()
+  $('impact').style.left = Math.max(150, Math.min(stage.clientWidth - 150, a.x)) + 'px'
+  $('impact').style.top = Math.max(70, a.y) + 'px'
+})
+
+// ---------------------------------------------------------------- spotlight: ⌘K
+let spotItems = []
+let spotIndex = 0
+function spotCandidates() {
+  if (!page || !isMap()) return []
+  const items = []
+  for (const el of Object.values(page.elements)) {
+    const text = [el.id, el.label, el.note, ...(el.members || []).map(m => m.text), ...(el.files || [])].filter(Boolean).join(' ')
+    items.push({ kind: '상자', title: el.label || el.id, sub: (el.files || [])[0] ? baseName(el.files[0]) : page.changeNames[el.change || 'keep'], text, run: () => { flyTo(el.id); setTarget({ kind: 'element', id: el.id }) } })
+  }
+  for (const [id, m] of Object.entries(page.messages || {})) {
+    items.push({ kind: '메시지', title: seqName(id), sub: m.from + ' → ' + (m.to || m.from), text: [id, m.label, m.note, ...(m.files || [])].filter(Boolean).join(' '), run: () => { flyTo(id); setTarget({ kind: 'message', id }) } })
+  }
+  for (const d of page.decisions) {
+    items.push({ kind: '결정', title: d.id + ' · ' + d.question, sub: d.chosen ? d.chosen + ' 확정' : '열림', text: [d.id, d.question, ...(d.options || []).map(o => o.text)].join(' '), run: () => {
+      const card = [...$('decisions').querySelectorAll('.decision')].find(c => c.dataset.decision === d.id)
+      if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      previewDecision(d.id, null)
+      setTimeout(clearDecisionPreview, 3200)
+    } })
+  }
+  const command = (title, run, sub) => items.push({ kind: '명령', title, sub: sub || '', text: title, run })
+  if (!isSeq()) {
+    for (const [key, f] of Object.entries(FILTERS)) command(f.name + ' 보기', () => setFilter(FILTERS[key]))
+    if (boxFilter) command('모두 보기', () => setFilter(null), '필터 풀기')
+  }
+  if (versions.length > 1) command('타임머신 재생', () => play(), '처음 버전부터')
+  command('지도 맞춤', () => fit(), 'f')
+  return items
+}
+function scoreOf(item, words) {
+  const hay = (item.title + ' ' + item.text).toLowerCase()
+  let score = 0
+  for (const w of words) {
+    const at = hay.indexOf(w)
+    if (at < 0) return -1
+    score += at === 0 ? 3 : item.title.toLowerCase().includes(w) ? 2 : 1
+  }
+  return score + (item.kind === '상자' ? 0.5 : 0)
+}
+function renderSpot() {
+  const words = $('spot-input').value.toLowerCase().split(/\s+/).filter(Boolean)
+  const all = spotCandidates()
+  spotItems = words.length === 0
+    ? [...all.filter(i => i.kind === '명령'), ...all.filter(i => i.kind !== '명령').slice(0, 8)]
+    : all.map(i => [i, scoreOf(i, words)]).filter(([, s]) => s >= 0).sort((a, b) => b[1] - a[1]).map(([i]) => i).slice(0, 30)
+  spotIndex = Math.min(spotIndex, Math.max(0, spotItems.length - 1))
+  $('spot-list').innerHTML = spotItems.length === 0 ? '<div class="dim" style="padding:8px 12px">찾는 게 없어</div>' : spotItems.map((i, n) =>
+    '<div class="spot-item' + (n === spotIndex ? ' on' : '') + '" data-n="' + n + '"><span class="kind">' + esc(i.kind) + '</span><span>' + esc(i.title) + '</span><span class="sub">' + esc(i.sub) + '</span></div>').join('')
+  $('spot-list').querySelectorAll('.spot-item').forEach(div => {
+    div.onmouseenter = () => { spotIndex = Number(div.dataset.n); $('spot-list').querySelectorAll('.spot-item').forEach(x => x.classList.toggle('on', x === div)) }
+    div.onclick = () => runSpot(Number(div.dataset.n))
+  })
+  const on = $('spot-list').querySelector('.spot-item.on')
+  if (on) on.scrollIntoView({ block: 'nearest' })
+}
+function openSpot() {
+  if (!isMap() || previewRev !== null) return
+  $('spotlight').hidden = false
+  $('spot-input').value = ''
+  spotIndex = 0
+  renderSpot()
+  $('spot-input').focus()
+}
+function closeSpot() { $('spotlight').hidden = true }
+function runSpot(n) {
+  const item = spotItems[n]
+  closeSpot()
+  if (item) item.run()
+}
+$('spot-open').onclick = openSpot
+$('spotlight').addEventListener('pointerdown', e => { if (e.target.id === 'spotlight') closeSpot() })
+$('spot-input').addEventListener('input', () => { spotIndex = 0; renderSpot() })
+$('spot-input').addEventListener('keydown', e => {
+  if (e.isComposing) return
+  if (e.key === 'Escape') { e.preventDefault(); closeSpot() }
+  if (e.key === 'ArrowDown') { e.preventDefault(); spotIndex = Math.min(spotItems.length - 1, spotIndex + 1); renderSpot() }
+  if (e.key === 'ArrowUp') { e.preventDefault(); spotIndex = Math.max(0, spotIndex - 1); renderSpot() }
+  if (e.key === 'Enter') { e.preventDefault(); runSpot(spotIndex) }
+})
+addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); $('spotlight').hidden ? openSpot() : closeSpot(); return }
+  if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(e.target.tagName)) { e.preventDefault(); openSpot() }
+})
+
+// ---------------------------------------------------------------- semantic zoom: far, names; near, files
+/**
+ * Below this scale the boxes' text is too small to read: names float as pills at reading size.
+ * Kept under what fitting an unfolded map usually lands on (~0.45), so a fitted map keeps its members.
+ */
+const FAR = 0.35
+/** Above this the boxes have room to spare: their files show under them. */
+const NEAR = 1.55
+overlayHooks.push(() => {
+  const isClassMap = isMap() && !isSeq() && previewRev === null
+  const isFar = isClassMap && view.k < FAR
+  const isNear = isClassMap && view.k > NEAR
+  canvas.classList.toggle('zoom-far', isFar)
+  $('pills').classList.toggle('off', !isFar)
+  $('filecaps').classList.toggle('off', !isNear)
+  if (isFar) {
+    const html = []
+    for (const node of canvas.querySelectorAll('g.node')) {
+      const id = idOf(node)
+      const el = id && page.elements[id]
+      if (!el) continue
+      const b = screenBox(node)
+      const shape = node.querySelector('path')
+      const fill = shape ? getComputedStyle(shape).fill : '#fff'
+      html.push('<div class="pill" style="left:' + (b.x + b.w / 2) + 'px;top:' + (b.y + b.h / 2) + 'px;max-width:' + Math.max(110, b.w + 24) + 'px;background:' + fill + '" title="' + esc(el.label || el.id) + '">' + esc(el.label || el.id) + '</div>')
+    }
+    $('pills').innerHTML = html.join('')
+  }
+  if (isNear) {
+    const html = []
+    for (const node of canvas.querySelectorAll('g.node')) {
+      const id = idOf(node)
+      const el = id && page.elements[id]
+      if (!el || !(el.files || []).length) continue
+      const b = screenBox(node)
+      const names = el.files.slice(0, 3).map(f => baseName(f)).join(' · ') + (el.files.length > 3 ? ' 외 ' + (el.files.length - 3) : '')
+      html.push('<div class="filecap" style="left:' + (b.x + b.w / 2) + 'px;top:' + (b.y + b.h + 6) + 'px">' + esc(names) + '</div>')
+    }
+    $('filecaps').innerHTML = html.join('')
+  }
+})
+
+// ---------------------------------------------------------------- focus: a picked box and what it touches
+/** Lines drawn between boxes, by index, with the boxes at each end. */
+function edgesOfBox(id) {
+  return (page.edges || []).map((e, index) => ({ ...e, index })).filter(e => e.from === id || e.to === id)
+}
+function applyFocus() {
+  canvas.querySelectorAll('.unfocused').forEach(n => n.classList.remove('unfocused'))
+  canvas.querySelectorAll('path.relation.flowing').forEach(n => n.classList.remove('flowing'))
+  if (!isMap() || isSeq() || previewRev !== null || target.kind !== 'element') return
+  const id = target.id
+  if (!nodeOf(id)) return
+  const touching = edgesOfBox(id)
+  const near = new Set([id, ...touching.flatMap(e => [e.from, e.to])])
+  const lines = new Set(touching.map(e => e.index))
+  for (const node of canvas.querySelectorAll('g.node')) if (!near.has(idOf(node))) node.classList.add('unfocused')
+  for (const path of canvas.querySelectorAll('path.relation')) {
+    if (lines.has(Number(path.dataset.edge))) path.classList.add('flowing')
+    else path.classList.add('unfocused')
+  }
+  for (const label of canvas.querySelectorAll('g.edgeLabel')) {
+    const index = edgeIndexOf(label)
+    if (index !== undefined && !lines.has(index)) label.classList.add('unfocused')
+  }
+}
+addEventListener('keydown', e => {
+  if (e.key === 'Escape' && target.kind !== 'map' && $('popover').hidden && $('spotlight').hidden && previewRev === null && !['INPUT', 'TEXTAREA'].includes(e.target.tagName)) setTarget({ kind: 'map' })
+})
+
+// ---------------------------------------------------------------- flow playback: a pulse along the calls, in order
+let flowRun = 0
+/** Class maps: breadth first from the boxes nothing points at, in the order the lines are written. */
+function flowOrder() {
+  const edges = (page.edges || []).map((e, index) => ({ ...e, index }))
+  const incoming = new Set(edges.map(e => e.to))
+  const starts = [...new Set(edges.map(e => e.from))].filter(id => !incoming.has(id))
+  const queue = starts.length ? starts : edges.slice(0, 1).map(e => e.from)
+  const seen = new Set()
+  const order = []
+  for (let i = 0; i < queue.length; i++) {
+    for (const e of edges.filter(x => x.from === queue[i] && !seen.has(x.index))) {
+      seen.add(e.index)
+      order.push(e)
+      if (!queue.includes(e.to)) queue.push(e.to)
+    }
+  }
+  for (const e of edges) if (!seen.has(e.index)) order.push(e)
+  return order.slice(0, 30)
+}
+/** A glowing dot travelling along `line` (a path or a line) over `ms`. */
+function pulseAlong(line, ms) {
+  return new Promise(resolve => {
+    if (!line || typeof line.getTotalLength !== 'function') return resolve()
+    const total = line.getTotalLength()
+    const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
+    dot.setAttribute('r', '5')
+    dot.setAttribute('class', 'pulse')
+    line.parentNode.appendChild(dot)
+    const start = performance.now()
+    const step = now => {
+      const t = Math.min(1, (now - start) / ms)
+      const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2
+      const p = line.getPointAtLength(total * e)
+      dot.setAttribute('cx', p.x)
+      dot.setAttribute('cy', p.y)
+      if (t < 1 && flowRun !== 0) requestAnimationFrame(step)
+      else { dot.remove(); resolve() }
+    }
+    requestAnimationFrame(step)
+  })
+}
+function arrive(nodes) {
+  for (const n of nodes) { n.classList.remove('arrive'); void n.getBBox(); n.classList.add('arrive') }
+}
+async function playFlow() {
+  if (flowRun !== 0) { flowRun = 0; $('flow').classList.remove('on'); $('flow').textContent = '▶ 흐름'; return }
+  const mine = flowRun = Date.now()
+  $('flow').classList.add('on')
+  $('flow').textContent = '❚❚ 흐름'
+  const ms = REDUCED.matches ? 0 : 700
+  if (isSeq()) {
+    for (const id of page.order.lines) {
+      if (flowRun !== mine) break
+      const [line, text] = seqNodesOf(id)
+      if (text) arrive([text])
+      await pulseAlong(line, ms)
+      const m = page.messages[id]
+      if (m) arrive(nodesOf(m.to || m.from))
+      await new Promise(r => setTimeout(r, 120))
+    }
+  } else {
+    for (const e of flowOrder()) {
+      if (flowRun !== mine) break
+      const path = canvas.querySelector('path.relation[data-edge="' + e.index + '"]')
+      if (path) path.classList.add('flowing')
+      arrive(nodesOf(e.from))
+      await pulseAlong(path, ms)
+      arrive(nodesOf(e.to))
+      if (path && !(target.kind === 'element' && (e.from === target.id || e.to === target.id))) path.classList.remove('flowing')
+      await new Promise(r => setTimeout(r, 140))
+    }
+  }
+  if (flowRun === mine) { flowRun = 0; $('flow').classList.remove('on'); $('flow').textContent = '▶ 흐름' }
+}
+$('flow').onclick = playFlow
+addEventListener('keydown', e => { if (e.key === 'p' && !e.metaKey && !e.ctrlKey && !['INPUT', 'TEXTAREA'].includes(e.target.tagName) && isMap()) playFlow() })
+
+// ---------------------------------------------------------------- fog: boxes whose code moved on while the map stood still
+function applyFog(drift) {
+  canvas.querySelectorAll('.foggy').forEach(n => n.classList.remove('foggy'))
+  if (!isMap() || isSeq() || previewRev !== null || !drift || !drift.files || !drift.files.length) return
+  const stale = new Set(drift.files)
+  for (const el of Object.values(page.elements)) {
+    if (!(el.files || []).some(f => stale.has(f.replace(/:\d+(-\d+)?$/, '')))) continue
+    const node = nodeOf(el.id)
+    if (node) node.classList.add('foggy')
+  }
+}
+
+// ---------------------------------------------------------------- done: a stamp on the box, thunk
+const SVG_NS = 'http://www.w3.org/2000/svg'
+function svgEl(tag, attrs) {
+  const n = document.createElementNS(SVG_NS, tag)
+  for (const [k, v] of Object.entries(attrs || {})) n.setAttribute(k, v)
+  return n
+}
+/** Stamps every done box; one that just became done (`before` says it was not) lands with a thunk. */
+function stampDone(states, before) {
+  canvas.querySelectorAll('.stamp').forEach(n => n.remove())
+  if (!isMap() || isSeq() || !states) return
+  for (const [id, state] of Object.entries(states)) {
+    if (!state.isDone) continue
+    const node = nodeOf(id)
+    if (!node) continue
+    const b = node.getBBox()
+    const stamp = svgEl('g', { class: 'stamp', transform: 'translate(' + (b.x + b.width - 8) + ',' + (b.y + 9) + ')' })
+    const face = svgEl('g', { class: 'stamp-face', transform: 'rotate(-14)' })
+    face.append(svgEl('circle', { class: 'face', r: 13 }), svgEl('circle', { class: 'rim', r: 10.5 }))
+    const text = svgEl('text', { 'text-anchor': 'middle', 'dominant-baseline': 'central' })
+    text.textContent = '완료'
+    face.append(text)
+    stamp.append(face)
+    node.append(stamp)
+    const wasDone = before && before[id] && before[id].isDone
+    if (before && !wasDone && !REDUCED.matches) {
+      face.animate([
+        { transform: 'rotate(-34deg) scale(2.4)', opacity: 0 },
+        { transform: 'rotate(-10deg) scale(.88)', opacity: 1, offset: 0.62 },
+        { transform: 'rotate(-14deg) scale(1)', opacity: 1 },
+      ], { duration: 560, easing: 'cubic-bezier(.3, 1.4, .5, 1)', id: 'dm-stamp' })
+      const wave = svgEl('circle', { class: 'wave', r: 13 })
+      stamp.prepend(wave)
+      wave.animate([{ transform: 'scale(1)', opacity: 0.9 }, { transform: 'scale(2.6)', opacity: 0 }], { duration: 700, delay: 330, easing: 'ease-out', id: 'dm-stamp' }).finished.then(() => wave.remove(), () => wave.remove())
+    }
+  }
+}
+
+// ---------------------------------------------------------------- progress rings
+const RINGS = [
+  { key: 'steps', name: '스텝', color: '#b5a2d9', r: 13 },
+  { key: 'boxes', name: '구현', color: '#93cfa9', r: 9 },
+  { key: 'decisions', name: '결정', color: '#efb2a0', r: 5 },
+]
+function ringCounts() {
+  const changed = Object.values(page.elements).filter(e => e.kind !== 'group' && (e.change || 'keep') !== 'keep')
+  return {
+    steps: { done: page.steps.filter(s => s.state === 'done').length, total: page.steps.length },
+    boxes: { done: changed.filter(e => e.done).length, total: changed.length },
+    decisions: { done: page.decisions.filter(d => d.chosen).length, total: page.decisions.length },
+  }
+}
+function renderRings() {
+  const host = $('rings')
+  if (!isMap() || previewRev !== null) { host.hidden = true; return }
+  const counts = ringCounts()
+  const shown = RINGS.filter(r => counts[r.key].total > 0)
+  host.hidden = shown.length === 0
+  if (host.hidden) return
+  if (!host.querySelector('svg')) {
+    host.innerHTML = '<svg viewBox="-16 -16 32 32">' + RINGS.map(r => '<circle class="track" r="' + r.r + '"/><circle data-ring="' + r.key + '" r="' + r.r + '" stroke="' + r.color + '"/>').join('') + '</svg>'
+    host.onclick = () => $('progress-title').scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+  for (const r of RINGS) {
+    const { done, total } = counts[r.key]
+    const length = 2 * Math.PI * r.r
+    const ring = host.querySelector('circle[data-ring="' + r.key + '"]')
+    const track = ring.previousElementSibling
+    ring.style.display = track.style.display = total > 0 ? '' : 'none'
+    ring.setAttribute('stroke-dasharray', String(length))
+    ring.setAttribute('stroke-dashoffset', String(total > 0 ? length * (1 - done / total) : length))
+  }
+  host.title = shown.map(r => r.name + ' ' + counts[r.key].done + '/' + counts[r.key].total).join(' · ')
+  // Bursts once, when this viewer saw the rings open and now sees them all closed; opening the page on a finished map stays quiet.
+  const isComplete = shown.every(r => counts[r.key].done === counts[r.key].total)
+  const key = 'design-map-rings-' + NAME
+  let seen = null
+  try { seen = localStorage.getItem(key) } catch {}
+  const now = isComplete ? 'done' : 'open'
+  if (seen !== now) try { localStorage.setItem(key, now) } catch {}
+  if (isComplete && seen === 'open' && !REDUCED.matches) burst(host)
+}
+/** A small ring of sparks when every ring closes. */
+function burst(host) {
+  const colors = RINGS.map(r => r.color)
+  for (let i = 0; i < 14; i++) {
+    const a = (i / 14) * Math.PI * 2
+    const dot = document.createElement('i')
+    dot.className = 'burst'
+    dot.style.background = colors[i % colors.length]
+    dot.style.setProperty('--dx', Math.cos(a) * 26 + 'px')
+    dot.style.setProperty('--dy', Math.sin(a) * 26 + 'px')
+    host.appendChild(dot)
+    dot.addEventListener('animationend', () => dot.remove())
+  }
+}
+
+// ---------------------------------------------------------------- side panel
+/** Each relation kind as Mermaid draws its line and end, and what it means on a map. */
+const RELATION_KINDS = [
+  ['association', false, 'arrow', '호출·소유'],
+  ['dependency', true, 'arrow', '느슨한 사용'],
+  ['inheritance', false, 'triangle', '상속'],
+  ['realization', true, 'triangle', '인터페이스 구현'],
+  ['composition', false, 'diamond-filled', '구성 (함께 생기고 사라짐)'],
+  ['aggregation', false, 'diamond', '집합 (따로 존재)'],
+]
+const RELATION_ENDS = {
+  arrow: '<path d="M27 5 L21 2 L21 8 Z" fill="#8e889e"/>',
+  triangle: '<path d="M28 5 L21 1.5 L21 8.5 Z" fill="#fff" stroke="#8e889e"/>',
+  'diamond-filled': '<path d="M29 5 L25 2 L21 5 L25 8 Z" fill="#8e889e"/>',
+  diamond: '<path d="M29 5 L25 2 L21 5 L25 8 Z" fill="#fff" stroke="#8e889e"/>',
+}
+/** Only the kinds this map uses, so the legend stays as short as the map. */
+function relationLegend() {
+  const used = new Set((page.relations || []).map(r => r.kind || 'association'))
+  const rows = RELATION_KINDS.filter(([kind]) => used.has(kind)).map(([kind, isDashed, end, text]) =>
+    '<span title="' + kind + '"><svg width="30" height="10" viewBox="0 0 30 10"><line x1="1" y1="5" x2="22" y2="5" stroke="#8e889e" stroke-width="1"' +
+    (isDashed ? ' stroke-dasharray="3 2"' : '') + '/>' + RELATION_ENDS[end] + '</svg>' + esc(text) + '</span>')
+  return rows.length === 0 ? '' : '<div class="legend-lines">' + rows.join('') + '</div>'
+}
+function side() {
+  renderRings()
+  $('legend').innerHTML = page.legend.map(l => '<span><i style="background:' + l.fill + ';border-color:' + l.stroke + (l.dashed ? ';border-style:dashed' : '') + '"></i>' + esc(l.text) + '</span>').join('') +
+    '<span><i style="background:#fff;border-color:#0d9488"></i>Claude가 보는 중</span><span><i style="background:#fff;border-color:#2563eb;border-style:dashed"></i>확인 안 한 변경</span>' +
+    relationLegend()
+  const open = page.decisions.filter(d => !d.chosen)
+  $('decisions-title').textContent = '결정' + (open.length ? ' · 열림 ' + open.length : '')
+  $('decisions').innerHTML = page.decisions.length === 0 ? '<div class="dim">없음</div>' : page.decisions.map(d => {
+    const opts = (d.options || []).map(o =>
+      '<div class="opt"><div class="body' + (o.id === d.chosen ? ' chosen' : '') + '"><code>' + esc(o.id) + '</code> ' + esc(o.text) +
+      (o.impact ? '<div class="dim">영향: ' + esc(o.impact) + '</div>' : '') + '</div>' +
+      (d.chosen ? '' : '<button data-decision="' + esc(d.id) + '" data-option="' + esc(o.id) + '">이걸로 결정</button>') + '</div>').join('')
+    return '<div class="card decision" data-decision="' + esc(d.id) + '"><div class="q">' + esc(d.id) + ' ' + esc(d.question) + (d.chosen ? ' <span class="chosen">확정</span>' : '') + '</div>' + opts + (d.rationale ? '<div class="dim">' + esc(d.rationale) + '</div>' : '') + '</div>'
+  }).join('')
+  $('decisions').querySelectorAll('.decision').forEach(card => {
+    card.querySelector('.q').onmouseenter = () => previewDecision(card.dataset.decision, null)
+    card.querySelectorAll('.opt').forEach(opt => {
+      const pickButton = opt.querySelector('button[data-option]')
+      const optionId = pickButton ? pickButton.dataset.option : (opt.querySelector('code') || {}).textContent
+      opt.onmouseenter = () => previewDecision(card.dataset.decision, optionId)
+    })
+    card.onmouseleave = clearDecisionPreview
+  })
+  $('decisions').querySelectorAll('button[data-decision]').forEach(b => {
+    b.onclick = () => {
+      const saved = target
+      target = { kind: 'decision', id: b.dataset.decision, option: b.dataset.option }
+      sendFeedback('decide').finally(() => { target = saved; composer() })
+    }
+  })
+  const mark = { done: '✅', working: '🔧', todo: '⬜' }
+  const steps = page.steps.map(s => '<li>' + mark[s.state] + ' 스텝 ' + s.step + ': ' + s.items.map(i => esc(i.label)).join(', ') + '</li>').join('')
+  const outside = page.outside.map(f => '<li><code>' + esc(f) + '</code></li>').join('')
+  $('progress-title').textContent = '진행' + (page.steps.length ? ' · ' + page.steps.filter(s => s.state === 'done').length + '/' + page.steps.length : '')
+  $('progress').innerHTML = (steps ? '<ul class="steps">' + steps + '</ul>' : '<div class="dim">스텝 없음</div>') +
+    (page.repo ? '' : '<div class="dim">repo가 없어서 파일 변경, Claude 시선, 편집기 열기가 동작하지 않아.</div>') +
+    (outside ? '<h2>지도 밖 변경 ' + page.outside.length + '</h2><ul>' + outside + '</ul>' : '')
+}
+
+// ---------------------------------------------------------------- the diagram
+/**
+ * Draws a source on the stage; on an error the last drawing stays up. `isAnimated`: boxes glide
+ * from where the last drawing had them (Magic Move) instead of the picture jumping.
+ */
+async function draw(source, isAnimated = false) {
+  renderCount += 1
+  const id = 'dm' + renderCount
+  const old = canvas.querySelector('svg')
+  const before = isAnimated && old && !REDUCED.matches ? layoutOf(old) : null
+  try {
+    const { svg } = await mermaid.render(id, source)
+    canvas.innerHTML = svg
+  } catch (error) {
+    document.getElementById('d' + id)?.remove()
+    return { error: String(error && error.message || error) }
+  }
+  // Mermaid sizes the SVG to 100% of its box, which floats here: pin it to its own size.
+  const drawn = canvas.querySelector('svg')
+  const box = drawn.viewBox.baseVal
+  drawn.removeAttribute('style')
+  drawn.setAttribute('width', box.width)
+  drawn.setAttribute('height', box.height)
+  // Lines are thin to hit: lay a wide transparent copy under each, both knowing their line.
+  // Mermaid numbers lines in the order they are written, which is the order of page.edges.
+  if (isMap()) canvas.querySelectorAll('path.relation').forEach(path => {
+    const m = /_(\d+)$/.exec(path.id || '')
+    if (!m) return
+    const index = Number(m[1]) - 1
+    path.dataset.edge = String(index)
+    const hit = path.cloneNode(false)
+    hit.removeAttribute('id')
+    hit.removeAttribute('marker-end')
+    hit.removeAttribute('marker-start')
+    hit.removeAttribute('style')
+    hit.setAttribute('class', 'edge-hit')
+    hit.dataset.edge = String(index)
+    path.parentNode.insertBefore(hit, path)
+  })
+  if (before) magicMove(before, drawn)
+  return {}
+}
+
+// ---------------------------------------------------------------- motion: Magic Move and folding
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)')
+const EASE = 'cubic-bezier(.2, .8, .2, 1)'
+/** A drawn piece's key across drawings: Mermaid adds the render id in front and a counter behind. */
+const keyOf = n => (n.id || '').replace(/^dm\d+-/, '').replace(/-\d+$/, '')
+const elementIdOfKey = key => key.startsWith('classId-') ? key.slice('classId-'.length) : key
+function translateOf(n) {
+  const t = n.transform && n.transform.baseVal.consolidate()
+  return t ? { x: t.matrix.e, y: t.matrix.f } : { x: 0, y: 0 }
+}
+/** A point of `n`'s own space in the SVG's user space, whatever groups sit between. */
+function userPoint(svg, n, x, y) {
+  const p = svg.createSVGPoint()
+  p.x = x
+  p.y = y
+  return p.matrixTransform(svg.getScreenCTM().inverse().multiply(n.getScreenCTM()))
+}
+/** Where every box and group sits, in canvas pixels at scale 1 (user units less the viewBox origin). */
+function layoutOf(svg) {
+  const vb = svg.viewBox.baseVal
+  const boxes = new Map()
+  const groups = new Map()
+  for (const n of svg.querySelectorAll('g.node')) {
+    const key = keyOf(n)
+    if (!key || n.classList.contains('ghost')) continue
+    const at = userPoint(svg, n, 0, 0)
+    const b = n.getBBox()
+    boxes.set(key, { x: at.x - vb.x, y: at.y - vb.y, w: b.width, h: b.height, node: n })
+  }
+  for (const c of svg.querySelectorAll('g.cluster')) {
+    const id = groupIdOf(c)
+    const r = c.querySelector('rect')
+    if (!id || !r) continue
+    const b = r.getBBox()
+    const at = userPoint(svg, r, b.x + b.width / 2, b.y + b.height / 2)
+    groups.set('classId-' + id, { x: at.x - vb.x, y: at.y - vb.y, w: b.width, h: b.height, node: c })
+  }
+  return { vb, boxes, groups }
+}
+/** The keys of a box's enclosing groups, nearest first: where it folds into and blooms out of. */
+function ancestorKeys(key) {
+  const keys = []
+  const elements = page && page.elements
+  for (let at = elements && elements[elementIdOfKey(key)]; at && at.parent; at = elements[at.parent]) keys.push('classId-' + at.parent)
+  return keys
+}
+function placeIn(layout, keys) {
+  for (const key of keys) {
+    const found = layout.boxes.get(key) || layout.groups.get(key)
+    if (found) return found
+  }
+  return null
+}
+/**
+ * Boxes that stayed glide from their old place; a group folding shrinks into its box and its
+ * children fly in after it; unfolding, they bloom out of where the box was. Lines fade in last.
+ */
+function magicMove(before, svg) {
+  const after = layoutOf(svg)
+  const ox = after.vb.x
+  const oy = after.vb.y
+  let isMoved = false
+  for (const [key, now] of after.boxes) {
+    const t = translateOf(now.node)
+    const at = (dx, dy, s) => 'translate(' + (t.x + dx) + 'px,' + (t.y + dy) + 'px) scale(' + s + ')'
+    const was = before.boxes.get(key)
+    if (was) {
+      const dx = was.x - now.x
+      const dy = was.y - now.y
+      if (Math.abs(dx) + Math.abs(dy) < 1) continue
+      now.node.animate([{ transform: at(dx, dy, 1) }, { transform: at(0, 0, 1) }], { duration: 560, easing: EASE, id: 'dm-move' })
+      isMoved = true
+      continue
+    }
+    const folded = before.groups.get(key)
+    const from = folded || placeIn(before, ancestorKeys(key))
+    if (from) {
+      const s = folded ? Math.max(0.3, Math.min(3, from.w / Math.max(now.w, 1))) : 0.25
+      now.node.animate([{ transform: at(from.x - now.x, from.y - now.y, s), opacity: folded ? 0.35 : 0 }, { transform: at(0, 0, 1), opacity: 1 }], { duration: 640, easing: EASE, id: 'dm-bloom' })
+    } else {
+      now.node.animate([{ transform: at(0, 0, 0.85), opacity: 0 }, { transform: at(0, 0, 1), opacity: 1 }], { duration: 420, easing: EASE, id: 'dm-appear' })
+    }
+    isMoved = true
+  }
+  for (const [key, was] of before.boxes) {
+    if (after.boxes.has(key)) continue
+    const opened = after.groups.get(key)
+    const to = opened || placeIn(after, ancestorKeys(key))
+    const ghost = was.node.cloneNode(true)
+    ghost.removeAttribute('id')
+    ghost.classList.remove('picked', 'flash', 'flash-reply', 'unseen', 'trail', 'focus-read', 'focus-edit')
+    ghost.classList.add('ghost')
+    const gx = was.x + ox
+    const gy = was.y + oy
+    ghost.setAttribute('transform', 'translate(' + gx + ',' + gy + ')')
+    svg.appendChild(ghost)
+    const end = to
+      ? 'translate(' + (to.x + ox) + 'px,' + (to.y + oy) + 'px) scale(' + (opened ? Math.min(1.6, to.w / Math.max(was.w, 1)) : 0.2) + ')'
+      : 'translate(' + gx + 'px,' + gy + 'px) scale(.9)'
+    const leaving = ghost.animate([{ transform: 'translate(' + gx + 'px,' + gy + 'px) scale(1)', opacity: 1 }, { transform: end, opacity: 0 }], { duration: opened ? 380 : 560, easing: EASE, id: 'dm-leave', fill: 'forwards' })
+    leaving.finished.then(() => ghost.remove(), () => ghost.remove())
+    isMoved = true
+  }
+  if (!isMoved) return
+  for (const [key, now] of after.groups) {
+    if (!before.groups.has(key)) now.node.animate([{ opacity: 0 }, { opacity: 0, offset: 0.4 }, { opacity: 1 }], { duration: 640, easing: 'ease-out', id: 'dm-frame' })
+  }
+  for (const n of svg.querySelectorAll('g.edgePaths, g.edgeLabels')) {
+    n.animate([{ opacity: 0 }, { opacity: 0, offset: 0.5 }, { opacity: 1 }], { duration: 760, easing: 'ease-out', id: 'dm-lines' })
+  }
+}
+
+async function load() {
+  if (previewRev !== null) return
+  const res = await fetch('/api/' + NAME, { cache: 'no-store' })
+  if (res.status === 404) return gone()
+  if (!res.ok) { $('error').textContent = '읽지 못했어: ' + await res.text(); return }
+  const next = await res.json()
+  if (previewRev !== null) return
+  const before = page
+  page = next
+  document.body.dataset.kind = page.kind
+  $('gone').hidden = true
+  header()
+  drawerInfo()
+  if (isMap()) side()
+  let source = page.mermaid
+  if (editing) {
+    if (!dirty) {
+      $('editor-text').value = page.mermaid
+      editBase = page.revision
+    } else if (page.revision !== editBase) {
+      editorStatus('그사이 다른 곳에서 rev ' + page.revision + '이(가) 저장됐어. 저장할 때 어느 쪽을 남길지 고를 수 있어.', 'bad')
+    }
+    source = $('editor-text').value
+  }
+  const result = await draw(source, !isFirst && !editing)
+  if (result.error) {
+    if (editing) editorStatus('그리기 실패: ' + result.error.split('\n').slice(0, 3).join('\n'), 'bad')
+    else $('error').textContent = '그리기 실패: ' + result.error
+  } else {
+    $('error').textContent = ''
+  }
+  if (isFirst) { fit(); isFirst = false } else apply()
+  if (isMap() && !result.error) {
+    if (isSeq() && !editing) decorateSequence()
+    // Boxes whose drawing changed since the last version glow once.
+    if (before && before.kind === 'map') {
+      for (const [id, sig] of Object.entries(page.boxes || {})) {
+        if ((before.boxes || {})[id] === sig) continue
+        for (const node of nodesOf(id)) node.classList.add('flash')
+      }
+    }
+    if (target.kind === 'element' && !page.elements[target.id]) target = { kind: 'map' }
+    if (target.kind === 'message' && !(page.messages && page.messages[target.id]) && !(page.fragments && page.fragments[target.id])) target = { kind: 'map' }
+    if (target.kind === 'relation' && !page.edges.some(e => e.from === target.from && e.to === target.to)) target = { kind: 'map' }
+    setTarget(target)
+    renderUnseen()
+    renderActivity()
+    breathe()
+    applyFilter()
+    stampDone(page.states, before && before.kind === 'map' ? before.states || {} : null)
+  }
+  settleOverlay()
+  loadVersions()
+}
+
+function gone() {
+  page = null
+  stopEdit(false)
+  document.body.dataset.kind = 'gone'
+  canvas.innerHTML = ''
+  $('gone').hidden = false
+  $('title').textContent = NAME
+  $('meta').textContent = ''
+}
+
+// ---------------------------------------------------------------- the drawer's record: title, pin, memo, tags
+function stamp(t) {
+  const d = new Date(t)
+  const hm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0')
+  return d.toDateString() === new Date().toDateString() ? '오늘 ' + hm : (d.getMonth() + 1) + '월 ' + d.getDate() + '일 ' + hm
+}
+function header() {
+  const pinned = !!(page.meta && page.meta.pinned)
+  if ($('title-input').hidden) $('title').textContent = page.title
+  document.title = page.title
+  $('pin').textContent = pinned ? '★' : '☆'
+  $('pin').classList.toggle('pinned', pinned)
+  $('pin').title = pinned ? '고정 풀기' : '서랍 맨 위에 고정'
+  $('meta').textContent = (isMap() ? (page.context ? page.context + ' · ' : '') : (TYPE_NAMES[page.type] || page.type || '다이어그램') + ' · ') +
+    'rev ' + page.revision + ' · ' + stamp(page.updatedAt)
+}
+async function saveMeta(patch, message) {
+  try {
+    const { meta } = await post('/api/' + NAME + '/meta', patch)
+    page.meta = meta
+    if (patch.title !== undefined) page.title = meta.title || page.contentTitle || NAME
+    header()
+    drawerInfo()
+    if (message) toast(message)
+  } catch (error) {
+    $('error').textContent = '저장 실패: ' + error.message
+  }
+}
+$('pin').onclick = () => {
+  if (!page) return
+  const pinned = !!(page.meta && page.meta.pinned)
+  saveMeta({ pinned: !pinned }, pinned ? '고정을 풀었어' : '서랍 맨 위에 고정했어')
+}
+$('title').onclick = () => {
+  if (!page) return
+  const input = $('title-input')
+  input.value = page.title
+  $('title').hidden = true
+  input.hidden = false
+  input.focus()
+  input.select()
+}
+function finishTitle(isSave) {
+  const input = $('title-input')
+  if (input.hidden) return
+  input.hidden = true
+  $('title').hidden = false
+  const value = input.value.replace(/\s+/g, ' ').trim()
+  // A map's own title comes back when the name is cleared; a plain diagram keeps the one it has.
+  if (!isSave || !page || value === page.title || (value === '' && !isMap())) return
+  saveMeta({ title: value }, value === '' ? '원래 이름으로 돌렸어' : '이름을 바꿨어')
+}
+$('title-input').addEventListener('keydown', e => {
+  if (e.isComposing) return
+  if (e.key === 'Enter') { e.preventDefault(); finishTitle(true) }
+  if (e.key === 'Escape') { e.preventDefault(); finishTitle(false) }
+})
+$('title-input').addEventListener('blur', () => finishTitle(true))
+
+/** A memo as HTML: escaped first, then a few marks (headings, lists, code, bold, links to http(s) only). */
+function markdown(text) {
+  const inline = s => s
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+  let html = ''
+  let isList = false
+  let isCode = false
+  for (const line of esc(text).split('\n')) {
+    if (line.trim().startsWith('```')) {
+      if (isList) { html += '</ul>'; isList = false }
+      html += isCode ? '</pre>' : '<pre>'
+      isCode = !isCode
+      continue
+    }
+    if (isCode) { html += line + '\n'; continue }
+    const item = /^\s*[-*] (.*)$/.exec(line)
+    if (item) {
+      if (!isList) { html += '<ul>'; isList = true }
+      html += '<li>' + inline(item[1]) + '</li>'
+      continue
+    }
+    if (isList) { html += '</ul>'; isList = false }
+    const heading = /^(#{1,3}) (.*)$/.exec(line)
+    if (heading) html += '<h' + (heading[1].length + 2) + '>' + inline(heading[2]) + '</h' + (heading[1].length + 2) + '>'
+    else if (line.trim() !== '') html += '<p>' + inline(line) + '</p>'
+  }
+  if (isList) html += '</ul>'
+  if (isCode) html += '</pre>'
+  return html
+}
+function drawerInfo() {
+  const meta = page.meta || {}
+  const memo = meta.memo || ''
+  if ($('memo-form').hidden) {
+    $('memo').innerHTML = memo.trim() ? markdown(memo) : '메모 없음. 클릭해서 이 다이어그램이 무엇을 보여 주는지, 왜 만들었는지 적어 둬.'
+    $('memo').classList.toggle('empty', !memo.trim())
+  }
+  $('tags').innerHTML = (meta.tags || []).map(t => '<span class="tagchip">#' + esc(t) + '<button data-tag="' + esc(t) + '" title="태그 빼기">✕</button></span>').join('')
+  $('tags').querySelectorAll('button[data-tag]').forEach(b => {
+    b.onclick = () => saveMeta({ tags: (page.meta.tags || []).filter(t => t !== b.dataset.tag) }).then(loadTagList)
+  })
+}
+function editMemo() {
+  if (!page) return
+  $('memo-text').value = (page.meta && page.meta.memo) || ''
+  $('memo').hidden = true
+  $('memo-form').hidden = false
+  $('memo-text').focus()
+}
+async function finishMemo(isSave) {
+  if (isSave) await saveMeta({ memo: $('memo-text').value }, '메모를 저장했어')
+  $('memo-form').hidden = true
+  $('memo').hidden = false
+  if (page) drawerInfo()
+}
+$('memo-edit').onclick = editMemo
+$('memo').onclick = e => { if (!e.target.closest('a')) editMemo() }
+$('memo-save').onclick = () => finishMemo(true)
+$('memo-cancel').onclick = () => finishMemo(false)
+$('memo-text').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); finishMemo(true) }
+  if (e.key === 'Escape') { e.preventDefault(); finishMemo(false) }
+})
+$('tag-input').addEventListener('keydown', e => {
+  if (e.key !== 'Enter' || e.isComposing || !page) return
+  e.preventDefault()
+  const added = $('tag-input').value.split(',').map(t => t.trim()).filter(Boolean)
+  if (added.length === 0) return
+  $('tag-input').value = ''
+  saveMeta({ tags: [...((page.meta && page.meta.tags) || []), ...added] }).then(loadTagList)
+})
+async function loadTagList() {
+  const res = await fetch('/api/_library/tags', { cache: 'no-store' })
+  if (!res.ok) return
+  $('all-tags').innerHTML = (await res.json()).tags.map(t => '<option value="' + esc(t.tag) + '">').join('')
+}
+
+// ---------------------------------------------------------------- versions
+async function loadVersions() {
+  const res = await fetch('/api/' + NAME + '/history', { cache: 'no-store' })
+  if (!res.ok) return
+  versions = (await res.json()).items
+  renderVersions()
+}
+function renderVersions() {
+  if (!page) return
+  const shown = isAllVersions ? versions : versions.slice(0, 10)
+  $('versions-title').textContent = '버전 ' + versions.length
+  $('versions').innerHTML = shown.map(v =>
+    '<div class="version' + (v.revision === previewRev ? ' on' : '') + '" data-rev="' + v.revision + '" title="' + (v.revision === page.revision ? '지금 버전' : '눌러서 이 버전 보기') + '">' +
+      '<b>rev ' + v.revision + '</b><span class="when">' + esc(stamp(v.at)) + '</span>' + (v.revision === page.revision ? '<span class="now">현재</span>' : '') +
+    '</div>').join('') +
+    (versions.length > shown.length ? '<button id="more-versions">' + (versions.length - shown.length) + '개 더 보기</button>' : '') +
+    (versions.length <= 1 ? '<div class="dim">고칠 때마다 버전이 쌓여. 예전 버전을 눌러서 보고, 그 버전으로 되돌릴 수 있어.</div>' : '')
+  $('versions').querySelectorAll('.version').forEach(div => {
+    div.onclick = () => {
+      const rev = Number(div.dataset.rev)
+      if (rev === page.revision) exitPreview()
+      else preview(rev)
+    }
+  })
+  if ($('more-versions')) $('more-versions').onclick = () => { isAllVersions = true; renderVersions() }
+  renderScrubber()
+}
+
+// ---------------------------------------------------------------- time machine: scrub through the revisions
+let isPlaying = false
+let scrubSeq = 0
+let scrubTimer = null
+const ascending = () => [...versions].sort((a, b) => a.revision - b.revision)
+function renderScrubber() {
+  const list = ascending()
+  const bar = $('scrubber')
+  bar.hidden = !page || list.length < 2 || editing
+  if (bar.hidden) return
+  const shown = previewRev ?? page.revision
+  const index = Math.max(0, list.findIndex(v => v.revision === shown))
+  const range = $('scrub-range')
+  range.max = String(list.length - 1)
+  if (document.activeElement !== range) range.value = String(index)
+  const at = list[index]
+  $('scrub-label').textContent = 'rev ' + at.revision + (at.revision === page.revision ? ' · 지금' : ' · ' + stamp(at.at))
+  $('scrub-play').textContent = isPlaying ? '❚❚' : '▶'
+  bar.classList.toggle('playing', isPlaying)
+}
+/** Shows the revision at `index`; a later call wins over one still loading. */
+async function scrubTo(index) {
+  const mine = ++scrubSeq
+  const list = ascending()
+  const at = list[Math.max(0, Math.min(list.length - 1, index))]
+  if (!at || !page) return
+  if (at.revision === page.revision) {
+    if (previewRev !== null) exitPreview()
+    return
+  }
+  await historyPage(at.revision)
+  if (mine !== scrubSeq) return
+  await preview(at.revision)
+}
+async function play() {
+  if (isPlaying) { isPlaying = false; renderScrubber(); return }
+  const list = ascending()
+  isPlaying = true
+  renderScrubber()
+  for (let i = 0; i < list.length && isPlaying; i++) {
+    await scrubTo(i)
+    renderScrubber()
+    await new Promise(r => setTimeout(r, i === list.length - 1 ? 0 : 1100))
+  }
+  isPlaying = false
+  renderScrubber()
+}
+$('scrub-range').addEventListener('input', () => {
+  clearTimeout(scrubTimer)
+  isPlaying = false
+  scrubTimer = setTimeout(() => scrubTo(Number($('scrub-range').value)), 90)
+})
+$('scrub-play').onclick = play
+addEventListener('keydown', e => {
+  if (['INPUT', 'TEXTAREA'].includes(e.target.tagName) || $('scrubber').hidden) return
+  if (e.key !== '[' && e.key !== ']') return
+  const list = ascending()
+  const now = Math.max(0, list.findIndex(v => v.revision === (previewRev ?? page.revision)))
+  scrubTo(now + (e.key === ']' ? 1 : -1))
+})
+/** Past revisions never change once kept: each is fetched once. */
+const historyCache = new Map()
+async function historyPage(rev) {
+  if (!historyCache.has(rev)) {
+    const res = await fetch('/api/' + NAME + '/history/' + rev, { cache: 'no-store' })
+    if (!res.ok) return null
+    historyCache.set(rev, await res.json())
+  }
+  return historyCache.get(rev)
+}
+async function preview(rev) {
+  if (editing && dirty) { toast('저장하지 않은 편집이 있어. 저장하거나 닫은 다음에 봐 줘'); return }
+  stopEdit(false)
+  const old = await historyPage(rev)
+  if (!old) { toast('그 버전을 못 읽었어'); return }
+  previewRev = rev
+  document.body.classList.add('previewing')
+  if (isMap()) setTarget({ kind: 'map' })
+  const result = await draw(old.mermaid, true)
+  $('error').textContent = result.error ? '그리기 실패: ' + result.error : ''
+  apply()
+  breathe()
+  stampDone(old.states, null)
+  renderRings()
+  settleOverlay()
+  $('preview-bar').innerHTML = '<span>rev ' + rev + ' · ' + esc(stamp(old.at)) + ' 버전을 보는 중</span><button class="primary" id="restore">이 버전으로 되돌리기</button><button id="preview-exit">현재로</button>'
+  $('preview-bar').classList.add('show')
+  $('restore').onclick = () => restore(rev)
+  $('preview-exit').onclick = exitPreview
+  renderVersions()
+}
+function leavePreview() {
+  previewRev = null
+  document.body.classList.remove('previewing')
+  $('preview-bar').classList.remove('show')
+}
+function exitPreview() {
+  if (previewRev === null) return
+  leavePreview()
+  load()
+}
+async function restore(rev) {
+  try {
+    const { revision } = await post('/api/' + NAME + '/restore', { revision: rev })
+    leavePreview()
+    toast('rev ' + rev + '을(를) 새 버전 rev ' + revision + '(으)로 되살렸어')
+    await load()
+  } catch (error) {
+    $('error').textContent = '되돌리기 실패: ' + error.message
+  }
+}
+addEventListener('keydown', e => { if (e.key === 'Escape' && previewRev !== null && !['INPUT', 'TEXTAREA'].includes(e.target.tagName)) exitPreview() })
+
+// ---------------------------------------------------------------- duplicate and trash
+$('duplicate').onclick = async () => {
+  try {
+    const { id } = await post('/api/' + NAME + '/duplicate')
+    location.href = '/map/' + encodeURIComponent(id)
+  } catch (error) {
+    $('error').textContent = '복제 실패: ' + error.message
+  }
+}
+$('trash').onclick = async () => {
+  if (editing && dirty) { toast('저장하지 않은 편집이 있어. 저장하거나 닫은 다음에 옮겨 줘'); return }
+  try {
+    const { entry } = await post('/api/' + NAME + '/trash')
+    dirty = false
+    location.href = '/?trashed=' + encodeURIComponent(entry) + '&title=' + encodeURIComponent(page ? page.title : NAME)
+  } catch (error) {
+    $('error').textContent = '휴지통으로 옮기지 못했어: ' + error.message
+  }
+}
+
+// ---------------------------------------------------------------- a plain diagram's source
+function editorStatus(text, kind) {
+  $('editor-status').textContent = text
+  $('editor-status').className = kind || ''
+}
+function startEdit() {
+  if (!page || page.kind !== 'diagram' || previewRev !== null || editing) return
+  editing = true
+  dirty = false
+  editBase = page.revision
+  $('editor-text').value = page.mermaid
+  $('editor').hidden = false
+  $('app').classList.add('editing')
+  editorStatus('')
+  $('editor-text').focus()
+  renderScrubber()
+  requestAnimationFrame(() => fit())
+}
+function stopEdit(redraw = true) {
+  if (!editing) return
+  editing = false
+  dirty = false
+  $('editor').hidden = true
+  $('app').classList.remove('editing')
+  delete $('editor-close').dataset.armed
+  $('editor-close').textContent = '닫기'
+  renderScrubber()
+  if (redraw && page) draw(page.mermaid).then(() => requestAnimationFrame(() => fit()))
+}
+let editTimer = null
+$('editor-text').addEventListener('input', () => {
+  dirty = $('editor-text').value !== page.mermaid
+  clearTimeout(editTimer)
+  editTimer = setTimeout(async () => {
+    const result = await draw($('editor-text').value)
+    if (result.error) editorStatus('그리기 실패: ' + result.error.split('\n').slice(0, 3).join('\n'), 'bad')
+    else { editorStatus(dirty ? '저장 안 한 편집이 있어' : '', ''); apply() }
+  }, 300)
+})
+$('editor-text').addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && (e.key === 's' || e.key === 'Enter')) { e.preventDefault(); saveEdit(false) }
+  if (e.key === 'Tab' && !e.shiftKey && !e.isComposing) {
+    e.preventDefault()
+    e.target.setRangeText('  ', e.target.selectionStart, e.target.selectionEnd, 'end')
+    e.target.dispatchEvent(new Event('input'))
+  }
+  if (e.key === 'Escape' && !dirty) { e.preventDefault(); stopEdit() }
+})
+async function saveEdit(isForced) {
+  const value = $('editor-text').value
+  const source = value.endsWith('\n') ? value : value + '\n'
+  try {
+    const { revision } = await post('/api/' + NAME + '/source', isForced ? { mermaid: source } : { mermaid: source, base: editBase })
+    page.mermaid = source
+    page.revision = revision
+    page.updatedAt = Date.now()
+    editBase = revision
+    dirty = $('editor-text').value !== source && $('editor-text').value + '\n' !== source
+    header()
+    loadVersions()
+    editorStatus('저장했어 · rev ' + revision, 'ok')
+    delete $('editor-close').dataset.armed
+    $('editor-close').textContent = '닫기'
+  } catch (error) {
+    if (error.status !== 409) { editorStatus('저장 실패: ' + error.message, 'bad'); return }
+    const theirs = error.value
+    $('editor-status').className = 'bad'
+    $('editor-status').innerHTML = '그사이 다른 곳에서 rev ' + esc(theirs.revision) + '이(가) 저장됐어. <button id="take-theirs">그쪽 버전 불러오기</button> <button id="keep-mine">내 걸로 덮어쓰기</button>'
+    $('take-theirs').onclick = () => {
+      page.mermaid = theirs.mermaid
+      page.revision = theirs.revision
+      editBase = theirs.revision
+      $('editor-text').value = theirs.mermaid
+      $('editor-text').dispatchEvent(new Event('input'))
+      editorStatus('그쪽 버전을 불러왔어', 'ok')
+    }
+    $('keep-mine').onclick = () => saveEdit(true)
+  }
+}
+$('edit').onclick = startEdit
+$('editor-save').onclick = () => saveEdit(false)
+$('editor-close').onclick = () => {
+  if (dirty && !$('editor-close').dataset.armed) {
+    $('editor-close').dataset.armed = '1'
+    $('editor-close').textContent = '저장 안 하고 닫기'
+    editorStatus('저장하지 않은 편집이 있어. 한 번 더 누르면 버리고 닫아.', 'bad')
+    return
+  }
+  stopEdit()
+}
+addEventListener('beforeunload', e => { if (editing && dirty) { e.preventDefault(); e.returnValue = '' } })
+
+// ---------------------------------------------------------------- start
+const params = new URLSearchParams(location.search)
+const wantsEdit = params.get('edit') === '1'
+if (params.has('edit')) history.replaceState(null, '', location.pathname)
+load().then(() => {
+  if (!page) return
+  if (isMap()) { loadThread(); loadActivity() }
+  if (wantsEdit) startEdit()
+})
+loadTagList()
+const events = new EventSource('/events/' + NAME)
+events.addEventListener('hello', e => {
+  // A newer server came up: take its page too, unless that would lose an unsaved edit.
+  if (JSON.parse(e.data).version !== VERSION && !(editing && dirty)) location.reload()
+})
+events.addEventListener('update', () => load())
+events.addEventListener('feedback', () => { if (isMap()) loadThread() })
+events.addEventListener('activity', () => { if (isMap()) loadActivity() })
+</script>
+</body>
+</html>
