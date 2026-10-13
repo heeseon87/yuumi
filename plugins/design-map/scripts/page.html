@@ -8,7 +8,7 @@
   :root { --bg: #ffffff; --panel: #f6f7f9; --line: #e2e5ea; --text: #1d2228; --dim: #6b7280; --accent: #6a45a8; --blue: #2563eb; --teal: #0d9488; --green: #30a657; --red: #a63830; --warn-bg: #fff4f2; --warn-line: #f3c7c2; }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 14px/1.5 system-ui, -apple-system, "Apple SD Gothic Neo", sans-serif; }
-  #app { display: grid; grid-template-columns: 1fr 380px; grid-template-rows: auto auto 1fr; height: 100%; }
+  #app { display: grid; grid-template-columns: 1fr var(--side-w, 380px); grid-template-rows: auto auto 1fr; height: 100%; }
   header { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; padding: 8px 14px; border-bottom: 1px solid var(--line); min-width: 0; }
   header h1 { font-size: 15px; margin: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   header .meta { color: var(--dim); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -42,6 +42,24 @@
   @keyframes pulse-edit { 0%, 100% { filter: drop-shadow(0 0 2px rgba(236, 150, 128, .35)); } 50% { filter: drop-shadow(0 0 13px rgba(236, 150, 128, .95)); } }
   #canvas .node.breathing { animation: breathe 3.6s ease-in-out infinite; }
   @keyframes breathe { 0%, 100% { filter: drop-shadow(0 0 1px rgba(181, 162, 217, .2)); } 50% { filter: drop-shadow(0 0 9px rgba(181, 162, 217, .85)); } }
+  /* An undecided box waits: a slow warm swell, unlike the purple breath of work in progress. */
+  #canvas .asking { animation: asking 2.8s ease-in-out infinite; }
+  @keyframes asking {
+    0%, 70%, 100% { filter: drop-shadow(0 0 1px rgba(217, 154, 6, .25)); }
+    35% { filter: drop-shadow(0 0 10px rgba(217, 154, 6, .9)); }
+  }
+  #canvas .asking.leaning-to { animation-duration: 4.4s; }
+  @media (prefers-reduced-motion: reduce) {
+    #canvas .asking { animation: none; filter: drop-shadow(0 0 5px rgba(217, 154, 6, .7)); }
+  }
+  #asks { position: absolute; inset: 0; pointer-events: none; }
+  .ask { position: absolute; left: 0; top: 0; transform: translate(-72%, -55%); display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; background: #fff; color: #a4700a; box-shadow: 0 2px 8px rgba(70, 60, 100, .16), 0 0 0 1px #f0dcb6; pointer-events: auto; cursor: pointer; white-space: nowrap; }
+  .ask:hover { box-shadow: 0 2px 10px rgba(70, 60, 100, .22), 0 0 0 1px #d99a06; }
+  .ask i { width: 6px; height: 6px; border-radius: 50%; background: #d99a06; display: inline-block; animation: ask-dot 2.8s ease-in-out infinite; }
+  .ask.leaning i { background: var(--accent); }
+  .ask.leaning { color: var(--accent); box-shadow: 0 2px 8px rgba(70, 60, 100, .16), 0 0 0 1px #dccff2; }
+  @keyframes ask-dot { 0%, 70%, 100% { opacity: .35; } 35% { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .ask i { animation: none; opacity: 1; } }
   #overlay { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 2; }
   #firefly { position: absolute; left: 0; top: 0; width: 14px; height: 14px; margin: -7px 0 0 -7px; opacity: 0; transition: opacity .7s; }
   #firefly.on { opacity: 1; }
@@ -71,6 +89,26 @@
   .badge.open { color: #7d6aa8; box-shadow: 0 2px 8px rgba(70, 60, 100, .14), 0 0 0 1px #dccff2; }
   #popover { position: absolute; left: 0; top: 0; width: 300px; transform: translate(-50%, 12px); padding: 10px 12px; border-radius: 14px; background: rgba(255, 255, 255, .94); backdrop-filter: blur(16px) saturate(1.3); -webkit-backdrop-filter: blur(16px) saturate(1.3); box-shadow: 0 14px 40px rgba(70, 60, 100, .2), 0 0 0 1px rgba(181, 162, 217, .4); pointer-events: auto; animation: pop-in .3s cubic-bezier(.2, 1.3, .4, 1); }
   #popover[hidden] { display: none; }
+  #decider { position: absolute; left: 0; top: 0; width: 400px; max-height: 70%; overflow: auto; padding: 8px; border-radius: 16px; background: rgba(255, 255, 255, .95); backdrop-filter: blur(16px) saturate(1.3); -webkit-backdrop-filter: blur(16px) saturate(1.3); box-shadow: 0 14px 40px rgba(70, 60, 100, .22), 0 0 0 1px rgba(181, 162, 217, .45); pointer-events: auto; animation: pop-in .3s cubic-bezier(.2, 1.3, .4, 1); }
+  #decider[hidden] { display: none; }
+  #decider.docked { width: min(560px, calc(100% - 28px)); }
+  #leader { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0; transition: opacity .2s; }
+  #leader.on { opacity: 1; }
+  #leader path { fill: none; stroke: #b5a2d9; stroke-width: 1.6; stroke-dasharray: 5 4; }
+  #leader circle { fill: #b5a2d9; }
+  #decider .card { margin-bottom: 0; border: none; box-shadow: none; background: none; padding: 4px 6px 2px; }
+  #decider .shut { position: absolute; right: 10px; top: 9px; border: none; background: none; color: var(--dim); font-size: 13px; padding: 0 3px; line-height: 1; }
+  #decider .card .q { padding-right: 22px; }
+  /* Beside the diagram nothing may wrap into a paragraph: one line per option, and that is all. */
+  .decision.compact .opt { align-items: center; gap: 8px; padding: 3px 0; }
+  .decision.compact .opt .body { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .decision.compact .opt .body code { margin-right: 3px; }
+  .decision.compact .blocked { padding: 4px 8px; }
+  .decision.compact .blocked .what, .decision.compact .folded .what { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .decision.compact .more { display: flex; gap: 12px; margin-top: 8px; padding-top: 7px; border-top: 1px solid var(--line); }
+  .decision.compact .more .link { border: none; background: none; color: var(--accent); font-size: 12px; padding: 0; }
+  .elsewhere { font-size: 12px; color: var(--dim); display: flex; gap: 6px; align-items: baseline; margin-top: 8px; }
+  .elsewhere .link { margin-left: auto; border: none; background: none; color: var(--accent); font-size: 12px; padding: 0 2px; }
   #popover .title { font-weight: 600; font-size: 13px; }
   #popover .sub { font-size: 12px; color: var(--dim); margin-bottom: 6px; }
   #popover textarea { width: 100%; min-height: 58px; resize: vertical; font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
@@ -80,6 +118,15 @@
   @keyframes pop-in { from { opacity: 0; transform: translate(-50%, 4px) scale(.94); } to { opacity: 1; transform: translate(-50%, 12px) scale(1); } }
   #impact { position: absolute; left: 0; top: 0; max-width: 280px; transform: translate(-50%, calc(-100% - 10px)); padding: 7px 11px; border-radius: 12px; background: #fff; box-shadow: 0 8px 24px rgba(70, 60, 100, .15), 0 0 0 1px rgba(181, 162, 217, .45); font-size: 12px; white-space: pre-wrap; opacity: 0; transition: opacity .2s; }
   #impact.on { opacity: 1; }
+  #pins { position: absolute; inset: 0; pointer-events: none; }
+  .waypin { position: absolute; transform: translate(-50%, -50%); display: inline-flex; align-items: center; gap: 5px; max-width: 190px; padding: 4px 9px; border: none; border-radius: 999px; background: rgba(255, 255, 255, .92); backdrop-filter: blur(10px) saturate(1.3); -webkit-backdrop-filter: blur(10px) saturate(1.3); box-shadow: 0 4px 14px rgba(70, 60, 100, .18), 0 0 0 1px rgba(181, 162, 217, .5); font-size: 11.5px; color: var(--accent); cursor: pointer; pointer-events: auto; white-space: nowrap; animation: waypin-in .18s ease-out; }
+  .waypin:hover { background: #fff; }
+  .waypin .what { overflow: hidden; text-overflow: ellipsis; }
+  .waypin .way { font-size: 12px; flex: none; }
+  @keyframes waypin-in { from { opacity: 0; transform: translate(-50%, -50%) scale(.9); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+  .decision .q { cursor: zoom-in; }
+  .decision .q .go { opacity: 0; color: var(--accent); font-size: 11px; flex: none; transition: opacity .15s; }
+  .decision .q:hover .go { opacity: 1; }
   #canvas .hush, #canvas .dimmed { opacity: .22; transition: opacity .35s; }
   #canvas .ghosted { opacity: .62; filter: drop-shadow(0 0 9px rgba(181, 162, 217, .95)); transition: opacity .35s; }
   #canvas svg.filtering g.edgePaths, #canvas svg.filtering g.edgeLabels { opacity: .3; }
@@ -147,7 +194,79 @@
   .banner:empty { display: none; }
   .dim { color: var(--dim); font-size: 12px; }
   code { font-size: 12px; background: #eef0f3; padding: 0 4px; border-radius: 4px; }
-  #composer { position: sticky; top: 0; z-index: 2; box-shadow: 0 1px 0 var(--line); }
+  #side-top { position: sticky; top: 0; z-index: 2; background: var(--panel); padding-top: 2px; }
+  #tabs { display: flex; gap: 4px; padding: 0 0 8px; border-bottom: 1px solid var(--line); }
+  .tab { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 5px 0; border-radius: 7px; border: 1px solid transparent; background: none; color: var(--dim); }
+  .tab:hover { border-color: var(--line); }
+  .tab.on { background: #fff; border-color: var(--line); color: var(--text); font-weight: 600; box-shadow: 0 1px 2px rgba(40, 36, 60, .06); }
+  .tab .n { min-width: 16px; padding: 0 5px; border-radius: 999px; background: #e9ebef; color: var(--dim); font-size: 10.5px; line-height: 16px; font-weight: 600; }
+  .tab.on .n { background: var(--accent); color: #fff; }
+  .tab .n[hidden] { display: none; }
+  .pane[hidden] { display: none; }
+  #map-sections { padding-top: 10px; }
+  #open-decisions { display: block; width: 100%; text-align: left; margin-bottom: 8px; border-color: #e3d6f7; background: #faf7fe; color: var(--accent); font-weight: 600; }
+  #open-decisions[hidden] { display: none; }
+  #scope-note { font-size: 12px; color: var(--dim); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  #scope-note[hidden] { display: none; }
+  #scope-note b { color: var(--text); }
+  #scope-note span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #scope-note .link { margin-left: auto; border: none; background: none; color: var(--accent); font-size: 12px; padding: 0; }
+  #target-swatch { width: 11px; height: 11px; border-radius: 3px; border: 1px solid; display: inline-block; flex: none; }
+  #target-swatch[hidden] { display: none; }
+  #legend-hud { position: absolute; right: 14px; bottom: 16px; max-width: 290px; padding: 9px 12px; border-radius: 12px; background: rgba(255, 255, 255, .86); backdrop-filter: blur(14px) saturate(1.4); -webkit-backdrop-filter: blur(14px) saturate(1.4); box-shadow: 0 8px 28px rgba(70, 60, 100, .14), 0 0 0 1px rgba(70, 60, 100, .07); z-index: 3; }
+  #legend-hud[hidden] { display: none; }
+  #legend-hud .legend span { margin: 0 8px 4px 0; }
+  .fold { border: 1px solid var(--line); border-radius: 8px; background: #fff; margin-bottom: 6px; }
+  .fold > summary { list-style: none; cursor: pointer; padding: 6px 10px; font-size: 12px; color: var(--dim); display: flex; align-items: center; gap: 8px; }
+  .fold > summary::-webkit-details-marker { display: none; }
+  .fold > summary::before { content: "\25B8"; font-size: 10px; }
+  .fold[open] > summary::before { content: "\25BE"; }
+  .fold > .body { padding: 0 8px 2px; }
+  .decision:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .why-chosen { margin-top: 7px; padding-top: 6px; border-top: 1px solid var(--line); color: var(--dim); font-size: 12px; }
+  .decision .q { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+  .decision .q .text { flex: 1; min-width: 0; }
+  .oneway { font-size: 11px; color: #8a5a00; background: #fdf3e0; border: 1px solid #f0dcb6; border-radius: 999px; padding: 0 7px; white-space: nowrap; }
+  .blocked { margin-top: 5px; font-size: 12px; background: #f6f7f9; border-radius: 6px; padding: 5px 8px; display: flex; gap: 6px; align-items: baseline; }
+  .blocked .what { flex: 1; min-width: 0; }
+  .blocked .link, .decision .link { border: none; background: none; color: var(--accent); font-size: 12px; padding: 0 2px; }
+  .folded { margin-top: 5px; font-size: 12px; background: #f7f3fd; border-radius: 6px; padding: 5px 8px; display: flex; gap: 6px; align-items: baseline; color: var(--accent); }
+  .folded .what { flex: 1; min-width: 0; }
+  .cmp { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 12px; }
+  .cmp th, .cmp td { border: 1px solid var(--line); padding: 3px 6px; text-align: left; }
+  .cmp th { background: #f6f7f9; color: var(--dim); font-weight: 600; }
+  .cmp td.who { font-weight: 600; }
+  .cmp tr.lean td { background: #faf7fe; }
+  .opt.leaning { background: #faf7fe; border-radius: 6px; }
+  .opt .lean { border: none; background: none; color: var(--dim); font-size: 13px; padding: 0 2px 0 0; line-height: 1.5; flex: none; }
+  .opt.leaning .lean { color: var(--accent); }
+  .opt .rejected { color: var(--red); font-size: 12px; margin-top: 2px; }
+  .opt .rejected b { font-weight: 600; }
+  .hold { position: relative; overflow: hidden; }
+  .hold .fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: rgba(166, 56, 48, .18); pointer-events: none; }
+  .hold.on .fill { transition: width 900ms linear; width: 100%; }
+  .why { margin-top: 6px; background: #f3f6fd; border-radius: 6px; padding: 7px 8px; }
+  .trouble { margin-top: 5px; font-size: 12px; background: var(--warn-bg); border: 1px solid var(--warn-line); border-radius: 6px; padding: 5px 8px; color: var(--red); }
+  .trouble .what { display: block; }
+  .asked { margin-top: 7px; }
+  .asked .one { background: #f3f6fd; border-radius: 6px; padding: 6px 8px; margin-bottom: 4px; }
+  .asked .head { display: flex; gap: 6px; align-items: center; font-size: 11.5px; color: var(--dim); }
+  .asked .head .status { margin-left: auto; }
+  .asked .text { font-size: 12px; white-space: pre-wrap; margin-top: 2px; }
+  .asked .reply { font-size: 12px; white-space: pre-wrap; margin-top: 5px; padding: 5px 7px; background: #fff; border-radius: 5px; max-height: 5.4em; overflow: auto; }
+  .other { margin-top: 6px; }
+  .other > .link { padding: 0; }
+  .other .ask { font-size: 12px; color: var(--dim); margin-bottom: 4px; }
+  .other textarea { width: 100%; min-height: 48px; resize: vertical; font: inherit; font-size: 12px; padding: 5px 7px; border: 1px solid var(--line); border-radius: 6px; }
+  .other textarea:focus { outline: none; border-color: var(--accent); }
+  .other .row { margin-top: 5px; }
+  .why .ask { font-size: 12px; margin-bottom: 4px; }
+  .why input { width: 100%; font: inherit; font-size: 12px; padding: 4px 6px; border: 1px solid var(--line); border-radius: 5px; }
+  .why .row { margin-top: 5px; }
+  .trail { margin-top: 6px; font-size: 11.5px; color: var(--dim); }
+  .trail .link { font-size: 11.5px; }
+  .banner .close { margin-left: auto; border: none; background: none; color: var(--dim); padding: 0 2px; }
+  .banner .top { display: flex; align-items: flex-start; gap: 6px; }
   #composer .target { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; font-size: 12px; }
   #composer .target b { font-weight: 600; }
   #composer .target button { padding: 0 6px; }
@@ -177,6 +296,18 @@
   .legend-lines { margin-top: 4px; padding-top: 6px; border-top: 1px solid var(--line); }
   .steps { padding-left: 0 !important; }
   .steps li { list-style: none; }
+  .outside { margin-top: 10px; }
+  .outhead { font-size: 12px; color: var(--dim); margin-bottom: 6px; }
+  .outhead b { color: var(--text); }
+  details.outgroup { border: 1px solid var(--line); border-radius: 6px; background: #fff; margin-bottom: 4px; }
+  details.outgroup > summary { list-style: none; cursor: pointer; padding: 5px 9px; display: flex; align-items: center; gap: 8px; font-size: 12px; }
+  details.outgroup > summary::-webkit-details-marker { display: none; }
+  details.outgroup > summary::before { content: "\25B8"; color: var(--dim); font-size: 10px; }
+  details.outgroup[open] > summary::before { content: "\25BE"; }
+  details.outgroup .count { margin-left: auto; color: var(--dim); }
+  details.outgroup ul { margin: 0; padding: 0 9px 7px 24px; max-height: 220px; overflow: auto; }
+  details.outgroup li { list-style: none; margin-top: 2px; font-size: 12px; }
+  details.outgroup li code { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   #error { color: var(--red); white-space: pre-wrap; font-size: 12px; }
   #scrubber { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; padding: 6px 14px; border-radius: 999px; background: rgba(255, 255, 255, .78); backdrop-filter: blur(14px) saturate(1.4); -webkit-backdrop-filter: blur(14px) saturate(1.4); box-shadow: 0 8px 28px rgba(70, 60, 100, .12), 0 0 0 1px rgba(70, 60, 100, .07); font-size: 12px; color: var(--dim); opacity: .6; transition: opacity .25s; z-index: 3; white-space: nowrap; }
   #scrubber[hidden] { display: none; }
@@ -198,6 +329,15 @@
   /* the stage and the side keep the last row even when the activity bar above them is hidden */
   #stage, aside { grid-row: 3; min-height: 0; }
   #app.editing { grid-template-columns: 1fr minmax(420px, 44%); }
+  #app.side-off { grid-template-columns: 1fr 0; }
+  #app.side-off aside { display: none; }
+  aside { position: relative; }
+  #side-grip { position: absolute; left: -3px; top: 0; bottom: 0; width: 7px; cursor: col-resize; z-index: 4; touch-action: none; }
+  #side-grip:hover, #side-grip.on { background: linear-gradient(to right, transparent, rgba(106, 69, 168, .25), transparent); }
+  #side-show { position: fixed; right: 12px; bottom: 16px; z-index: 5; border-radius: 999px; padding: 6px 13px; background: rgba(255, 255, 255, .9); backdrop-filter: blur(14px) saturate(1.4); -webkit-backdrop-filter: blur(14px) saturate(1.4); box-shadow: 0 6px 20px rgba(70, 60, 100, .16), 0 0 0 1px rgba(70, 60, 100, .07); }
+  #side-show[hidden] { display: none; }
+  #app.side-off #legend-hud { bottom: 60px; }
+  .card-ghost { border-radius: 8px; background: rgba(106, 69, 168, .14); border: 1px solid rgba(106, 69, 168, .45); pointer-events: none; z-index: 20; }
   #editor textarea { width: 100%; height: calc(100vh - 250px); min-height: 220px; resize: vertical; font: 12.5px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; tab-size: 2; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: #fcfcfd; }
   #editor textarea:focus { outline: none; border-color: var(--accent); background: #fff; }
   #editor .row { display: flex; gap: 6px; align-items: center; margin-top: 6px; flex-wrap: wrap; }
@@ -254,16 +394,18 @@
       <button id="filter-chip" class="map-only" hidden title="필터 풀기"></button>
       <button id="flow" class="map-only" title="호출 흐름을 순서대로 재생 (p)">▶ 흐름</button>
       <button id="spot-open" class="map-only" title="⌘K · 상자, 멤버, 파일, 결정, 명령 찾기">⌘K</button>
+      <button id="legend-btn" class="map-only" title="범례 (?)">?</button>
       <span class="meta" id="zoom"></span>
       <button id="fit" title="f">맞춤</button>
       <button id="actual" title="1">100%</button>
     </div>
   </header>
   <div id="activity" class="map-only">활동 없음</div>
-  <div id="stage"><div id="canvas"></div><div id="overlay"><svg id="rubber"><path d=""/><circle r="5"/></svg><div id="pills"></div><div id="filecaps"></div><div id="badges"></div><div id="firefly"><i></i></div><div id="caption"></div><div id="impact"></div><div id="popover" class="no-pan" hidden></div></div><div id="preview-bar" class="no-pan"></div>
+  <div id="stage"><div id="canvas"></div><div id="overlay"><svg id="rubber"><path d=""/><circle r="5"/></svg><svg id="leader"><path d=""/><circle r="4"/></svg><div id="pills"></div><div id="filecaps"></div><div id="badges"></div><div id="asks"></div><div id="firefly"><i></i></div><div id="caption"></div><div id="impact"></div><div id="pins"></div><div id="popover" class="no-pan" hidden></div><div id="decider" class="no-pan" hidden></div></div><div id="preview-bar" class="no-pan"></div><div id="legend-hud" class="no-pan map-only" hidden><div class="legend" id="legend"></div></div>
     <div id="scrubber" class="no-pan" hidden title="[ ] 키로 한 버전씩"><button id="scrub-play" title="처음부터 재생">▶</button><input id="scrub-range" type="range" min="0" max="1" step="1"><span id="scrub-label"></span></div>
   </div>
   <aside>
+    <div id="side-grip" title="드래그로 폭 조절 · ⌘\\ 로 접기"></div>
     <div id="gone" class="card" hidden>이 다이어그램은 휴지통에 있거나 없어졌어.<div style="margin-top:8px"><a href="/">서랍으로 가기</a></div></div>
     <div id="editor" class="card diagram-only" hidden>
       <textarea id="editor-text" spellcheck="false" placeholder="Mermaid 원문"></textarea>
@@ -274,20 +416,30 @@
         <span class="dim">⌘S 저장 · 입력하는 대로 왼쪽에 그려져</span>
       </div>
     </div>
-    <div id="composer" class="card map-only">
-      <div class="target"><span class="dim">대상</span> <b id="target-name">지도 전체</b> <button id="target-clear" title="지도 전체로">✕</button></div>
-      <textarea id="text" placeholder="피드백이나 질문을 적어 줘. ⌘+Enter로 보내기"></textarea>
-      <div class="row" id="actions"></div>
+    <div id="notices" class="map-only">
+      <div id="drift" class="banner drift"></div>
+      <div id="unseen" class="banner unseen"></div>
     </div>
-    <div id="drift" class="banner drift map-only"></div>
-    <div id="unseen" class="banner unseen map-only"></div>
-    <div id="detail" class="card map-only"></div>
+    <div id="side-top" class="map-only">
+      <div id="composer" class="card">
+        <div class="target"><span class="dim">대상</span> <span id="target-swatch" hidden></span> <b id="target-name">지도 전체</b> <button id="target-clear" title="지도 전체로">✕</button></div>
+        <textarea id="text" placeholder="피드백이나 질문을 적어 줘. ⌘+Enter로 보내기"></textarea>
+        <div class="row" id="actions"></div>
+      </div>
+      <button id="open-decisions" hidden></button>
+      <div id="tabs" role="tablist">
+        <button id="tab-thread" class="tab on" role="tab" aria-selected="true" data-pane="thread">대화<span class="n" id="thread-n" hidden></span></button>
+        <button id="tab-decisions" class="tab" role="tab" aria-selected="false" data-pane="decisions">결정<span class="n" id="decisions-n" hidden></span></button>
+        <button id="tab-progress" class="tab" role="tab" aria-selected="false" data-pane="progress">진행<span class="n" id="progress-n" hidden></span></button>
+      </div>
+    </div>
     <div id="error"></div>
     <div id="map-sections" class="map-only">
-      <h2 id="thread-title">대화</h2><div id="thread"></div>
-      <h2 id="decisions-title">결정</h2><div id="decisions"></div>
-      <h2 id="progress-title">진행</h2><div id="progress"></div>
-      <h2>범례</h2><div class="legend" id="legend"></div>
+      <div id="scope-note" hidden></div>
+      <div id="detail" class="card"></div>
+      <div class="pane" id="pane-thread"><div id="thread"></div></div>
+      <div class="pane" id="pane-decisions" hidden><div id="decisions"></div></div>
+      <div class="pane" id="pane-progress" hidden><div id="progress"></div></div>
     </div>
     <div id="drawer-sections">
       <h2 class="with-tools">메모 <button class="link" id="memo-edit">편집</button></h2>
@@ -307,6 +459,7 @@
     </div>
   </aside>
 </div>
+<button id="side-show" hidden title="⌘\\">‹ 패널 열기</button>
 <div id="toast"></div>
 <div id="spotlight" hidden><div class="panel"><input id="spot-input" placeholder="상자, 멤버, 파일, 결정, 명령 찾기" autocomplete="off" spellcheck="false"><div id="spot-list"></div><div class="hint">↑↓ 고르기 · Enter 열기 · Esc 닫기</div></div></div>
 <script src="/mermaid.js"></script>
@@ -324,9 +477,9 @@ const TYPE_NAMES = {
   sequenceDiagram: '시퀀스', flowchart: '플로차트', graph: '플로차트', classDiagram: '클래스', stateDiagram: '상태',
   'stateDiagram-v2': '상태', erDiagram: 'ER', gantt: '간트', mindmap: '마인드맵', timeline: '타임라인', pie: '파이', journey: '여정', gitGraph: 'git',
 }
-const LOCAL = ['expand', 'collapse', 'hide', 'reset', 'decide', 'open']
-/** Folds the server keeps out of the thread once applied. */
-const VIEW_ONLY = ['expand', 'collapse']
+const LOCAL = ['expand', 'collapse', 'hide', 'reset', 'decide', 'open', 'lean', 'reject', 'blocked']
+/** What the mod applies and then drops from the thread: folds, and the notes left while deciding. */
+const VIEW_ONLY = ['expand', 'collapse', 'lean', 'reject', 'blocked']
 /** The revision shown instead of the current one, while looking back. */
 let previewRev = null
 let versions = []
@@ -601,8 +754,12 @@ function pick(hit) {
   if (group && page && page.elements[group]) return setTarget({ kind: 'element', id: group })
   setTarget({ kind: 'map' })
 }
-function setTarget(next) {
-  target = next
+/**
+ * The pick, on the drawing alone. A redraw has to put this back, but it must not touch the side
+ * panel: rebuilding the cards under the pointer fires mouseenter again, and the preview that
+ * caused the redraw asks for another one. The map would keep changing with the mouse held still.
+ */
+function markTarget() {
   canvas.querySelectorAll('.picked').forEach(n => n.classList.remove('picked'))
   canvas.querySelectorAll('.edge-picked').forEach(n => n.classList.remove('edge-picked'))
   if (isSeq() && (target.kind === 'element' || target.kind === 'message')) {
@@ -617,8 +774,19 @@ function setTarget(next) {
     if (path) path.classList.add('edge-picked')
   }
   applyFocus()
+}
+function setTarget(next) {
+  target = next
+  markTarget()
+  // The decision of the thing just picked belongs beside it, not across the window.
+  const item = target.kind === 'element' ? page && page.elements[target.id]
+    : target.kind === 'message' ? page && page.messages && page.messages[target.id] : null
+  const asking = item && item.decision && (page.decisions.find(d => d.id === item.decision) || {}).chosen === undefined
+    ? item.decision : null
+  if (asking === null) { if (deciderOn !== null) closeDecider(false) } else if (deciderOn !== asking && !deciderShut.has(asking)) openDecider(asking)
   composer()
   detail()
+  renderPanes()
 }
 function targetName(t) {
   if (!t || t.kind === 'map') return '지도 전체'
@@ -675,8 +843,26 @@ function button(label, onClick, kind) {
   b.onclick = onClick
   return b
 }
+/** The picked box's own fill and stroke, read off the drawing: the chip and the map match. */
+function swatchOf(id) {
+  const node = nodesOf(id)[0] || clusterOf(id)
+  if (!node) return null
+  const SHAPES = 'rect, path, polygon, circle, line'
+  // A box hands back its own shape; a sequence message is the drawn line itself.
+  const shape = node.matches && node.matches(SHAPES) ? node : node.querySelector ? node.querySelector(SHAPES) : null
+  if (!shape) return null
+  const style = getComputedStyle(shape)
+  return {
+    fill: style.fill && style.fill !== 'none' ? style.fill : '#ffffff',
+    stroke: style.stroke && style.stroke !== 'none' ? style.stroke : '#8e889e',
+  }
+}
 function composer() {
   $('target-name').textContent = targetName(target)
+  const swatch = $('target-swatch')
+  const paint = page !== null && (target.kind === 'element' || target.kind === 'message') ? swatchOf(target.id) : null
+  swatch.hidden = paint === null
+  if (paint !== null) { swatch.style.background = paint.fill; swatch.style.borderColor = paint.stroke }
   $('target-clear').style.visibility = target.kind === 'map' ? 'hidden' : 'visible'
   const row = $('actions')
   row.innerHTML = ''
@@ -728,8 +914,11 @@ function seqDetail() {
     $('detail').innerHTML = '<div class="q">' + esc(seqName(m.id)) + '</div>' +
       '<div class="dim">' + esc([KINDS[m.kind || 'call'], m.from + ' → ' + (m.to || m.from), page.changeNames[m.change || 'keep'], m.steps && m.steps.length ? '스텝 ' + m.steps.join('·') : '', m.done ? '완료' : m.working ? '작업 중' : '', decision(m)].filter(Boolean).join(' · ')) + '</div>' +
       (m.note ? '<div>' + esc(m.note) + '</div>' : '') +
-      (files ? '<div class="dim" style="margin-top:6px">호출 위치</div>' + files : '')
+      (files ? '<div class="dim" style="margin-top:6px">호출 위치</div>' + files : '') +
+      decisionOfTarget(m)
     wireOpen({ kind: 'message', id: m.id })
+    wireDecisions($('detail'))
+    renderTrails($('detail'))
     return
   }
   if (f) {
@@ -741,6 +930,18 @@ function seqDetail() {
     return
   }
   $('detail').innerHTML = ''
+}
+/**
+ * The open decision this item is waiting on, drawn right here. Deciding and the thing being
+ * decided belong on the same surface; sending the eye across the window to a list does not help.
+ */
+function decisionOfTarget(item) {
+  const id = item && item.decision
+  if (!id || !page) return ''
+  const d = page.decisions.find(x => x.id === id)
+  if (!d || d.chosen) return ''
+  if (decisionHome(id) === 'map') return ''
+  return '<div class="dim" style="margin-top:8px">이 ' + scopeNoun() + '가 기다리는 결정</div>' + decisionCard(d)
 }
 function detail() {
   if (isSeq() && target.kind === 'message') return seqDetail()
@@ -760,7 +961,10 @@ function detail() {
     '<div class="dim">' + esc([el.kind || (isSeq() ? 'participant' : 'class'), page.changeNames[el.change || 'keep'], el.steps && el.steps.length ? '스텝 ' + el.steps.join('·') : '', el.done ? '완료' : el.working ? '작업 중' : '', el.decision ? '결정 ' + el.decision : ''].filter(Boolean).join(' · ')) + '</div>' +
     (el.note ? '<div>' + esc(el.note) + '</div>' : '') +
     (members ? '<ul>' + members + '</ul>' : '') +
-    (files ? '<div class="dim" style="margin-top:6px">파일</div>' + files : '')
+    (files ? '<div class="dim" style="margin-top:6px">파일</div>' + files : '') +
+    decisionOfTarget(el)
+  wireDecisions($('detail'))
+  renderTrails($('detail'))
   $('detail').querySelectorAll('button[data-open]').forEach(b => {
     b.onclick = async () => {
       try {
@@ -774,7 +978,7 @@ function detail() {
 }
 
 // ---------------------------------------------------------------- the thread
-const ACTION_NAMES = { comment: '', explain: '설명 요청', expand: '펼치기', collapse: '접기', hide: '숨기기', reset: '보기 초기화', decide: '결정' }
+const ACTION_NAMES = { comment: '', explain: '설명 요청', expand: '펼치기', collapse: '접기', hide: '숨기기', reset: '보기 초기화', decide: '결정', lean: '기울이기', reject: '기각 사유', blocked: '대기 이유', propose: '다른 길' }
 function statusOf(item) {
   if (item.status === 'sent') return thread.isListening ? (thread.isBusy && !item.urgent ? '작업 끝나면 전달' : '전달 중') : '받을 세션 기다리는 중'
   if (item.status === 'working') return LOCAL.includes(item.action) && item.action !== 'decide' ? '반영 중' : 'Claude 작업 중'
@@ -794,9 +998,14 @@ function renderThread() {
     : '이 지도를 열어 둔 Claude 세션이 없어. Claude Code에서 ' + CONNECT + ' 명령을 실행하면 그 세션이 피드백을 받고, 기다리던 피드백도 그때 전달돼.'
   $('connect').hidden = thread.isListening
   const items = [...thread.items].reverse()
-  const open = thread.items.filter(i => i.status === 'sent' || i.status === 'working').length
-  $('thread-title').textContent = '대화' + (open ? ' · 진행 중 ' + open : '')
-  $('thread').innerHTML = items.length === 0 ? '<div class="dim">상자나 관계선을 클릭하고 피드백을 남기면 ' + (thread.isListening ? 'Claude에게 바로 전달돼.' : '받을 세션이 생길 때 전달돼.') + '</div>' : items.map(i => {
+  const openCount = thread.items.filter(i => i.status === 'sent' || i.status === 'working').length
+  setTabCount('thread', openCount, openCount ? '진행 중 ' + openCount : '')
+  const mine = items.filter(i => scopeKeeps(i.target))
+  // What just landed stays out of the fold, so an answer is never hidden the moment it arrives.
+  const isLive = i => i.status === 'sent' || i.status === 'working' || freshIds.has(i.id)
+  const live = mine.filter(isLive)
+  const done = mine.filter(i => !isLive(i))
+  const card = i => {
     const what = ACTION_NAMES[i.action]
     return '<div class="item' + (freshIds.has(i.id) ? ' fresh' : '') + '" data-id="' + i.id + '">' +
       '<div class="head"><b>#' + i.id + '</b> ' + esc(i.action === 'decide' ? (i.target.id + ' → ' + i.target.option) : targetName(i.target)) + (what ? ' · ' + esc(what) : '') + (i.urgent ? ' · 끼어들기' : '') +
@@ -804,11 +1013,20 @@ function renderThread() {
       (i.text ? '<div class="text">' + esc(i.text) + '</div>' : '') +
       (i.reply ? '<div class="reply">' + esc(i.reply) + '</div>' : '') +
       '</div>'
-  }).join('')
+  }
+  const empty = scopeOn()
+    ? '이 ' + scopeNoun() + '에 대한 대화가 아직 없어. 위에 적으면 여기 쌓여.'
+    : '상자나 관계선을 클릭하고 피드백을 남기면 ' + (thread.isListening ? 'Claude에게 바로 전달돼.' : '받을 세션이 생길 때 전달돼.')
+  $('thread').innerHTML = mine.length === 0 ? '<div class="dim">' + empty + '</div>'
+    : live.map(card).join('') +
+      (done.length ? '<details class="fold"' + (done.length <= 2 ? ' open' : '') + '><summary>완료 ' + done.length + '</summary><div class="body">' + done.map(card).join('') + '</div></details>' : '')
   $('thread').querySelectorAll('.item').forEach(div => {
     div.onclick = () => {
       const item = thread.items.find(i => String(i.id) === div.dataset.id)
-      if (item && item.target && (item.target.kind === 'element' || item.target.kind === 'relation' || item.target.kind === 'message')) setTarget(item.target)
+      if (item && item.target && (item.target.kind === 'element' || item.target.kind === 'relation' || item.target.kind === 'message')) {
+        flyCard(div, item.target)
+        setTarget(item.target)
+      }
     }
   })
   composer()
@@ -833,6 +1051,7 @@ async function loadThread() {
       for (const node of nodesOf(item.target.id)) { node.classList.remove('flash-reply'); void node.getBBox(); node.classList.add('flash-reply') }
     }
   }
+  refreshDecisionCards()
   const answered = landed.filter(i => i.status === 'answered' && i.reply)
   for (const item of answered) replyBubble(item)
   if (answered.length) notifyAnswer(answered[answered.length - 1])
@@ -888,17 +1107,21 @@ function renderActivity() {
   renderDrift(drift)
   applyFog(drift)
 }
+let driftDismissed = ''
 function renderDrift(drift) {
   if (!drift || !drift.files || drift.files.length === 0) { $('drift').innerHTML = ''; return }
+  const sig = drift.files.join('|')
+  if (sig === driftDismissed) { $('drift').innerHTML = ''; return }
   const files = drift.files.slice(0, 6).map(f => '<code>' + esc(f) + '</code>').join(' ')
-  $('drift').innerHTML = '⚠ 코드는 바뀌었는데 지도는 그대로야 (안개 낀 상자): ' + files + (drift.files.length > 6 ? ' 외 ' + (drift.files.length - 6) + '개' : '') +
+  $('drift').innerHTML = '<div class="top"><div>⚠ 코드는 바뀌었는데 지도는 그대로야 (안개 낀 상자): ' + files +
+    (drift.files.length > 6 ? ' 외 ' + (drift.files.length - 6) + '개' : '') + '</div><button class="close" id="drift-close" title="닫기">✕</button></div>' +
     '<div class="row"><button id="drift-ask">지도에 반영해 달라고 하기</button></div>'
-  $('drift-ask').onclick = () => {
-    $('text').value = '방금 바뀐 코드(' + drift.files.slice(0, 6).join(', ') + ')를 지도에 반영해 줘.'
-    const saved = target
-    target = { kind: 'map' }
-    sendFeedback('comment').finally(() => { target = saved; composer() })
-  }
+  $('drift-close').onclick = () => { driftDismissed = sig; $('drift').innerHTML = '' }
+  // The feedback carries its own target, so the picked box is never swapped out from under the panes.
+  $('drift-ask').onclick = () => sendFeedback('comment', null, {
+    target: { kind: 'map' },
+    text: '방금 바뀐 코드(' + drift.files.slice(0, 6).join(', ') + ')를 지도에 반영해 줘.',
+  })
 }
 
 // ---------------------------------------------------------------- since you last looked
@@ -1074,6 +1297,60 @@ function breathe() {
   }
 }
 
+// ---------------------------------------------------------------- undecided boxes: a slow swell and a badge
+/**
+ * A box waiting on an open decision swells slowly in warm light, and wears a badge that opens
+ * the decision. A `[D5]` in the label is a footnote: it tells you only once you are already
+ * reading that box. The light is what finds the box for you across the whole map.
+ */
+function askingBoxes() {
+  const open = new Map()
+  if (isMap() && previewRev === null && page !== null) {
+    for (const d of page.decisions) {
+      if (d.chosen !== undefined) continue
+      for (const place of placesOf(d.id)) {
+        if (!open.has(place.node)) open.set(place.node, { id: d.id, question: d.question, leaning: d.leaning, node: place.node })
+      }
+    }
+  }
+  // Only the nodes whose state actually changed: removing and re-adding the class every frame
+  // restarts the animation, and a swell that restarts 60 times a second never swells.
+  for (const node of canvas.querySelectorAll('.asking')) {
+    if (!open.has(node)) node.classList.remove('asking', 'leaning-to')
+  }
+  for (const [node, ask] of open) {
+    node.classList.add('asking')
+    // A leaning is half an answer: the same light, slower, so it reads as settling down.
+    node.classList.toggle('leaning-to', ask.toward !== undefined)
+  }
+  return open
+}
+overlayHooks.push(() => {
+  const host = $('asks')
+  const open = askingBoxes()
+  if (open.size === 0) { host.innerHTML = ''; return }
+  const keep = new Set()
+  for (const ask of open.values()) {
+    keep.add(ask.id)
+    let badge = host.querySelector('[data-ask="' + CSS.escape(ask.id) + '"]')
+    if (badge === null) {
+      badge = document.createElement('div')
+      badge.className = 'ask no-pan'
+      badge.dataset.ask = ask.id
+      badge.onclick = () => { setTarget({ kind: 'map' }); openDecider(badge.dataset.ask) }
+      host.appendChild(badge)
+    }
+    const short = ask.toward === undefined ? '' : (ask.toward.length > 12 ? ask.toward.slice(0, 11) + '…' : ask.toward)
+    badge.innerHTML = '<i></i>' + esc(short === '' ? '정할 차례' : short + ' 쪽')
+    badge.classList.toggle('leaning', ask.toward !== undefined)
+    badge.title = ask.id + ' ' + ask.question + ' — 눌러서 여기서 정하기'
+    const b = screenBox(ask.node)
+    badge.style.left = (b.x + b.w) + 'px'
+    badge.style.top = b.y + 'px'
+  }
+  for (const badge of [...host.children]) if (!keep.has(badge.dataset.ask)) badge.remove()
+})
+
 // ---------------------------------------------------------------- answers arriving: a bubble, and if asked, a chime
 const bubbles = []
 function replyBubble(item) {
@@ -1100,8 +1377,14 @@ overlayHooks.push(() => {
   }
 })
 function showThreadItem(id) {
+  // The panes may be narrowed to another box, on another tab, or the card may sit in the finished fold.
+  const item = thread.items.find(i => String(i.id) === String(id))
+  if (item && !scopeKeeps(item.target)) setTarget({ kind: 'map' })
+  showPane('thread')
   const div = $('thread').querySelector('.item[data-id="' + id + '"]')
   if (!div) return
+  const fold = div.closest('details.fold')
+  if (fold) fold.open = true
   div.scrollIntoView({ behavior: REDUCED.matches ? 'auto' : 'smooth', block: 'center' })
   div.classList.add('fresh')
 }
@@ -1297,7 +1580,10 @@ function flyTo(id) {
   const cx = (b.x + b.w / 2 - view.x) / view.k
   const cy = (b.y + b.h / 2 - view.y) / view.k
   const k = Math.min(1.6, Math.max(view.k, 0.85))
-  const goal = { k, x: stage.clientWidth / 2 - cx * k, y: stage.clientHeight / 2 - cy * k }
+  glideTo({ k, x: stage.clientWidth / 2 - cx * k, y: stage.clientHeight / 2 - cy * k })
+}
+/** Eases the camera to a view; the same move whether one box or a whole decision is framed. */
+function glideTo(goal) {
   if (REDUCED.matches) { view = goal; apply(); return }
   const from = { ...view }
   const mine = ++flight
@@ -1340,8 +1626,15 @@ const FILTERS = {
 }
 
 // ---------------------------------------------------------------- decisions, previewed on the map
+/** Stops previewing altogether: the lit boxes, the caption, and any future on screen. */
 function clearDecisionPreview() {
+  clearHighlight()
+  void endFuture()
+}
+function clearHighlight() {
   canvas.querySelectorAll('.ghosted, .hush').forEach(n => n.classList.remove('ghosted', 'hush'))
+  pinned = []
+  $('pins').innerHTML = ''
   $('impact').classList.remove('on')
   impactAnchor = null
 }
@@ -1351,17 +1644,372 @@ function previewDecision(id, optionId) {
   if (!page || previewRev !== null) return
   const d = page.decisions.find(x => x.id === id)
   if (!d) return
-  clearDecisionPreview()
-  const tagged = [...Object.values(page.elements), ...Object.values(page.messages || {}), ...Object.values(page.fragments || {})]
-    .filter(x => x.decision === id).map(x => x.id)
-  const lit = new Set(tagged.flatMap(t => nodesOf(t)))
+  clearHighlight()
+  // Light the box that is actually drawn: fold a group and its boxes are gone, but the group
+  // carries the tag. Lighting nothing and dimming the rest is how a decision went missing.
+  pinned = placesOf(id)
+  const lit = new Set(pinned.map(p => p.node))
   if (!isSeq()) for (const node of canvas.querySelectorAll('g.node')) node.classList.add(lit.has(node) ? 'ghosted' : 'hush')
   else for (const node of lit) node.classList.add('ghosted')
   const option = optionId && (d.options || []).find(o => o.id === optionId)
-  $('impact').textContent = option ? option.id + ' · ' + option.text + (option.impact ? '\n영향: ' + option.impact : '') : d.id + ' · ' + d.question + (tagged.length ? '' : '\n지도에 이 결정이 붙은 상자가 없어')
-  impactAnchor = () => tagged.length ? anchorOf({ kind: nodesOf(tagged[0]).length && page.elements[tagged[0]] ? 'element' : 'message', id: tagged[0] }) : { x: stage.clientWidth / 2, y: 90 }
+  // Where the decision sits, said plainly: the caption must not look like it points at a box
+  // that is not on screen, and the pins say which way the missing ones are.
+  const away = pinned.filter(p => isAway(screenBox(p.node)))
+  const folded = foldedGroupsOf(id)
+  const noun = isSeq() ? '항목' : '상자'
+  const where = pinned.length === 0 ? '\n지도에 이 결정이 붙은 ' + noun + '가 없어'
+    : '\n걸린 ' + noun + ' ' + pinned.length + '개'
+      + (away.length === 0 ? '' : ' · ' + (away.length === pinned.length ? '모두' : away.length + '개가') + ' 화면 밖')
+      + (away.length === 0 ? '' : '\n가장자리 표식이 그 방향이야. 누르면 그리로 가.')
+      + (folded.length === 0 ? '' : '\n' + folded.map(g => nameOf(g)).join(', ') + ' 안에 접혀 있어')
+  $('impact').textContent = (option ? option.id + ' · ' + option.text + (option.impact ? '\n영향: ' + option.impact : '') : d.id + ' · ' + d.question) + where
+  const here = pinned.find(p => !isAway(screenBox(p.node)))
+  impactAnchor = () => {
+    if (here === undefined) return { x: stage.clientWidth / 2, y: 90 }
+    const b = screenBox(here.node)
+    return { x: b.x + b.w / 2, y: b.y }
+  }
   $('impact').classList.add('on')
   layoutOverlay()
+  // Only a decision whose options really change the picture gets a redraw; the rest would just
+  // flicker the same dashes off and on as the pointer crosses the card.
+  if (optionId && hasFutures(id)) wantFuture(optionId)
+  else cancelFuture()
+}
+
+// ---------------------------------------------------------------- deciding on the map itself
+/**
+ * An open decision, floated beside the box it is about, buttons and all. Reading the question in
+ * the side panel and the consequence on the map means looking back and forth; this puts both in
+ * one place. It holds to its box as the view moves, and closes with Esc or the ✕.
+ */
+let deciderOn = null
+let deciderShut = new Set()
+function closeDecider(isByHand) {
+  if (deciderOn === null) return
+  if (isByHand === true) deciderShut.add(deciderOn)
+  deciderOn = null
+  deciderSpot = null
+  $('decider').hidden = true
+  $('decider').innerHTML = ''
+  $('leader').classList.remove('on')
+  renderPanes()
+}
+function openDecider(id) {
+  const d = page && page.decisions.find(x => x.id === id)
+  if (!d || d.chosen) return
+  if (placesOf(id)[0] === undefined) return
+  deciderShut.delete(id)
+  deciderOn = id
+  deciderSpot = null
+  $('decider').hidden = false
+  drawDecider()
+  renderPanes()
+  layoutOverlay()
+}
+/** Redraws the floating card in place, keeping the spot it already found. */
+function drawDecider() {
+  const d = page && page.decisions.find(x => x.id === deciderOn)
+  if (d === undefined) return
+  const host = $('decider')
+  host.innerHTML = '<button class="shut" title="닫기 (Esc)">✕</button>' + compactCard(d)
+  host.querySelector('.shut').onclick = () => closeDecider(true)
+  wireDecisions(host)
+  renderTrails(host)
+}
+/** Everything that shows a decision, after its thread or its content moved. */
+function refreshDecisionCards() {
+  if (!isMap() || page === null) return
+  if (deciderOn !== null) {
+    const d = page.decisions.find(x => x.id === deciderOn)
+    if (d === undefined || d.chosen !== undefined) closeDecider(false)
+    else { drawDecider(); layoutOverlay() }
+  }
+  renderDecisions()
+  detail()
+}
+/**
+ * The card sits where it covers nothing and a line points back to its box. A panel over the
+ * drawing hides the very thing being decided; a panel at the window's edge makes the eye cross
+ * the whole screen. Empty space plus a line is both: near the box, and on top of none of it.
+ */
+let deciderSpot = null
+function freeSpot(w, h, anchor) {
+  const pad = 14
+  const W = stage.clientWidth
+  const H = stage.clientHeight
+  const boxes = [...canvas.querySelectorAll('g.node')].map(screenBox)
+  const hits = (x, y) => boxes.some(b => x < b.x + b.w + pad && x + w + pad > b.x && y < b.y + b.h + pad && y + h + pad > b.y)
+  const fits = (x, y) => x >= pad && y >= pad && x + w <= W - pad && y + h <= H - pad && !hits(x, y)
+  // Stay where it is while that still works: a card that re-places itself on every pan jitters.
+  if (deciderSpot !== null && deciderSpot.w === w && deciderSpot.h === h && fits(deciderSpot.x, deciderSpot.y)) return deciderSpot
+  const ax = anchor.x + anchor.w / 2
+  const ay = anchor.y + anchor.h / 2
+  let best = null
+  for (let x = pad; x <= W - w - pad; x += 32) {
+    for (let y = pad; y <= H - h - pad; y += 32) {
+      if (hits(x, y)) continue
+      const far = Math.hypot(x + w / 2 - ax, y + h / 2 - ay)
+      if (best === null || far < best.far) best = { x, y, w, h, far }
+    }
+  }
+  // Nothing is free: dock it at the bottom, where it covers the least and never moves.
+  return best ?? { x: Math.round((W - w) / 2), y: Math.max(pad, H - h - pad), w, h, docked: true }
+}
+/** A thin curve from the box to the card's nearest side, so the eye has a route to follow. */
+function drawLeader(from, to) {
+  const leader = $('leader')
+  const ax = from.x + from.w / 2
+  const ay = from.y + from.h / 2
+  const tx = to.x + to.w / 2
+  const ty = to.y + to.h / 2
+  // Leave each rectangle at the side that faces the other one.
+  const sx = tx > ax ? from.x + from.w : tx < ax ? from.x : ax
+  const sy = tx > ax || tx < ax ? Math.max(from.y, Math.min(from.y + from.h, ty)) : ty > ay ? from.y + from.h : from.y
+  const ex = tx > ax ? to.x : tx < ax ? to.x + to.w : tx
+  const ey = Math.max(to.y + 10, Math.min(to.y + to.h - 10, sy))
+  const mx = (sx + ex) / 2
+  leader.querySelector('path').setAttribute('d', 'M' + sx + ',' + sy + ' C' + mx + ',' + sy + ' ' + mx + ',' + ey + ' ' + ex + ',' + ey)
+  leader.querySelector('circle').setAttribute('cx', sx)
+  leader.querySelector('circle').setAttribute('cy', sy)
+  leader.classList.add('on')
+}
+function placeDecider() {
+  if (deciderOn === null) return
+  const host = $('decider')
+  const place = placesOf(deciderOn)[0]
+  if (place === undefined) { host.style.opacity = '0'; $('leader').classList.remove('on'); return }
+  host.style.opacity = '1'
+  const anchor = screenBox(place.node)
+  // Try it at its own height first; a tall card on a full map finds nowhere, and covering the
+  // drawing is worse than scrolling inside the card. So shrink before giving up and docking.
+  host.style.maxHeight = ''
+  let spot = freeSpot(host.offsetWidth, host.offsetHeight, anchor)
+  for (const limit of [340, 260, 200]) {
+    if (spot.docked !== true || host.offsetHeight <= limit) break
+    host.style.maxHeight = limit + 'px'
+    spot = freeSpot(host.offsetWidth, host.offsetHeight, anchor)
+  }
+  if (spot.docked === true) host.style.maxHeight = ''
+  deciderSpot = spot
+  host.classList.toggle('docked', spot.docked === true)
+  host.style.left = spot.x + 'px'
+  host.style.top = spot.y + 'px'
+  drawLeader(anchor, spot)
+}
+overlayHooks.push(placeDecider)
+addEventListener('keydown', e => { if (e.key === 'Escape' && deciderOn !== null && $('popover').hidden) { e.preventDefault(); closeDecider(true) } })
+/** A decision shows in exactly one place: on the map, else beside the picked box, else in the pane. */
+function decisionHome(id) {
+  if (deciderOn === id) return 'map'
+  return inspectorDecisionId() === id ? 'inspector' : 'pane'
+}
+/** One line standing in for a card that lives somewhere else, with a way back to it. */
+function elsewhereLine(id, where) {
+  return '<div class="elsewhere"><span>' + esc(id) + '는 ' + (where === 'map' ? '지도 위에 떠 있어' : '위 인스펙터 카드에 있어') + '</span>' +
+    (where === 'map' ? '<button class="link" data-find="' + esc(id) + '">찾아가기</button>' : '') + '</div>'
+}
+
+// ---------------------------------------------------------------- where a decision sits
+/**
+ * A decision lights the boxes it is tagged on, but those may be panned off screen, and a caption
+ * clamped to the edge reads as if it pointed at whatever is there. So: say how many are away,
+ * and pin a marker on the edge in each one's direction. Hovering tells; clicking moves.
+ */
+let pinned = []
+/** The box that stands for an item on screen: itself, or the collapsed group it folded into. */
+function drawnNodeOf(id) {
+  const own = nodesOf(id)[0] || clusterOf(id)
+  if (own) return own
+  for (let at = page.elements[id]; at && at.parent; at = page.elements[at.parent]) {
+    const up = nodeOf(at.parent) || clusterOf(at.parent)
+    if (up) return up
+  }
+  return null
+}
+const nameOf = id => (page.elements[id] ? (page.elements[id].label || id) : id)
+/** Everything a decision is tagged on, whether or not it is drawn right now. */
+function taggedBy(id) {
+  return [...Object.values(page.elements), ...Object.values(page.messages || {}), ...Object.values(page.fragments || {})]
+    .filter(x => x.decision === id)
+}
+/** The collapsed groups a decision is hiding inside, outermost first: what to unfold to see it. */
+function foldedGroupsOf(id) {
+  const collapsed = new Set((page.view && page.view.collapse) || [])
+  const groups = new Set()
+  for (const item of taggedBy(id)) {
+    if (nodesOf(item.id).length > 0) continue
+    const chain = []
+    for (let at = page.elements[item.id]; at && at.parent; at = page.elements[at.parent]) {
+      if (collapsed.has(at.parent)) chain.push(at.parent)
+    }
+    // The outermost collapsed group is the box actually drawn, so that is the one to unfold.
+    if (chain.length > 0) groups.add(chain[chain.length - 1])
+  }
+  return [...groups]
+}
+/** Every drawn box this decision is on, once each, with the name to show on its pin. */
+function placesOf(id) {
+  const items = taggedBy(id)
+  const seen = new Set()
+  const places = []
+  for (const item of items) {
+    const node = drawnNodeOf(item.id)
+    if (node === null || seen.has(node)) continue
+    seen.add(node)
+    places.push({ id: item.id, label: page.elements[item.id] ? (page.elements[item.id].label || item.id) : seqName(item.id), node })
+  }
+  return places
+}
+const isAway = b => b.x + b.w < 4 || b.y + b.h < 4 || b.x > stage.clientWidth - 4 || b.y > stage.clientHeight - 4
+const WAYS = [['→', 0], ['↘', 45], ['↓', 90], ['↙', 135], ['←', 180], ['↖', 225], ['↑', 270], ['↗', 315]]
+/** Lays each away box's marker on the stage border, in its direction from the middle. */
+function layoutPins() {
+  const host = $('pins')
+  const away = pinned.filter(p => isAway(screenBox(p.node))).slice(0, 4)
+  if (away.length === 0) { host.innerHTML = ''; return }
+  const cx = stage.clientWidth / 2
+  const cy = stage.clientHeight / 2
+  const margin = 30
+  const marks = away.map(p => {
+    const b = screenBox(p.node)
+    const dx = b.x + b.w / 2 - cx
+    const dy = b.y + b.h / 2 - cy
+    // How far along the line to the box the stage border is: that is where the marker sits.
+    const toSide = Math.abs(dx) < 1 ? Infinity : (cx - margin) / Math.abs(dx)
+    const toTop = Math.abs(dy) < 1 ? Infinity : (cy - margin) / Math.abs(dy)
+    const reach = Math.min(toSide, toTop, 1)
+    const degrees = (Math.atan2(dy, dx) * 180 / Math.PI + 360) % 360
+    const way = WAYS.reduce((best, w) => {
+      const gap = Math.min(Math.abs(degrees - w[1]), 360 - Math.abs(degrees - w[1]))
+      return gap < best.gap ? { glyph: w[0], gap } : best
+    }, { glyph: '→', gap: 999 }).glyph
+    return { id: p.id, label: p.label, way, x: cx + dx * reach, y: cy + dy * reach }
+  })
+  host.innerHTML = marks.map(m => '<button class="waypin" data-pin="' + esc(m.id) + '" style="left:' + m.x + 'px;top:' + m.y + 'px" ' +
+    'title="눌러서 이 ' + (isSeq() ? '항목' : '상자') + '로 가기"><span class="way">' + m.way + '</span><span class="what">' + esc(m.label) + '</span></button>').join('')
+  // The border point is where the marker points from, not where it fits: pull each one back
+  // inside by its own size, or a long name hangs off the stage.
+  // The caption sits in the middle when every box is away, which is where an up-left marker
+  // lands too. Two floaters on the same pixels read as one broken thing, so push below it.
+  const caption = $('impact').classList.contains('on') ? screenBox($('impact')) : null
+  host.querySelectorAll('.waypin').forEach(el => {
+    const halfW = el.offsetWidth / 2 + 6
+    const halfH = el.offsetHeight / 2 + 6
+    let x = Math.max(halfW, Math.min(stage.clientWidth - halfW, parseFloat(el.style.left)))
+    let y = Math.max(halfH, Math.min(stage.clientHeight - halfH, parseFloat(el.style.top)))
+    if (caption !== null && Math.abs(x - (caption.x + caption.w / 2)) < caption.w / 2 + halfW
+      && Math.abs(y - (caption.y + caption.h / 2)) < caption.h / 2 + halfH) {
+      const below = caption.y + caption.h + halfH + 8
+      const above = caption.y - halfH - 8
+      y = below + halfH <= stage.clientHeight ? below : Math.max(halfH, above)
+    }
+    el.style.left = x + 'px'
+    el.style.top = y + 'px'
+    el.onclick = () => flyTo(el.dataset.pin)
+  })
+}
+overlayHooks.push(layoutPins)
+/** Moves the camera so every one of these boxes fits, with room around them. */
+function frameNodes(nodes) {
+  if (nodes.length === 0) return
+  let minX = Infinity
+  let minY = Infinity
+  let maxX = -Infinity
+  let maxY = -Infinity
+  for (const node of nodes) {
+    const b = screenBox(node)
+    minX = Math.min(minX, (b.x - view.x) / view.k)
+    minY = Math.min(minY, (b.y - view.y) / view.k)
+    maxX = Math.max(maxX, (b.x + b.w - view.x) / view.k)
+    maxY = Math.max(maxY, (b.y + b.h - view.y) / view.k)
+  }
+  const w = Math.max(1, maxX - minX)
+  const h = Math.max(1, maxY - minY)
+  // The zoom is the person's: moving the camera must not take their reading distance away.
+  // What does not fit at this zoom keeps its edge marker, which is what the markers are for.
+  const k = view.k
+  glideTo({ k, x: stage.clientWidth / 2 - (minX + w / 2) * k, y: stage.clientHeight / 2 - (minY + h / 2) * k })
+}
+/** Frames everything a decision is tagged on; nothing happens when it is on no box. */
+function showDecisionOnMap(id) {
+  const places = placesOf(id)
+  if (places.length === 0) { toast('이 결정이 붙은 ' + (isSeq() ? '항목' : '상자') + '가 지도에 없어'); return }
+  frameNodes(places.map(p => p.node))
+  const d = page.decisions.find(x => x.id === id)
+  if (d && d.chosen === undefined && deciderOn !== id) openDecider(id)
+}
+
+// ---------------------------------------------------------------- the two futures, one map
+/**
+ * Moving between a decision's options redraws the map as if each had been chosen, so the boxes
+ * that differ are the only ones that move. Two pictures side by side would need comparing;
+ * one picture that changes does not. The server renders each future; this caches them.
+ */
+const futures = new Map()
+let futureShown = null
+let futureWanted = null
+let futureTimer = null
+let futureDrawing = Promise.resolve()
+/** Whether this decision's options differ on the map at all: nothing to show between them if not. */
+function hasFutures(id) {
+  if (!page) return false
+  const all = [...Object.values(page.elements), ...Object.values(page.messages || {}), ...Object.values(page.fragments || {}), ...(page.relations || [])]
+  return all.some(x => x.decision === id && x.option !== undefined)
+}
+/** The pointer crossing a card is not a request to redraw: wait for it to settle on one option. */
+function wantFuture(optionId) {
+  if (!isMap() || previewRev !== null || editing) return
+  if (futureWanted === optionId) return
+  futureWanted = optionId
+  clearTimeout(futureTimer)
+  futureTimer = setTimeout(() => void showFuture(optionId), 220)
+}
+function cancelFuture() {
+  clearTimeout(futureTimer)
+  futureTimer = null
+  futureWanted = null
+}
+async function showFuture(optionId) {
+  if (futureWanted !== optionId || futureShown === optionId) return
+  let drawn = futures.get(optionId)
+  if (drawn === undefined) {
+    try {
+      const res = await fetch('/api/' + NAME + '/future/' + encodeURIComponent(optionId), { cache: 'no-store' })
+      if (!res.ok) return
+      drawn = (await res.json()).mermaid
+      futures.set(optionId, drawn)
+    } catch { return }
+  }
+  // The pointer may have moved on while that was in flight.
+  if (futureWanted !== optionId || drawn === page.mermaid) return
+  futureShown = optionId
+  await drawOnce(drawn)
+}
+async function endFuture() {
+  cancelFuture()
+  if (futureShown === null) return
+  futureShown = null
+  await drawOnce(page.mermaid)
+}
+/** Redraws never overlap: two Mermaid renders at once is what reads as flicker. */
+function drawOnce(source) {
+  futureDrawing = futureDrawing.then(async () => {
+    await draw(source, true)
+    afterDraw()
+  }, () => undefined)
+  return futureDrawing
+}
+/** What a redraw outside load() has to put back: tagging, picks, fog and filters. */
+function afterDraw() {
+  if (!isMap()) return
+  if (isSeq()) decorateSequence()
+  markTarget()
+  renderUnseen()
+  renderActivity()
+  breathe()
+  applyFilter()
+  settleOverlay()
 }
 overlayHooks.push(() => {
   if (!impactAnchor) return
@@ -1385,8 +2033,10 @@ function spotCandidates() {
   }
   for (const d of page.decisions) {
     items.push({ kind: '결정', title: d.id + ' · ' + d.question, sub: d.chosen ? d.chosen + ' 확정' : '열림', text: [d.id, d.question, ...(d.options || []).map(o => o.text)].join(' '), run: () => {
+      if (scopeOn() && !elementsOfDecision(d.id).includes(target.id)) setTarget({ kind: 'map' })
+      showPane('decisions')
       const card = [...$('decisions').querySelectorAll('.decision')].find(c => c.dataset.decision === d.id)
-      if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      if (card) { rove(card); card.scrollIntoView({ behavior: 'smooth', block: 'center' }) }
       previewDecision(d.id, null)
       setTimeout(clearDecisionPreview, 3200)
     } })
@@ -1676,7 +2326,7 @@ function renderRings() {
   if (host.hidden) return
   if (!host.querySelector('svg')) {
     host.innerHTML = '<svg viewBox="-16 -16 32 32">' + RINGS.map(r => '<circle class="track" r="' + r.r + '"/><circle data-ring="' + r.key + '" r="' + r.r + '" stroke="' + r.color + '"/>').join('') + '</svg>'
-    host.onclick = () => $('progress-title').scrollIntoView({ behavior: 'smooth', block: 'start' })
+    host.onclick = () => { showPane('progress'); $('map-sections').scrollIntoView({ behavior: 'smooth', block: 'start' }) }
   }
   for (const r of RINGS) {
     const { done, total } = counts[r.key]
@@ -1738,41 +2388,506 @@ function relationLegend() {
 }
 function side() {
   renderRings()
+  renderLegend()
+  renderDecisions()
+  renderProgress()
+  renderOpenPill()
+  renderScope()
+}
+function renderLegend() {
   $('legend').innerHTML = page.legend.map(l => '<span><i style="background:' + l.fill + ';border-color:' + l.stroke + (l.dashed ? ';border-style:dashed' : '') + '"></i>' + esc(l.text) + '</span>').join('') +
     '<span><i style="background:#fff;border-color:#0d9488"></i>Claude가 보는 중</span><span><i style="background:#fff;border-color:#2563eb;border-style:dashed"></i>확인 안 한 변경</span>' +
     relationLegend()
-  const open = page.decisions.filter(d => !d.chosen)
-  $('decisions-title').textContent = '결정' + (open.length ? ' · 열림 ' + open.length : '')
-  $('decisions').innerHTML = page.decisions.length === 0 ? '<div class="dim">없음</div>' : page.decisions.map(d => {
-    const opts = (d.options || []).map(o =>
-      '<div class="opt"><div class="body' + (o.id === d.chosen ? ' chosen' : '') + '"><code>' + esc(o.id) + '</code> ' + esc(o.text) +
-      (o.impact ? '<div class="dim">영향: ' + esc(o.impact) + '</div>' : '') + '</div>' +
-      (d.chosen ? '' : '<button data-decision="' + esc(d.id) + '" data-option="' + esc(o.id) + '">이걸로 결정</button>') + '</div>').join('')
-    return '<div class="card decision" data-decision="' + esc(d.id) + '"><div class="q">' + esc(d.id) + ' ' + esc(d.question) + (d.chosen ? ' <span class="chosen">확정</span>' : '') + '</div>' + opts + (d.rationale ? '<div class="dim">' + esc(d.rationale) + '</div>' : '') + '</div>'
+}
+$('legend-btn').onclick = () => { $('legend-hud').hidden = !$('legend-hud').hidden }
+
+// ---------------------------------------------------------------- panes: one of the three at a time
+const PANES = ['thread', 'decisions', 'progress']
+let pane = 'thread'
+function showPane(next) {
+  if (!PANES.includes(next)) return
+  pane = next
+  for (const p of PANES) {
+    $('pane-' + p).hidden = p !== pane
+    const tab = $('tab-' + p)
+    tab.classList.toggle('on', p === pane)
+    tab.setAttribute('aria-selected', p === pane ? 'true' : 'false')
+  }
+  try { localStorage.setItem('design-map-pane-' + NAME, pane) } catch {}
+}
+function setTabCount(name, count, title) {
+  const n = $(name + '-n')
+  n.textContent = count ? String(count) : ''
+  n.hidden = !count
+  $('tab-' + name).title = title || ''
+}
+for (const p of PANES) $('tab-' + p).onclick = () => showPane(p)
+try { showPane(localStorage.getItem('design-map-pane-' + NAME) || 'thread') } catch {}
+
+// ---------------------------------------------------------------- scope: the panes follow what is picked
+/** With a box, a message or a line picked, every pane shows only what is about it. */
+function scopeOn() { return isMap() && page !== null && ['element', 'message', 'relation'].includes(target.kind) }
+/** The boxes and messages a decision is tagged on: the map lights them, the panes narrow by them. */
+function elementsOfDecision(id) {
+  return [...Object.values(page.elements), ...Object.values(page.messages || {}), ...Object.values(page.fragments || {})]
+    .filter(x => x.decision === id).map(x => x.id)
+}
+function scopeKeeps(t) {
+  if (!scopeOn()) return true
+  if (!t) return false
+  if (target.kind === 'relation') return t.kind === 'relation' && t.from === target.from && t.to === target.to
+  if (t.kind === 'element' || t.kind === 'message') return t.id === target.id
+  if (t.kind === 'relation') return t.from === target.id || t.to === target.id
+  if (t.kind === 'decision') return elementsOfDecision(t.id).includes(target.id)
+  return false
+}
+function renderScope() {
+  const note = $('scope-note')
+  if (!scopeOn()) { note.hidden = true; return }
+  note.hidden = false
+  note.innerHTML = '<span><b>' + esc(targetName(target)) + '</b>만 보는 중</span>'
+  const all = document.createElement('button')
+  all.className = 'link'
+  all.textContent = '전체 보기'
+  all.onclick = () => setTarget({ kind: 'map' })
+  note.appendChild(all)
+}
+/** Everything that narrows with the pick, after the pick changed. */
+function renderPanes() {
+  if (!isMap() || page === null) return
+  renderScope()
+  renderDecisions()
+  renderProgress()
+  renderThread()
+}
+const scopeNoun = () => isSeq() ? '항목' : '상자'
+
+// ---------------------------------------------------------------- decisions
+/**
+ * Two readings of one decision. Beside the diagram it has to be glanceable: the question and
+ * the choices, one line each, nothing that wraps. Everything to study — the impacts, the table,
+ * what was already proposed, the trail — needs width and goes in the panel, which has both.
+ */
+function compactCard(d) {
+  const asked = proposalsOf(d.id)
+  const opts = (d.options || []).map(o => {
+    const isLean = o.id === d.leaning
+    return '<div class="opt' + (isLean ? ' leaning' : '') + '" data-option="' + esc(o.id) + '">' +
+      '<button class="lean" data-lean="' + esc(o.id) + '" title="' + (isLean ? '기울어짐 풀기' : '이쪽으로 기울이기 (확정 아님)') + '">' + (isLean ? '◉' : '○') + '</button>' +
+      '<div class="body" title="' + esc(o.text + (o.impact ? '\n영향: ' + o.impact : '')) + '"><code>' + esc(o.id) + '</code> ' + esc(o.text) + '</div>' +
+      holdButton(d, o.id) + '</div>'
   }).join('')
-  $('decisions').querySelectorAll('.decision').forEach(card => {
-    card.querySelector('.q').onmouseenter = () => previewDecision(card.dataset.decision, null)
+  const folded = foldedGroupsOf(d.id)
+  return '<div class="card decision compact" tabindex="-1" data-decision="' + esc(d.id) + '">' +
+    '<div class="q"><span class="text">' + esc(d.id) + ' ' + esc(d.question) + '</span>' +
+    (d.oneWay ? '<span class="oneway">되돌리기 어려움</span>' : '') + '</div>' +
+    (d.blocked ? '<div class="blocked"><span class="what">⏳ ' + esc(d.blocked) + '</span></div>' : '') + troubleHtml(d.id) +
+    (folded.length === 0 ? '' : '<div class="folded"><span class="what">🗂 ' + folded.map(g => esc(nameOf(g))).join(', ') + ' 안</span>' +
+      '<button class="link" data-unfold="' + esc(folded.join(' ')) + '">펼치기</button></div>') +
+    opts +
+    '<div class="more"><button class="link" data-more="' + esc(d.id) + '">자세히' + (asked.length === 0 ? '' : ' · 제안 ' + asked.length) + '</button>' +
+    '<button class="link" data-otherfull="' + esc(d.id) + '">다른 길 적기</button></div></div>'
+}
+function decisionCard(d) {
+  const lean = d.leaning
+  const opts = (d.options || []).map(o => {
+    const isLean = o.id === lean
+    const picked = o.id === d.chosen
+    return '<div class="opt' + (isLean ? ' leaning' : '') + '" data-option="' + esc(o.id) + '">' +
+      // The leaning marker leads, so the options read as a list one of them is already nearer to.
+      (d.chosen ? '' : '<button class="lean" data-lean="' + esc(o.id) + '" title="' + (isLean ? '기울어짐 풀기' : '이쪽으로 기울이기 (확정 아님)') + '">' + (isLean ? '◉' : '○') + '</button>') +
+      '<div class="body' + (picked ? ' chosen' : '') + '"><code>' + esc(o.id) + '</code> ' + esc(o.text) +
+      (o.impact ? '<div class="dim">영향: ' + esc(o.impact) + '</div>' : '') +
+      (o.rejected ? '<div class="rejected"><b>접은 이유</b> ' + esc(o.rejected) + '</div>' : '') +
+      '</div>' +
+      (d.chosen ? '' : holdButton(d, o.id)) +
+      '</div>'
+  }).join('')
+  const head = '<div class="q" title="눌러서 이 결정이 걸린 곳을 지도에서 보기"><span class="text">' + esc(d.id) + ' ' + esc(d.question) + '</span>' +
+    '<span class="go">⤢ 지도에서</span>' +
+    (d.oneWay ? '<span class="oneway">되돌리기 어려움</span>' : '') +
+    (d.chosen ? '<span class="chosen">확정</span>' : '') + '</div>'
+  const blocked = d.chosen ? '' :
+    '<div class="blocked"><span class="what">' + (d.blocked ? '⏳ 이걸 알면 정할 수 있어: ' + esc(d.blocked) : '<span class="dim">무엇을 알면 정할 수 있어?</span>') +
+    '</span><button class="link" data-blocked="' + esc(d.id) + '">' + (d.blocked ? '고치기' : '적기') + '</button></div>'
+  const folded = foldedGroupsOf(d.id)
+  const away = folded.length === 0 ? '' :
+    '<div class="folded"><span class="what">🗂 ' + folded.map(g => esc(nameOf(g))).join(', ') + ' 안에 접혀 있어서 지도에 안 보여</span>' +
+    '<button class="link" data-unfold="' + esc(folded.join(' ')) + '">펼치기</button></div>'
+  // Two options and neither fits is a real answer, and it has nowhere to go but here.
+  const asked = proposalsOf(d.id)
+  const sent = asked.length === 0 ? '' : '<div class="asked">' + asked.map(i =>
+    '<div class="one"><div class="head"><b>#' + i.id + '</b> 다른 길 제안' +
+    '<span class="status ' + esc(i.status) + '">' + esc(statusOf(i)) + '</span></div>' +
+    '<div class="text">' + esc(i.text) + '</div>' +
+    (i.reply ? '<div class="reply">' + esc(i.reply) + '</div>' : '') + '</div>').join('') + '</div>'
+  const other = d.chosen ? '' : sent + '<div class="other"><button class="link" data-other="' + esc(d.id) + '">' +
+    (asked.length === 0 ? '둘 다 아니야 · 다른 길 적기' : '하나 더 적기') + '</button></div>'
+  return '<div class="card decision" tabindex="-1" data-decision="' + esc(d.id) + '">' + head + troubleHtml(d.id) + away + blocked + compareTable(d) + opts + other +
+    (d.rationale ? '<div class="why-chosen">고른 이유: ' + esc(d.rationale) + '</div>' : '') +
+    '<div class="trail" data-trail="' + esc(d.id) + '"></div></div>'
+}
+/** A one-way door is held, not clicked: the friction matches what it costs to be wrong. */
+function holdButton(d, optionId) {
+  const attrs = ' data-decision="' + esc(d.id) + '" data-option="' + esc(optionId) + '"'
+  if (!d.oneWay) return '<button' + attrs + '>이걸로 결정</button>'
+  return '<button class="hold"' + attrs + ' data-hold="1" title="되돌리기 어려운 결정이야. 꾹 누르고 있어">' +
+    '<span class="fill"></span><span class="label">꾹 눌러서 결정</span></button>'
+}
+/** The options on the decision's own axes: comparing them side by side beats reading them in turn. */
+function compareTable(d) {
+  const axes = d.axes || []
+  const rows = (d.options || []).filter(o => (o.by || []).length === axes.length)
+  if (axes.length === 0 || rows.length < 2) return ''
+  return '<table class="cmp"><thead><tr><th></th>' + axes.map(a => '<th>' + esc(a) + '</th>').join('') + '</tr></thead><tbody>' +
+    rows.map(o => '<tr' + (o.id === d.leaning ? ' class="lean"' : '') + '><td class="who">' + esc(o.id) +
+      (o.id === d.chosen ? ' ✓' : '') + '</td>' + (o.by || []).map(v => '<td>' + esc(v) + '</td>').join('') + '</tr>').join('') +
+    '</tbody></table>'
+}
+/** The open decision the inspector draws beside the picked item, so the pane never doubles it. */
+function inspectorDecisionId() {
+  if (!page || !scopeOn() || target.kind === 'relation') return undefined
+  const item = page.elements[target.id] || (page.messages || {})[target.id]
+  const id = item && item.decision
+  if (!id) return undefined
+  const d = page.decisions.find(x => x.id === id)
+  return d && !d.chosen ? id : undefined
+}
+function renderDecisions() {
+  const open = page.decisions.filter(d => !d.chosen)
+  setTabCount('decisions', open.length, open.length ? '열린 결정 ' + open.length : '')
+  const shown = scopeOn() ? page.decisions.filter(d => elementsOfDecision(d.id).includes(target.id)) : page.decisions
+  const list = shown.filter(d => decisionHome(d.id) === 'pane')
+  const moved = shown.filter(d => decisionHome(d.id) !== 'pane')
+  const empty = moved.length > 0 ? '' : '<div class="dim">' + (scopeOn() ? '이 ' + scopeNoun() + '에 붙은 결정이 없어.' : '없음') + '</div>'
+  $('decisions').innerHTML = (list.length === 0 ? empty : list.map(decisionCard).join('')) +
+    moved.map(d => elsewhereLine(d.id, decisionHome(d.id))).join('')
+  wireDecisions()
+  renderTrails()
+}
+function wireDecisions(root) {
+  root = root || $('decisions')
+  const cards = [...root.querySelectorAll('.decision')]
+  cards.forEach((card, n) => {
+    if (n === 0) card.tabIndex = 0
+    card.onfocus = () => { rove(card); previewDecision(card.dataset.decision, null) }
+    card.onblur = clearDecisionPreview
+    card.onkeydown = onDecisionKey
+    const head = card.querySelector('.q')
+    head.onmouseenter = () => previewDecision(card.dataset.decision, null)
+    head.onclick = () => showDecisionOnMap(card.dataset.decision)
     card.querySelectorAll('.opt').forEach(opt => {
-      const pickButton = opt.querySelector('button[data-option]')
-      const optionId = pickButton ? pickButton.dataset.option : (opt.querySelector('code') || {}).textContent
-      opt.onmouseenter = () => previewDecision(card.dataset.decision, optionId)
+      opt.onmouseenter = () => previewDecision(card.dataset.decision, opt.dataset.option)
     })
     card.onmouseleave = clearDecisionPreview
   })
-  $('decisions').querySelectorAll('button[data-decision]').forEach(b => {
-    b.onclick = () => {
-      const saved = target
-      target = { kind: 'decision', id: b.dataset.decision, option: b.dataset.option }
-      sendFeedback('decide').finally(() => { target = saved; composer() })
+  for (const b of root.querySelectorAll('button[data-option]:not([data-lean])')) {
+    if (b.dataset.hold === '1') wireHold(b)
+    else b.onclick = () => decide(b.dataset.decision, b.dataset.option)
+  }
+  for (const b of root.querySelectorAll('button[data-lean]')) {
+    b.onclick = e => {
+      e.stopPropagation()
+      const card = b.closest('.decision')
+      const was = (page.decisions.find(d => d.id === card.dataset.decision) || {}).leaning
+      sendFeedback('lean', null, { target: { kind: 'decision', id: card.dataset.decision, option: was === b.dataset.lean ? '' : b.dataset.lean }, text: '' })
     }
+  }
+  for (const b of root.querySelectorAll('button[data-blocked]')) {
+    b.onclick = () => askBlocked(b.dataset.blocked)
+  }
+  for (const b of root.querySelectorAll('button[data-other]')) {
+    b.onclick = () => askOther(b.dataset.other)
+  }
+  // The compact card hands the long reading and the long writing to the panel, which has room.
+  for (const b of root.querySelectorAll('button[data-more]')) {
+    b.onclick = () => studyDecision(b.dataset.more)
+  }
+  for (const b of root.querySelectorAll('button[data-otherfull]')) {
+    b.onclick = () => { studyDecision(b.dataset.otherfull); askOther(b.dataset.otherfull) }
+  }
+  for (const b of root.querySelectorAll('button[data-find]')) {
+    b.onclick = () => showDecisionOnMap(b.dataset.find)
+  }
+  for (const b of root.querySelectorAll('button[data-unfold]')) {
+    b.onclick = () => {
+      for (const id of b.dataset.unfold.split(' ')) sendFeedback('expand', null, { target: { kind: 'element', id }, text: '' })
+    }
+  }
+}
+// ---------------------------------------------------------------- a decision's own history
+/**
+ * Every revision is kept whole, so a decision's trail is already on disk: when it was asked,
+ * when it was answered, when the answer changed. Walked lazily and cached, because each step
+ * is one fetch and the snapshots never change.
+ */
+const snapshots = new Map()
+let trailRuns = 0
+async function decisionsAt(revision) {
+  if (snapshots.has(revision)) return snapshots.get(revision)
+  const res = await fetch('/api/' + NAME + '/history/' + revision, { cache: 'no-store' })
+  if (!res.ok) return null
+  const got = (await res.json()).decisions || []
+  snapshots.set(revision, got)
+  return got
+}
+const stepsOf = (before, after) => {
+  if (!before && after) return '열림'
+  if (before && !after) return '지웠음'
+  if (!before || !after) return ''
+  if (before.chosen !== after.chosen) return after.chosen ? after.chosen + '로 확정' : '확정 풀림'
+  if (before.leaning !== after.leaning) return after.leaning ? after.leaning + '로 기울어짐' : '기울어짐 풀림'
+  if (JSON.stringify(before.options || []) !== JSON.stringify(after.options || [])) return '선택지 손봄'
+  if (before.rationale !== after.rationale) return '이유 갱신'
+  if (before.blocked !== after.blocked) return after.blocked ? '대기 이유 적음' : '대기 풀림'
+  if (before.question !== after.question) return '질문 고침'
+  return ''
+}
+/** Fills every visible card's trail line, newest revision last. */
+async function renderTrails(root) {
+  const hosts = [...(root || document).querySelectorAll('[data-trail]')]
+  if (hosts.length === 0 || versions.length === 0) return
+  const mine = ++trailRuns
+  const revisions = [...versions].map(v => v.revision).sort((a, b) => a - b)
+  const marks = new Map()
+  let before = new Map()
+  for (const revision of revisions) {
+    const list = await decisionsAt(revision)
+    if (mine !== trailRuns) return
+    if (list === null) continue
+    const now = new Map(list.map(d => [d.id, d]))
+    for (const id of new Set([...before.keys(), ...now.keys()])) {
+      const what = stepsOf(before.get(id), now.get(id))
+      if (what === '') continue
+      marks.set(id, [...(marks.get(id) || []), { revision, what }])
+    }
+    before = now
+  }
+  for (const host of hosts) {
+    const steps = marks.get(host.dataset.trail) || []
+    if (steps.length === 0) { host.textContent = ''; continue }
+    const shown = steps.slice(-3)
+    host.innerHTML = (steps.length > shown.length ? '… ' : '') +
+      shown.map(m => '<button class="link" data-goto="' + m.revision + '">rev ' + m.revision + '</button> ' + esc(m.what)).join(' → ')
+    host.querySelectorAll('button[data-goto]').forEach(b => { b.onclick = () => preview(Number(b.dataset.goto)) })
+  }
+}
+
+/** The decision's card wherever it is on screen: the pane, or the inspector beside the box. */
+function openCardOf(id) {
+  return [...document.querySelectorAll('.decision')].find(c => c.dataset.decision === id)
+}
+/** Choosing, and then the one question worth asking while the answer is still cheap. */
+async function decide(id, option) {
+  const sent = await sendFeedback('decide', null, { target: { kind: 'decision', id, option }, text: '' })
+  if (sent) askWhyNot(id, option)
+}
+function wireHold(button) {
+  let timer = null
+  const stop = () => { button.classList.remove('on'); if (timer) { clearTimeout(timer); timer = null } }
+  const start = () => {
+    if (timer) return
+    button.classList.add('on')
+    timer = setTimeout(() => { stop(); decide(button.dataset.decision, button.dataset.option) }, 900)
+  }
+  button.onpointerdown = e => { e.preventDefault(); start() }
+  button.onpointerup = stop
+  button.onpointerleave = stop
+  button.onpointercancel = stop
+  // The keyboard commits the same way: held, not tapped. A click alone must not get through.
+  button.onclick = e => e.preventDefault()
+  button.onkeydown = e => { if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); start() } }
+  button.onkeyup = e => { if (e.code === 'Enter' || e.code === 'Space') stop() }
+}
+/** Why the other paths lost, asked once, in the only moment it is cheap to answer. */
+function askWhyNot(id, chosen) {
+  const card = openCardOf(id)
+  const d = page.decisions.find(x => x.id === id)
+  if (!card || !d) return
+  const others = (d.options || []).filter(o => o.id !== chosen && !o.rejected)
+  if (others.length === 0) return
+  const box = document.createElement('div')
+  box.className = 'why'
+  box.innerHTML = '<div class="ask">접은 길은 왜 아니야? 한 줄이면 돼. 나중에 이 질문이 다시 올라올 때 이 한 줄이 막아 줘.</div>' +
+    others.map(o => '<input data-why="' + esc(o.id) + '" placeholder="' + esc(o.id + ' ' + o.text) + '는 왜 아닌지">').join('') +
+    '<div class="row"><button class="primary" data-why-save>남기기</button><button data-why-skip>나중에</button></div>'
+  card.appendChild(box)
+  const inputs = [...box.querySelectorAll('input[data-why]')]
+  inputs[0].focus()
+  const save = () => {
+    for (const input of inputs) {
+      const text = input.value.trim()
+      if (text !== '') sendFeedback('reject', null, { target: { kind: 'decision', id, option: input.dataset.why }, text })
+    }
+    box.remove()
+  }
+  box.querySelector('[data-why-save]').onclick = save
+  box.querySelector('[data-why-skip]').onclick = () => box.remove()
+  for (const input of inputs) input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); save() } })
+}
+/** What has already been asked about this decision, newest last, with how far it has got. */
+function proposalsOf(id) {
+  return thread.items.filter(i => i.action === 'propose' && i.target && i.target.kind === 'decision' && i.target.id === id)
+}
+/**
+ * Anything about this decision that did not go through. A press that silently fails is worse
+ * than one that is refused out loud: it gets pressed again, and again.
+ */
+function troublesOf(id) {
+  return thread.items.filter(i => i.status === 'failed' && i.target && i.target.kind === 'decision' && i.target.id === id)
+}
+const troubleHtml = id => troublesOf(id).map(i =>
+  '<div class="trouble"><span class="what">' + esc(ACTION_NAMES[i.action] || i.action) + ' 실패' +
+  (i.reply ? ': ' + esc(i.reply) : '') + '</span></div>').join('')
+/**
+ * The third way. A decision is a menu, and sometimes the right answer is not on it: the options
+ * are wrong, or the question is. Saying so has to be as easy as picking, or it gets skipped and
+ * the decision just sits open.
+ */
+function askOther(id) {
+  const card = openCardOf(id)
+  if (card === undefined) return
+  const where = card.querySelector('.other')
+  where.innerHTML = '<div class="ask">어떤 길이야? 질문 자체가 틀렸다고 해도 돼.</div>' +
+    '<textarea data-other-text placeholder="예: 둘 다 말고 운영 환경만 WIF로 가고 나머지는 그대로 두면 어때"></textarea>' +
+    '<div class="row"><button class="primary" data-other-send>보내기</button><button data-other-cancel>취소</button></div>'
+  const area = where.querySelector('textarea')
+  area.focus()
+  const go = where.querySelector('[data-other-send]')
+  const send = async () => {
+    const text = area.value.trim()
+    if (text === '' || go.disabled) { area.focus(); return }
+    // One press, one proposal: a quiet card after sending reads as a cancel, and gets sent again.
+    go.disabled = true
+    go.textContent = '보내는 중…'
+    const isSent = await sendFeedback('propose', null, { target: { kind: 'decision', id }, text })
+    if (isSent) refreshDecisionCards()
+    else { go.disabled = false; go.textContent = '보내기' }
+  }
+  where.querySelector('[data-other-send]').onclick = send
+  where.querySelector('[data-other-cancel]').onclick = () => renderPanes()
+  area.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void send() }
+    if (e.key === 'Escape') { e.preventDefault(); renderPanes() }
   })
-  const mark = { done: '✅', working: '🔧', todo: '⬜' }
-  const steps = page.steps.map(s => '<li>' + mark[s.state] + ' 스텝 ' + s.step + ': ' + s.items.map(i => esc(i.label)).join(', ') + '</li>').join('')
-  const outside = page.outside.map(f => '<li><code>' + esc(f) + '</code></li>').join('')
-  $('progress-title').textContent = '진행' + (page.steps.length ? ' · ' + page.steps.filter(s => s.state === 'done').length + '/' + page.steps.length : '')
-  $('progress').innerHTML = (steps ? '<ul class="steps">' + steps + '</ul>' : '<div class="dim">스텝 없음</div>') +
+}
+/** Moves a decision from the map card to the panel, where the full card fits. */
+function studyDecision(id) {
+  closeDecider(true)
+  // With the box still picked the full card lands in the inspector, not the pane: go where it went.
+  if (inspectorDecisionId() !== id) showPane('decisions')
+  const card = openCardOf(id)
+  if (card !== undefined) card.scrollIntoView({ behavior: REDUCED.matches ? 'auto' : 'smooth', block: 'center' })
+}
+/** What the decision is waiting on, in the user's own words. */
+function askBlocked(id) {
+  const card = openCardOf(id)
+  const d = page.decisions.find(x => x.id === id)
+  if (!card || !d) return
+  const where = card.querySelector('.blocked')
+  where.innerHTML = '<input class="what" data-blocked-text placeholder="이걸 알면 정할 수 있어" value="' + esc(d.blocked || '') + '">' +
+    '<button class="link" data-blocked-save>저장</button>'
+  const input = where.querySelector('input')
+  input.focus()
+  input.select()
+  const save = () => sendFeedback('blocked', null, { target: { kind: 'decision', id }, text: input.value.trim() })
+  where.querySelector('[data-blocked-save]').onclick = save
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); save() }
+    if (e.key === 'Escape') { e.preventDefault(); renderDecisions() }
+  })
+}
+/** One card at a time is in the tab order, so arrow keys walk the list the way a list should. */
+function rove(card) {
+  for (const c of card.parentNode.querySelectorAll('.decision')) c.tabIndex = c === card ? 0 : -1
+}
+function onDecisionKey(e) {
+  const cards = [...e.currentTarget.parentNode.querySelectorAll('.decision')]
+  const at = cards.indexOf(e.currentTarget)
+  if (at < 0) return
+  if (e.code === 'ArrowDown' || e.code === 'ArrowUp') {
+    e.preventDefault()
+    const to = cards[at + (e.code === 'ArrowDown' ? 1 : -1)]
+    if (to) to.focus()
+    return
+  }
+  // Enter steps into the options instead of deciding: a decision is never one keypress away.
+  if (e.code === 'Enter' && e.target === e.currentTarget) {
+    const first = e.currentTarget.querySelector('button[data-option]')
+    if (first) { e.preventDefault(); first.focus() }
+  }
+}
+function focusFirstDecision() {
+  const cards = [...document.querySelectorAll('.decision')]
+  const card = cards.find(c => c.querySelector('button[data-option]')) || cards[0]
+  if (card) { rove(card); card.focus() }
+}
+function renderOpenPill() {
+  const open = page.decisions.filter(d => !d.chosen)
+  const pill = $('open-decisions')
+  pill.hidden = open.length === 0
+  if (open.length === 0) return
+  pill.textContent = '결정 ' + open.length + '개 남음 · ' + open.map(d => d.id).join(', ')
+  pill.title = open.map(d => d.id + ' ' + d.question).join('\n')
+  pill.onclick = () => { showPane('decisions'); focusFirstDecision() }
+}
+addEventListener('keydown', e => {
+  if (e.metaKey || e.ctrlKey || e.altKey || !isMap()) return
+  if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return
+  // By code, not by key: with a Korean keyboard layout on, e.key for d is not "d".
+  if (e.code === 'KeyD') { e.preventDefault(); showPane('decisions'); focusFirstDecision() }
+  if (e.key === '?') { e.preventDefault(); $('legend-hud').hidden = !$('legend-hud').hidden }
+})
+
+// ---------------------------------------------------------------- progress
+function renderProgress() {
+  const mark = { done: '✅', working: '\ud83d\udd27', todo: '⬜' }
+  const all = page.steps || []
+  const rows = !scopeOn() ? all : all
+    .map(s => ({ step: s.step, items: s.items.filter(i => i.id === target.id) }))
+    .filter(s => s.items.length > 0)
+    .map(s => ({ ...s, state: s.items.every(i => i.state === 'done') ? 'done' : s.items.some(i => i.state !== 'todo') ? 'working' : 'todo' }))
+  const doneCount = rows.filter(s => s.state === 'done').length
+  setTabCount('progress', rows.length - doneCount, rows.length ? '스텝 ' + doneCount + '/' + rows.length : '')
+  const steps = rows.map(s => '<li>' + mark[s.state] + ' 스텝 ' + s.step + ': ' + s.items.map(i => esc(i.label)).join(', ') + '</li>').join('')
+  const empty = scopeOn() ? '이 ' + scopeNoun() + '에 붙은 스텝이 없어.' : '스텝 없음'
+  $('progress').innerHTML = (steps ? '<ul class="steps">' + steps + '</ul>' : '<div class="dim">' + empty + '</div>') +
     (page.repo ? '' : '<div class="dim">repo가 없어서 파일 변경, Claude 시선, 편집기 열기가 동작하지 않아.</div>') +
-    (outside ? '<h2>지도 밖 변경 ' + page.outside.length + '</h2><ul>' + outside + '</ul>' : '')
+    (scopeOn() ? '' : outsideHtml())
+  wireOutside()
+}
+/** Changed files no box owns, by their top folder: hundreds of them must not flood the pane. */
+function outsideGroups(files) {
+  const groups = new Map()
+  for (const f of files) {
+    const cut = f.indexOf('/')
+    const key = cut < 0 ? '(루트 파일)' : f.slice(0, cut) + '/'
+    if (!groups.has(key)) groups.set(key, [])
+    groups.get(key).push(f)
+  }
+  return [...groups.entries()].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]))
+}
+function outsideHtml() {
+  const files = page.outside || []
+  if (files.length === 0) return ''
+  const rows = outsideGroups(files).map(([dir, list]) => {
+    const shown = list.slice(0, 20).map(f => '<li><code title="' + esc(f) + '">' + esc(f) + '</code></li>').join('')
+    const more = list.length > 20 ? '<li class="dim">외 ' + (list.length - 20) + '개</li>' : ''
+    return '<details class="outgroup"><summary><code>' + esc(dir) + '</code><span class="count">' + list.length + '</span></summary><ul>' + shown + more + '</ul></details>'
+  }).join('')
+  return '<div class="outside"><div class="outhead">지도 밖 변경 <b>' + files.length + '</b><span class="dim"> · 어느 상자에도 안 붙은 파일</span></div>' +
+    rows + '<div class="row" style="margin-top:6px"><button id="out-ask">지도에 넣어 달라고 하기</button><button id="out-untrack">설계 전용으로 두기</button></div></div>'
+}
+function wireOutside() {
+  const ask = $('out-ask')
+  if (ask) ask.onclick = () => {
+    const top = outsideGroups(page.outside).slice(0, 6).map(([dir, list]) => dir + ' ' + list.length + '개').join(', ')
+    sendFeedback('comment', null, { target: { kind: 'map' }, text: '지도 밖 변경이 ' + page.outside.length + '개야 (' + top + '). 지도에 넣을 것과 그냥 둘 것을 정리해 줘.' })
+  }
+  const untrack = $('out-untrack')
+  if (untrack) untrack.onclick = () => {
+    sendFeedback('comment', null, { target: { kind: 'map' }, text: '이 지도는 아직 구현 전인 설계 전용 지도야. repo를 비워서 파일 변경 추적을 꺼 줘.' })
+  }
 }
 
 // ---------------------------------------------------------------- the diagram
@@ -1938,6 +3053,10 @@ async function load() {
   const next = await res.json()
   if (previewRev !== null) return
   const before = page
+  if (before === null || before.revision !== next.revision) { futures.clear(); futureShown = null; futureWanted = null }
+  // A new revision may have answered the floating decision, and re-offers one that was put away.
+  if (before === null || before.revision !== next.revision) deciderShut.clear()
+  if (deciderOn !== null && (next.decisions.find(d => d.id === deciderOn) || {}).chosen !== undefined) closeDecider(false)
   page = next
   document.body.dataset.kind = page.kind
   $('gone').hidden = true
@@ -2159,6 +3278,7 @@ function renderVersions() {
   })
   if ($('more-versions')) $('more-versions').onclick = () => { isAllVersions = true; renderVersions() }
   renderScrubber()
+  if (isMap()) void renderTrails()
 }
 
 // ---------------------------------------------------------------- time machine: scrub through the revisions
@@ -2385,6 +3505,81 @@ $('editor-close').onclick = () => {
   stopEdit()
 }
 addEventListener('beforeunload', e => { if (editing && dirty) { e.preventDefault(); e.returnValue = '' } })
+
+// ---------------------------------------------------------------- the side panel: width and folding
+const SIDE_KEY = 'design-map-side-' + NAME
+const SIDE_MIN = 300
+const SIDE_DEFAULT = 380
+let sideWidth = SIDE_DEFAULT
+const applySideWidth = () => document.documentElement.style.setProperty('--side-w', sideWidth + 'px')
+function setSideWidth(px) {
+  sideWidth = Math.round(Math.max(SIDE_MIN, Math.min(innerWidth - 320, px)))
+  applySideWidth()
+  try { localStorage.setItem(SIDE_KEY, String(sideWidth)) } catch {}
+}
+function setSideOpen(isOpen) {
+  $('app').classList.toggle('side-off', !isOpen)
+  $('side-show').hidden = isOpen
+  try { localStorage.setItem(SIDE_KEY + '-off', isOpen ? '' : '1') } catch {}
+  layoutOverlay()
+}
+try {
+  const saved = Number(localStorage.getItem(SIDE_KEY))
+  if (saved >= SIDE_MIN) setSideWidth(saved)
+  applySideWidth()
+  if (localStorage.getItem(SIDE_KEY + '-off') === '1') setSideOpen(false)
+} catch { applySideWidth() }
+$('side-show').onclick = () => setSideOpen(true)
+{
+  const grip = $('side-grip')
+  let from = null
+  grip.addEventListener('pointerdown', e => {
+    from = { x: e.clientX, w: sideWidth }
+    grip.classList.add('on')
+    grip.setPointerCapture(e.pointerId)
+    e.preventDefault()
+  })
+  grip.addEventListener('pointermove', e => { if (from !== null) setSideWidth(from.w + (from.x - e.clientX)) })
+  const drop = e => {
+    if (from === null) return
+    from = null
+    grip.classList.remove('on')
+    try { grip.releasePointerCapture(e.pointerId) } catch {}
+  }
+  grip.addEventListener('pointerup', drop)
+  grip.addEventListener('pointercancel', drop)
+  grip.addEventListener('dblclick', () => setSideWidth(SIDE_DEFAULT))
+}
+addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.code === 'Backslash') { e.preventDefault(); setSideOpen($('app').classList.contains('side-off')) }
+})
+// Everything drawn over the map is placed from the stage's size: re-place it whenever that changes.
+new ResizeObserver(() => layoutOverlay()).observe(stage)
+
+// ---------------------------------------------------------------- a card and its box are one thing
+/** The card flies to the box it is about, so the pane and the map read as one surface. */
+function flyCard(card, t) {
+  if (REDUCED.matches || !card || t.kind === 'relation') return
+  const node = nodesOf(t.id)[0] || clusterOf(t.id)
+  if (!node) return
+  const from = card.getBoundingClientRect()
+  const to = node.getBoundingClientRect()
+  if (from.width === 0 || to.width === 0 || to.height === 0) return
+  const ghost = document.createElement('div')
+  ghost.className = 'card-ghost'
+  ghost.style.cssText = 'position:fixed;left:' + from.left + 'px;top:' + from.top + 'px;width:' + from.width + 'px;height:' + from.height + 'px'
+  document.body.appendChild(ghost)
+  const dx = to.left + to.width / 2 - (from.left + from.width / 2)
+  const dy = to.top + to.height / 2 - (from.top + from.height / 2)
+  const sx = Math.max(0.06, to.width / from.width)
+  const sy = Math.max(0.06, to.height / from.height)
+  const run = ghost.animate([
+    { transform: 'none', opacity: 0.95 },
+    { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(' + sx + ',' + sy + ')', opacity: 0 },
+  ], { duration: 420, easing: EASE, fill: 'forwards' })
+  run.onfinish = () => ghost.remove()
+  run.oncancel = () => ghost.remove()
+}
 
 // ---------------------------------------------------------------- start
 const params = new URLSearchParams(location.search)

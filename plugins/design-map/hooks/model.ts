@@ -147,9 +147,20 @@ export function validate(map: DesignMap, view: MapView = {}): string[] {
     if (d.chosen !== undefined && d.options !== undefined && !d.options.some(o => o.id === d.chosen)) {
       errors.push(`${d.id}: chosen "${d.chosen}" is not one of its options`)
     }
+    if (d.leaning !== undefined && d.options !== undefined && !d.options.some(o => o.id === d.leaning)) {
+      errors.push(`${d.id}: leaning "${d.leaning}" is not one of its options`)
+    }
+    if (d.leaning !== undefined && d.chosen !== undefined) errors.push(`${d.id}: a chosen decision has no leaning; clear one of them`)
+    if (d.axes !== undefined && !isStringList(d.axes)) errors.push(`${d.id}: axes must be a list of column names`)
+    for (const o of d.options ?? []) {
+      if (o.by === undefined) continue
+      if (!isStringList(o.by)) errors.push(`${d.id}: option "${String(o.id)}" by must be a list of values`)
+      else if (o.by.length !== (d.axes?.length ?? 0)) errors.push(`${d.id}: option "${o.id}" has ${o.by.length} values for ${d.axes?.length ?? 0} axes`)
+    }
   }
   for (const el of map.elements) {
     if (el.decision !== undefined && !decisions.has(el.decision)) errors.push(`${el.id}: decision "${el.decision}" does not exist`)
+    errors.push(...optionErrors(el.id, el.decision, el.option, decisions))
   }
   if (isSequence) errors.push(...sequenceErrors(map, byId, decisions))
   else if ((map.messages?.length ?? 0) > 0 || (map.fragments?.length ?? 0) > 0) errors.push('messages and fragments belong to sequence maps; this is a class map')
@@ -163,6 +174,7 @@ export function validate(map: DesignMap, view: MapView = {}): string[] {
     if (r.kind !== undefined && !RELATION_KINDS.includes(r.kind)) errors.push(`${name}: kind must be one of ${RELATION_KINDS.join(', ')}`)
     if (r.label !== undefined && (!isString(r.label) || /[:"\n]/.test(r.label))) errors.push(`${name}: label must be a string without : " or a newline`)
     if (r.decision !== undefined && !decisions.has(r.decision)) errors.push(`${name}: decision "${r.decision}" does not exist`)
+    errors.push(...optionErrors(name, r.decision, r.option, decisions))
   }
 
   if (isSequence) {
@@ -180,6 +192,16 @@ export function validate(map: DesignMap, view: MapView = {}): string[] {
   if (view.direction !== undefined && !DIRECTIONS.includes(view.direction)) errors.push(`view.direction must be one of ${DIRECTIONS.join(', ')}`)
 
   return errors
+}
+
+/** `option` says which path of its decision an item belongs to, so it needs that decision. */
+function optionErrors(owner: string, decision: string | undefined, option: string | undefined, decisions: Map<string, Decision>): string[] {
+  if (option === undefined) return []
+  if (decision === undefined) return [`${owner}: option "${option}" needs a decision on the same item`]
+  const d = decisions.get(decision)
+  if (d === undefined) return []
+  if (d.options !== undefined && !d.options.some(o => o.id === option)) return [`${owner}: option "${option}" is not one of ${decision}'s options`]
+  return []
 }
 
 function filesErrors(owner: string, files: unknown): string[] {
@@ -234,6 +256,7 @@ function sequenceErrors(map: DesignMap, participants: Map<string, Element>, deci
     if (m.done !== undefined && typeof m.done !== 'boolean') errors.push(`${m.id}: done must be true or false`)
     if (m.note !== undefined && !isString(m.note)) errors.push(`${m.id}: note must be a string`)
     if (m.decision !== undefined && !decisions.has(m.decision)) errors.push(`${m.id}: decision "${m.decision}" does not exist`)
+    errors.push(...optionErrors(m.id, m.decision, m.option, decisions))
   })
 
   type Span = { id: string; start: number; end: number; cuts: number[] }
@@ -244,6 +267,7 @@ function sequenceErrors(map: DesignMap, participants: Map<string, Element>, deci
     errors.push(...textErrors(f.id, 'label', f.label))
     if (f.change !== undefined && !CHANGES.includes(f.change)) errors.push(`${f.id}: change must be one of ${CHANGES.join(', ')}`)
     if (f.decision !== undefined && !decisions.has(f.decision)) errors.push(`${f.id}: decision "${f.decision}" does not exist`)
+    errors.push(...optionErrors(f.id, f.decision, f.option, decisions))
     const start = at.get(f.first)
     const end = at.get(f.last)
     if (start === undefined) errors.push(`${f.id}: first "${String(f.first)}" is not a message`)
@@ -637,6 +661,17 @@ type Box = {
   members: Member[]
 }
 
+/**
+ * Once a decision is chosen, the options it did not take are no longer part of the design:
+ * anything tagged with a losing `option` stops being drawn. While the decision is still open,
+ * every path is drawn, because that is the thing being decided.
+ */
+export function isRuledOut(decisions: readonly Decision[], item: { decision?: string; option?: string }): boolean {
+  if (item.option === undefined || item.decision === undefined) return false
+  const d = decisions.find(x => x.id === item.decision)
+  return d?.chosen !== undefined && d.chosen !== item.option
+}
+
 export function toMermaid(map: DesignMap, view: MapView = {}, options: RenderOptions = {}): Rendered {
   if (map.diagram === 'sequence') return toSequence(map, options)
   const warnings: string[] = []
@@ -654,7 +689,8 @@ export function toMermaid(map: DesignMap, view: MapView = {}, options: RenderOpt
     }
     return chain
   }
-  const isHidden = (id: string) => hidden.has(id) || ancestors(id).some(a => hidden.has(a.id))
+  const ruledOut = new Set(map.elements.filter(el => isRuledOut(map.decisions ?? [], el)).map(el => el.id))
+  const isHidden = (id: string) => hidden.has(id) || ruledOut.has(id) || ancestors(id).some(a => hidden.has(a.id) || ruledOut.has(a.id))
   /** The box an element is drawn in: itself, or its outermost collapsed ancestor. */
   const drawnAs = (id: string): string | undefined => {
     if (isHidden(id)) return undefined
@@ -773,6 +809,7 @@ export function toMermaid(map: DesignMap, view: MapView = {}, options: RenderOpt
   lines.push('')
   const edges = new Map<string, { from: string; to: string; arrow: string; labels: string[]; unlabeled: number; sources: { from: string; to: string }[] }>()
   for (const r of map.relations) {
+    if (isRuledOut(map.decisions ?? [], r)) continue
     const from = drawnAs(r.from)
     const to = drawnAs(r.to)
     if (from === undefined || to === undefined) {
@@ -857,8 +894,13 @@ function toSequence(map: DesignMap, options: RenderOptions): Rendered {
   const touched = new Set(options.touched ?? [])
   const open = new Set((map.decisions ?? []).filter(d => d.chosen === undefined).map(d => d.id))
   const tag = (decision: string | undefined) => (decision !== undefined && open.has(decision) ? ` [${decision}]` : '')
-  const messages = map.messages ?? []
-  const fragments = map.fragments ?? []
+  // A decided question leaves its losing paths out, participants and the messages that need them alike.
+  const ruled = (item: { decision?: string; option?: string }) => isRuledOut(map.decisions ?? [], item)
+  const elements = map.elements.filter(el => !ruled(el))
+  const here = new Set(elements.map(el => el.id))
+  const messages = (map.messages ?? []).filter(m => !ruled(m) && here.has(m.from) && here.has(m.to ?? m.from))
+  const kept = new Set(messages.map(m => m.id))
+  const fragments = (map.fragments ?? []).filter(f => !ruled(f) && kept.has(f.first) && kept.has(f.last))
   const signatures: Record<string, string> = {}
   const changes = new Set<Change>()
   let hasDone = false
@@ -879,8 +921,8 @@ function toSequence(map: DesignMap, options: RenderOptions): Rendered {
   }
 
   const lines: string[] = [SEQUENCE_INIT, 'sequenceDiagram', '    autonumber']
-  const place = new Map(map.elements.map((el, i) => [el.id, i]))
-  for (const el of map.elements) {
+  const place = new Map(elements.map((el, i) => [el.id, i]))
+  for (const el of elements) {
     lines.push(`    ${el.kind === 'actor' ? 'actor' : 'participant'} ${el.id} as ${labelOf(el, el.id)}`)
   }
 
@@ -917,7 +959,7 @@ function toSequence(map: DesignMap, options: RenderOptions): Rendered {
   /** The participants a run of messages touches, leftmost and rightmost: where a title note spans. */
   const span = (from: number, to: number) => {
     const at = messages.slice(from, to + 1).flatMap(m => [m.from, m.to ?? m.from]).map(id => place.get(id) ?? 0)
-    const ids = [Math.min(...at), Math.max(...at)].map(i => map.elements[i]?.id).filter(id => id !== undefined)
+    const ids = [Math.min(...at), Math.max(...at)].map(i => elements[i]?.id).filter(id => id !== undefined)
     return [...new Set(ids)].join(',')
   }
 
@@ -1027,7 +1069,7 @@ export function pageOf(name: string, map: DesignMap, view: MapView, touched: rea
   const legend: Page['legend'] = used.changes.map(c => ({ text: LEGEND[c], fill: PALETTE[c].fill, stroke: PALETTE[c].stroke }))
   if (used.hasDone || used.hasSteps) legend.push({ text: isClass ? '완료 도장 · (스텝 N) 구현 순서' : '✅ 구현 완료 · (스텝 N) 구현 순서', fill: '#ffffff', stroke: '#9fd1b1' })
   if (used.hasWorking) legend.push({ text: isClass ? '숨 쉬는 상자 · 작업 중 (파일 변경 감지)' : `${WORKING} 작업 중 (파일 변경 감지)`, fill: '#ffffff', stroke: '#a29cad' })
-  if (used.hasOpen) legend.push({ text: map.diagram === 'sequence' ? '[D번호] 결정 대기' : '점선 · [D번호] 결정 대기', fill: '#ffffff', stroke: '#a29cad', dashed: true })
+  if (used.hasOpen) legend.push({ text: '천천히 빛남 · [D번호] 결정 대기', fill: '#ffffff', stroke: '#d99a06', dashed: true })
   if ((map.fragments ?? []).some(f => f.kind === 'section')) legend.push({ text: '크림색 띠 · 구간', fill: '#faf6ef', stroke: '#dcd3c4' })
   const numbers = new Map((order?.lines ?? []).map((id, i) => [id, i + 1]))
   return {
@@ -1088,8 +1130,10 @@ export function decisionsMarkdown(map: DesignMap): string {
   if (open.length > 0) {
     lines.push(`### 열린 결정 ${open.length}`)
     for (const d of open) {
-      lines.push('', `**${d.id}** ${shown(d.question)}`)
-      for (const o of d.options ?? []) lines.push(`- \`${o.id}\` ${shown(o.text)}${o.impact === undefined ? '' : `  \n  영향: ${shown(o.impact)}`}`)
+      lines.push('', `**${d.id}** ${shown(d.question)}${d.oneWay === true ? ' (되돌리기 어려움)' : ''}`)
+      for (const o of d.options ?? []) lines.push(`- \`${o.id}\` ${shown(o.text)}${o.id === d.leaning ? ' ← 기울어짐' : ''}${o.impact === undefined ? '' : `  \n  영향: ${shown(o.impact)}`}`)
+      if (d.blocked !== undefined) lines.push(`- 이걸 알면 정할 수 있다: ${shown(d.blocked)}`)
+      lines.push(...compareTable(d))
       const held = owners(d.id)
       if (held.length > 0) lines.push(`- 걸린 곳: ${held.join(', ')}`)
     }
@@ -1099,9 +1143,28 @@ export function decisionsMarkdown(map: DesignMap): string {
     for (const d of settled) {
       const chosen = d.options?.find(o => o.id === d.chosen)
       lines.push(`- **${d.id}** ${shown(d.question)}: \`${d.chosen}\`${chosen === undefined ? '' : ` ${shown(chosen.text)}`}${d.rationale === undefined ? '' : ` (${shown(d.rationale)})`}`)
+      // The paths not taken stay written down: coming back, the first thing needed is why not.
+      for (const o of d.options ?? []) {
+        if (o.id === d.chosen || o.rejected === undefined) continue
+        lines.push(`  - 접은 길 \`${o.id}\` ${shown(o.text)}: ${shown(o.rejected)}`)
+      }
     }
   }
   return lines.join('\n')
+}
+
+/** The options side by side on the decision's own axes; nothing when it declares none. */
+function compareTable(d: Decision): string[] {
+  const axes = d.axes ?? []
+  const options = (d.options ?? []).filter(o => (o.by?.length ?? 0) === axes.length)
+  if (axes.length === 0 || options.length < 2) return []
+  return [
+    '',
+    `| | ${axes.map(a => shown(a)).join(' | ')} |`,
+    `| --- | ${axes.map(() => '---').join(' | ')} |`,
+    ...options.map(o => `| \`${o.id}\` ${shown(o.text)} | ${(o.by ?? []).map(v => shown(v)).join(' | ')} |`),
+    '',
+  ]
 }
 
 export type StepRow = { step: number; id: string; label: string; state: 'done' | 'working' | 'todo' }

@@ -40,6 +40,8 @@ export type Element = {
   change?: Change
   /** A decision id; while that decision is open the box is dashed and tagged `[D1]`. */
   decision?: string
+  /** Its `decision`'s option id: this exists only on that path, and goes when another is chosen. */
+  option?: string
   steps?: number[]
   done?: boolean
   members?: Member[]
@@ -56,6 +58,8 @@ export type Relation = {
   kind?: RelationKind
   label?: string
   decision?: string
+  /** Its `decision`'s option id: this exists only on that path, and goes when another is chosen. */
+  option?: string
 }
 
 /** call ->>, reply -->>, async -), note: a Note box over `from` (and `to`) with the label as its text. */
@@ -75,6 +79,8 @@ export type Message = {
   /** Default `keep`; the others draw a colored band behind the line. */
   change?: Change
   decision?: string
+  /** Its `decision`'s option id: this exists only on that path, and goes when another is chosen. */
+  option?: string
   steps?: number[]
   done?: boolean
   /** The call site (`path:line`), only when the call itself changes. */
@@ -96,9 +102,19 @@ export type Fragment = {
   branches?: { at: string; label?: string }[]
   change?: Change
   decision?: string
+  /** Its `decision`'s option id: this exists only on that path, and goes when another is chosen. */
+  option?: string
 }
 
-export type DecisionOption = { id: string; text: string; impact?: string }
+export type DecisionOption = {
+  id: string
+  text: string
+  impact?: string
+  /** Why this path was not taken. Written when another option is chosen, and kept after. */
+  rejected?: string
+  /** One value per the decision's `axes`, in the same order, for the comparison table. */
+  by?: string[]
+}
 
 export type Decision = {
   /** The question's id (`D1`); options are `D1-a`, `D1-b`. */
@@ -108,6 +124,14 @@ export type Decision = {
   /** The chosen option's id; absent while the decision is open. */
   chosen?: string
   rationale?: string
+  /** The option being considered: drawn faintly on the map, committed to nothing. */
+  leaning?: string
+  /** What has to be known before this can be decided, in the user's words. */
+  blocked?: string
+  /** Hard to undo: the browser makes choosing deliberate instead of one click. */
+  oneWay?: boolean
+  /** Column names that compare the options side by side; each option fills them in `by`. */
+  axes?: string[]
 }
 
 export type DesignMap = {

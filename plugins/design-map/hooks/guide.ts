@@ -40,11 +40,11 @@ export const TOOLS: ToolSpec[] = [
     name: TOOL.update,
     description:
       'Change the open design map in one batch, validated as a whole: on any error nothing is written and the errors come back. A field set to null is removed. '
-      + 'Element {id (ASCII), label?, kind?: group|class|interface|enum|table|resource|external (sequence: class|interface|enum|table|resource|external|actor, no group), parent? (a group), change?: keep|result|modify|delete|add, decision?, steps?: number[], done?, members?: [{text, change?: modify|add|delete, done?}], files?: repo-relative paths, note?}. '
-      + 'Class maps: Relation {from, to, kind?: association|dependency|inheritance|realization|composition|aggregation, label?, decision?}. '
-      + 'Sequence maps (elements are the participants, left to right): Message {id, from, to? (not on a note), kind?: call|reply|async|note, label?, change?, decision?, steps?, done?, files?: call site path:line, note?}, placed by after?/before? (a message id), else appended; '
-      + 'Fragment {id, kind: alt|opt|loop|par|section, label?, first, last (message ids), branches?: [{at (message id), label?}] (alt else, par and), change?, decision?}. '
-      + 'Decision {id: D1, question, options?: [{id: D1-a, text, impact?}], chosen?, rationale?}.',
+      + 'Element {id (ASCII), label?, kind?: group|class|interface|enum|table|resource|external (sequence: class|interface|enum|table|resource|external|actor, no group), parent? (a group), change?: keep|result|modify|delete|add, decision?, option? (an option id of that decision: the item exists only on that path), steps?: number[], done?, members?: [{text, change?: modify|add|delete, done?}], files?: repo-relative paths, note?}. '
+      + 'Class maps: Relation {from, to, kind?: association|dependency|inheritance|realization|composition|aggregation, label?, decision?, option?}. '
+      + 'Sequence maps (elements are the participants, left to right): Message {id, from, to? (not on a note), kind?: call|reply|async|note, label?, change?, decision?, option?, steps?, done?, files?: call site path:line, note?}, placed by after?/before? (a message id), else appended; '
+      + 'Fragment {id, kind: alt|opt|loop|par|section, label?, first, last (message ids), branches?: [{at (message id), label?}] (alt else, par and), change?, decision?, option?}. '
+      + 'Decision {id: D1, question, options?: [{id: D1-a, text, impact?, rejected? (why this path was not taken), by?: one value per axis}], chosen?, rationale?, leaning? (an option id, considered not committed), blocked? (what must be known first), oneWay? (hard to undo), axes?: column names comparing the options}.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -138,6 +138,17 @@ The map is the user's picture of the design, shared with you. Its job is to clos
 ## Three phases
 1. **Current state**: before proposing anything, map what exists (change: keep). Read the code; draw only what the task touches and what explains it.
 2. **Discussion**: mark the proposal on the same map (modify / add / delete / result). Every open question becomes a decision (D1, D2…) with options and their impact; tag what it would change with \`decision\`, which marks it [D1] (class maps also draw it dashed). When the user decides, set \`chosen\` and update the map to match.
+
+## Decisions: what the user needs in order to choose
+- **Read what is already settled before you propose.** The map hands you every decision with its \`chosen\`, its \`rationale\` and each option's \`rejected\` reason. If what you are about to propose reverses a settled decision, say so first, in one sentence, naming the decision and why it was rejected. Then make your case. Never re-propose a rejected option as if it were new.
+- **Draw both paths, not one.** When the options differ in what the design looks like, give the elements, relations or messages of each path its \`option\` (and the same \`decision\`). While the question is open every path is drawn; once \`chosen\` is set the losing paths stop being drawn, and the browser moves only the boxes that differ as the user looks between the options. Clean the losing elements out of the map in a later update; the hiding is only so the picture is never wrong in between.
+- **\`axes\` when the options trade off along the same lines** (e.g. \["비용", "위험", "되돌리기"\]): each option fills \`by\` with one value per axis, in the same order, and the user gets a comparison table instead of prose.
+- **\`oneWay: true\` when the choice is expensive to undo** (a schema, a public contract, a migration that moves data). The browser then asks the user to hold the button rather than click it. Leave it off for anything a later commit can change.
+- **\`blocked\` when the decision is waiting on a fact**, in the user's words ("GCP 프로젝트에서 WIF를 켤 수 있는지"). When you learn that fact, clear \`blocked\` and tell the user the decision is ready.
+- **\`rationale\` says why the chosen one won; each losing option's \`rejected\` says why it lost.** Write both when a decision closes. The rejected reasons are what stops the same question from being reopened months later.
+- **\`leaning\` is the user's, not yours.** They set it from the browser. Never write \`chosen\` or \`leaning\` on your own.
+- **Two options and neither fits is an answer too.** The user can say so from the browser; it arrives saying they cannot decide with these options. Treat it as the design being wrong, not the user being slow: add the option they describe with its own \`impact\`, or re-frame the question, and say in one line what you changed and why. Leave the choosing to them.
+- **Two is not a target.** Options exist to make the trade-off visible; when a third one is real, write it down rather than forcing the question into a pair.
 3. **Implementation**: give elements \`steps\` (implementation order). Changed files mark their element 🔧 automatically; set \`done: true\` when an element's work is finished. Changed files that no element owns are listed to the user as "지도 밖 변경": add them to the map or explain them.
 
 ## repo and files: required for code

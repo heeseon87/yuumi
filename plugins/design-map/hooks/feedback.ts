@@ -2,7 +2,7 @@
 // the mod applies itself and the prompt that carries the rest to the session.
 
 import type { DesignMap } from '../types'
-import type { ViewPatch } from './model'
+import type { MapUpdate, ViewPatch } from './model'
 
 export type FeedbackTarget =
   | { kind: 'map' }
@@ -14,7 +14,15 @@ export type FeedbackTarget =
   | { kind: 'message'; id: string }
 
 /** `open` asks the session to open `text` (an element's file) in the user's editor. */
-export type FeedbackAction = 'comment' | 'explain' | 'expand' | 'collapse' | 'hide' | 'reset' | 'decide' | 'open'
+export type FeedbackAction =
+  | 'comment' | 'explain' | 'expand' | 'collapse' | 'hide' | 'reset' | 'decide' | 'open'
+  /** Notes left while deciding: leaning toward an option, why a path was not taken, what it waits on. */
+  | 'lean' | 'reject' | 'blocked'
+  /** Neither option works: the user says what is missing and Claude reshapes the decision. */
+  | 'propose'
+
+/** The three that are written onto the map here and never reach a model turn. */
+export const DECISION_NOTES = ['lean', 'reject', 'blocked'] as const
 
 export type FeedbackItem = {
   id: number
@@ -39,6 +47,48 @@ export function viewPatchOf(item: FeedbackItem): { patch: ViewPatch; reply: stri
   if (item.action === 'expand') return { patch: { expand: [id] }, reply: `${id}를 펼쳤어.` }
   if (item.action === 'collapse') return { patch: { collapse: [id] }, reply: `${id}를 접었어.` }
   if (item.action === 'hide') return { patch: { hide: [id] }, reply: `${id}를 숨겼어. 보기 초기화로 다시 보여.` }
+  return undefined
+}
+
+/**
+ * Thinking out loud about a decision, written straight onto the map. None of these is a
+ * question for the model: a leaning is free to take back, and a reason is worth nothing if
+ * the user has to wait for a turn to record it. `map` must be the latest on disk, because
+ * `reject` rewrites the whole options list.
+ */
+export function decisionPatchOf(map: DesignMap, item: FeedbackItem): { update: MapUpdate; reply: string } | undefined {
+  const target = item.target
+  if (target.kind !== 'decision') return undefined
+  const decision = map.decisions?.find(d => d.id === target.id)
+  if (decision === undefined) return undefined
+  const text = item.text.trim()
+  if (item.action === 'lean') {
+    if (target.option === undefined || target.option === '') {
+      return { update: { decisions: { upsert: [{ id: decision.id, leaning: null }] } }, reply: `${decision.id}의 기울어짐을 지웠어.` }
+    }
+    return {
+      update: { decisions: { upsert: [{ id: decision.id, leaning: target.option }] } },
+      reply: `${decision.id}는 ${target.option} 쪽으로 기울었어. 확정은 아니야.`,
+    }
+  }
+  if (item.action === 'blocked') {
+    return {
+      update: { decisions: { upsert: [{ id: decision.id, blocked: text === '' ? null : text }] } },
+      reply: text === '' ? `${decision.id}의 대기 이유를 지웠어.` : `${decision.id}는 "${text}"를 알면 정할 수 있어.`,
+    }
+  }
+  if (item.action === 'reject') {
+    if (target.option === undefined) return undefined
+    const options = (decision.options ?? []).map(o => {
+      if (o.id !== target.option) return o
+      const { rejected: _was, ...rest } = o
+      return text === '' ? rest : { ...rest, rejected: text }
+    })
+    return {
+      update: { decisions: { upsert: [{ id: decision.id, options }] } },
+      reply: text === '' ? `${target.option}의 기각 사유를 지웠어.` : `${target.option}를 접은 이유를 남겼어.`,
+    }
+  }
   return undefined
 }
 
@@ -70,11 +120,28 @@ function body(map: DesignMap, item: FeedbackItem): string {
   if (item.action === 'decide' && target.kind === 'decision') {
     const decision = map.decisions?.find(d => d.id === target.id)
     const option = decision?.options?.find(o => o.id === target.option)
+    const others = (decision?.options ?? []).filter(o => o.id !== target.option)
     return [
       `${target.id}${decision === undefined ? '' : `(${decision.question})`}를 ${target.option ?? '?'}${option === undefined ? '' : `(${option.text})`}로 결정했어.`,
       '지도에는 이미 확정으로 표시했어. 이 결정에 맞게 영향받는 요소와 관계를 고쳐 줘.',
-      ...(item.text === '' ? [] : [item.text]),
+      ...(item.text === '' ? [] : [`고른 이유: ${item.text}`]),
+      // The reasons the other paths lost are what keeps the question from being reopened later.
+      ...(others.length === 0 ? [] : [
+        `rationale에 고른 이유를 적고, 접은 길(${others.map(o => o.id).join(', ')})에는 각각 rejected로 왜 아닌지를 적어 줘.`
+        + ' 사용자가 브라우저에서 이미 적은 rejected는 그대로 두고.',
+      ]),
+      '이 결정의 option 태그가 붙은 요소 중 고르지 않은 쪽은 지도에서 지워 줘.',
     ].join('\n')
+  }
+  if (item.action === 'propose' && target.kind === 'decision') {
+    const decision = map.decisions?.find(d => d.id === target.id)
+    const had = (decision?.options ?? []).map(o => `${o.id} ${o.text}`).join(' / ')
+    return [
+      `${target.id}${decision === undefined ? '' : `(${decision.question})`}의 선택지로는 못 정하겠대. 사용자 말: ${item.text}`,
+      had === '' ? '' : `지금 선택지: ${had}`,
+      '이게 새로운 길이면 선택지를 하나 더 만들어서 영향까지 적고, 질문 자체가 틀렸으면 질문을 다시 세워 줘.'
+        + ' 기존 선택지를 지우기 전에 왜 지우는지 한 줄로 말해 주고. 확정은 사용자가 한다.',
+    ].filter(line => line !== '').join('\n')
   }
   if (item.action === 'explain') return item.text === '' ? '이 요소가 하는 일과 왜 이렇게 생겼는지 설명해 줘.' : `설명해 줘: ${item.text}`
   return item.text

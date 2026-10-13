@@ -74,10 +74,14 @@ const ITEM_FILE = /^([a-z0-9][a-z0-9_-]{0,63})\.(json|mmd)$/
 const TRASH_ENTRY = /^([a-z0-9][a-z0-9_-]{0,63})~(\d{1,16})$/
 /** Every file an item has beside its history, by what follows the id. */
 const ITEM_SUFFIXES = ['.json', '.view.json', '.mmd', '.meta.json', '.feedback.json']
-const LOCAL_ACTIONS = new Set(['expand', 'collapse', 'hide', 'reset', 'decide', 'open'])
-const ACTIONS = new Set([...LOCAL_ACTIONS, 'comment', 'explain'])
-/** Folding and unfolding only change how the map is drawn: once applied they leave the thread. */
-const VIEW_ONLY = new Set(['expand', 'collapse'])
+const LOCAL_ACTIONS = new Set(['expand', 'collapse', 'hide', 'reset', 'decide', 'open', 'lean', 'reject', 'blocked'])
+const ACTIONS = new Set([...LOCAL_ACTIONS, 'comment', 'explain', 'propose'])
+/**
+ * Applied to the map or the view and then gone from the thread: folds, and the three notes a
+ * person leaves while thinking (leaning toward an option, why a path was not taken, what the
+ * decision is waiting on). None of them is a question, so none of them starts a Claude turn.
+ */
+const VIEW_ONLY = new Set(['expand', 'collapse', 'lean', 'reject', 'blocked'])
 const MAX_SOURCE = 200_000
 const MAX_MEMO = 100_000
 /** What "new diagram" starts from, by kind. */
@@ -590,7 +594,7 @@ async function handle(req, res) {
 
   // ------------------------------------------------------------ the drawer's record of one item
 
-  if (['meta', 'source', 'history', 'restore', 'duplicate', 'trash'].includes(sub)) {
+  if (['meta', 'source', 'history', 'future', 'restore', 'duplicate', 'trash'].includes(sub)) {
     const kind = kindOf(name)
     if (kind === undefined) return json(res, 404, { error: 'gone' })
 
@@ -631,6 +635,19 @@ async function handle(req, res) {
       const map = readJson(file)
       const view = pruneView(map, readJsonOr(viewFile(name), {}) ?? {})
       return json(res, 200, { ...pageOf(name, map, view, [], [], at), kind, at })
+    }
+
+    // GET /api/<id>/future/<option>: the map drawn as if that option had been chosen, so the
+    // browser can move between the futures of an open decision instead of describing them.
+    if (sub === 'future' && req.method === 'GET' && kind === 'map') {
+      const option = String(idText ?? '')
+      const map = readJson(mapFile(name))
+      const owner = (map.decisions ?? []).find(d => (d.options ?? []).some(o => o.id === option))
+      if (owner === undefined) return json(res, 404, { error: 'no such option' })
+      const futures = (map.decisions ?? []).map(d => (d.id === owner.id ? { ...d, chosen: option, leaning: undefined } : d))
+      const view = pruneView(map, readJsonOr(viewFile(name), {}) ?? {})
+      const drawn = pageOf(name, { ...map, decisions: futures }, view, [], [], Date.now())
+      return json(res, 200, { option, decision: owner.id, mermaid: drawn.mermaid, boxes: drawn.boxes })
     }
 
     // POST /api/<id>/restore: an old revision becomes the newest; nothing is lost.

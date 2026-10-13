@@ -11,7 +11,7 @@ import type {
   MapView,
 } from '../types'
 import { editorCommand } from './editor'
-import { feedbackIdsOf, feedbackPrompt, viewPatchOf } from './feedback'
+import { DECISION_NOTES, decisionPatchOf, feedbackIdsOf, feedbackPrompt, viewPatchOf } from './feedback'
 import type { FeedbackItem } from './feedback'
 import { guideOf, TOOL, TOOLS } from './guide'
 import {
@@ -473,11 +473,31 @@ export const register: Register = (on, options) => {
           }
           continue
         }
+        // A leaning, a rejection reason or a blocker: written onto the map here, never forwarded.
+        if ((DECISION_NOTES as readonly string[]).includes(item.action) && item.target.kind === 'decision') {
+          const current = await at.doc.get()
+          if (current === null) continue
+          const latest = (await readJson<DesignMap>(at, current.path)) ?? current.map
+          const note = decisionPatchOf(latest, item)
+          if (note === undefined) {
+            await settle(at, doc.name, item.id, { status: 'failed', reply: `결정 ${item.target.id}를 찾지 못했어.` })
+            continue
+          }
+          const written = applyUpdate(latest, note.update)
+          if (written.errors.length > 0) {
+            await settle(at, doc.name, item.id, { status: 'failed', reply: written.errors.join('\n') })
+            continue
+          }
+          await writeMap(at, current, { ...written.map, revision: (latest.revision ?? 0) + 1 })
+          schedulePage()
+          await settle(at, doc.name, item.id, { status: 'done', reply: note.reply })
+          continue
+        }
         if (item.action === 'decide' && item.target.kind === 'decision') {
           const current = await at.doc.get()
           if (current === null) continue
           const latest = (await readJson<DesignMap>(at, current.path)) ?? current.map
-          const applied = applyUpdate(latest, { decisions: { upsert: [{ id: item.target.id, chosen: item.target.option ?? null }] } })
+          const applied = applyUpdate(latest, { decisions: { upsert: [{ id: item.target.id, chosen: item.target.option ?? null, leaning: null }] } })
           if (applied.errors.length > 0) {
             await settle(at, doc.name, item.id, { status: 'failed', reply: applied.errors.join('\n') })
             continue
