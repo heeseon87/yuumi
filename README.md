@@ -98,11 +98,66 @@ The rate-limit bars are **allocation-aware**: the color isn't a fixed percentage
 
 ## design-map
 
-Claude draws a design map (a Mermaid class or sequence diagram) while you discuss or build a change, and keeps it true as it works. The map lives in your browser at `http://127.0.0.1:7777`, with decisions, progress and a feedback thread beside it; what you write there reaches the Claude session. Boxes glide when the map changes, a firefly flies to whatever Claude is reading or editing, and a time-machine slider replays how the design grew.
+Claude draws a **design map** — a Mermaid class diagram (structure: boxes and relations) or sequence diagram (behavior: participants and ordered messages) — while you discuss or build a change, and keeps it true as it works. The map lives in your browser at `http://127.0.0.1:7777`, with decisions, progress and a feedback thread beside it, and what you write there reaches the Claude session.
 
-Ask Claude to open one ("이 변경을 설계 지도로 그려줘"), or run `/design-map`. Details: [`plugins/design-map/README.md`](plugins/design-map/README.md) (Korean).
+### Start a map
 
-Requires **Node 22.6+** and `npm i -g @mermaid-js/mermaid-cli` (its Mermaid bundle feeds the browser page). macOS only for now (it opens pages with `open`).
+Just ask Claude, in your own words:
+
+- "Draw this change as a design map" → a class map of what the change touches
+- "Map the order-creation flow as a sequence diagram" → a sequence map
+- "Open the design map for PROJ-142" → reopens (or creates) a map by name
+
+Claude opens it with `map_open`, then keeps it current with `map_update` as it analyzes, decides and implements. The browser opens on its own the first time.
+
+### Commands
+
+| Command | What it does |
+|---------|--------------|
+| `/design-map` | Reopen the last map of this folder in the browser; this session takes its feedback |
+| `/design-map <name>` | Open a map (or a saved diagram) by name |
+| `/design-map list` | List maps and diagrams |
+| `/design-map browser` | Open the current map in a new browser tab |
+| `/design-map drawer` | Open the diagram drawer: every map and saved diagram, with tags, memos and versions |
+| `/design-map export <file.md>` | Write the map (Mermaid block with legend, decisions, progress) into a Markdown file; re-running replaces only that block |
+| `/design-map close` | Close the map in this session |
+
+You can also ask Claude to keep any plain Mermaid diagram in the drawer ("put this flow in the drawer as a sequence diagram").
+
+### Reading the map
+
+- **Colors** say how much each box touches existing code: grey = unchanged · light purple = only stored values change · purple = code changes · green = new · red = removed. `«external»`, `«table»` and `«resource»` boxes are green when this change brings them in.
+- **Stamps and breathing**: a done box gets a 완료 stamp; a box whose files changed but isn't done breathes softly.
+- **The firefly** flies to the box Claude is reading (mint) or editing (peach), with a caption naming the file.
+- **Fog** settles on boxes whose code changed while the map didn't, and lifts when Claude updates the map.
+- **Rings** in the header show steps, implementation and decisions closing.
+
+### Talking to the map
+
+- Click a box, a line or the whole map, write in the side panel, and press ⌘↩ — it reaches Claude as feedback, and the answer pops up as a bubble over that box. While Claude is busy, **지금 끼어들기** delivers it into the running turn.
+- **Double-click (or long-press) a box** to write right on it. **Hold a box for a moment and pull** to another box (or ⌥-drag) to ask why they connect, or to suggest a relation.
+- **Hover a decision** to see the boxes it would change; pick an option with **이걸로 결정**.
+- 🔔 in the header turns on a soft chime and a macOS notification when Claude answers.
+
+### Getting around
+
+| Key / control | What it does |
+|---------------|--------------|
+| scroll · drag empty space | zoom · pan (`f` fit, `1` 100%) |
+| `⌘K` or `/` | Spotlight: jump to a box, member, file or decision; filters such as **새 코드만 보기** (new code only) |
+| `p` or **▶ 흐름** | Play the call flow: a pulse travels the arrows in order |
+| time-machine slider (bottom) | Scrub through revisions; `▶` replays from the first, `[` `]` step |
+| click a box | Focus: only its neighbours stay sharp, its lines flow |
+
+Zooming out far turns boxes into name pills; zooming in shows each box's files.
+
+### Settings
+
+`/config` → design-map: `port` (default 7777, bound to 127.0.0.1), `editor` for opening a box's file (`intellij`, `vscode`, `cursor`, `zed`, or `custom` with `editorCommand`), `mapsDir` (default `~/.claude/design-maps`), and `nodePath` (empty = the `node` on your PATH).
+
+Maps and their history live in `~/.claude/design-maps`, outside the plugin, so updates never touch them. More detail (feedback loop internals, sequence-map notation, files): [`plugins/design-map/README.md`](plugins/design-map/README.md) (Korean).
+
+Requires **Node 22.6+** and `npm i -g @mermaid-js/mermaid-cli` (its Mermaid bundle feeds the browser page). macOS only for now (pages open with `open`).
 
 ---
 
