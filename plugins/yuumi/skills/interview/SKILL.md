@@ -1,7 +1,7 @@
 ---
 name: interview
 description: Use when a plan or spec needs pressure-testing before you build it — finds the holes through an in-depth interview rather than a passive review
-version: 2.0.0
+version: 2.0.1
 argument-hint: [plan]
 ---
 

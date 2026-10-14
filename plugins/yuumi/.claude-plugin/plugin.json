@@ -1,6 +1,6 @@
 {
   "name": "yuumi",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Tokyo Night powerline statusline + a small set of Claude Code workflow skills (edit, explain, interview, review)",
   "author": {
     "name": "heeseon"

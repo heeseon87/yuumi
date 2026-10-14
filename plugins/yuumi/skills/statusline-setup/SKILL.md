@@ -1,7 +1,7 @@
 ---
 name: statusline-setup
 description: Install the Tokyo Night statusline in Claude Code (one-time) — copies the statusline shipped with the yuumi plugin to ~/.claude/hud/statusline.mjs and points settings.json statusLine at it
-version: 2.0.0
+version: 2.0.1
 # Setup edits settings.json: only the user starts it.
 disable-model-invocation: true
 ---

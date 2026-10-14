@@ -1,7 +1,7 @@
 ---
 name: edit
 description: Use when a document carries inline {curly-brace} edit notes to apply in place, or when scattered edits across long drafts or multiple files must stay consistent — no copy-paste round-trips
-version: 2.0.0
+version: 2.0.1
 disable-model-invocation: true
 ---
 

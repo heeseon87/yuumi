@@ -62,9 +62,14 @@ async function readStdin() {
 
 function getModelName(stdin) {
   // stdin.model.display_name: Claude Code가 세션별로 전달하는 공식 표시용 값
-  // "Sonnet 4.6" → "Sonnet", "Opus" → "Opus"
-  const name = stdin.model?.display_name ?? stdin.model?.id ?? 'Unknown';
-  return name.split(' ')[0];
+  // "Sonnet 4.6" → "Sonnet 4.6"; 버전이 없으면 id(claude-opus-5-5)에서 보충 → "Opus 5.5"
+  const display = stdin.model?.display_name ?? '';
+  const id = stdin.model?.id ?? '';
+  const name = display.split(' ').slice(0, 2).join(' ') || 'Unknown';
+  if (/\d/.test(name)) return name;
+  const m = id.match(/^claude-[a-z]+-(\d+)(?:-(\d{1,2}))?(?:-|$)/);
+  if (!m) return name === 'Unknown' && id ? id : name;
+  return `${name} ${m[2] ? `${m[1]}.${m[2]}` : m[1]}`;
 }
 
 

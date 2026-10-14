@@ -1,7 +1,7 @@
 ---
 name: review
 description: Actively understand a change someone else made — a PR, branch, or diff you did not write — through a dialogue walkthrough (prediction, tracing, rough sketches) before you judge it. Use when starting a PR review or making sense of an unfamiliar diff.
-version: 2.0.0
+version: 2.0.1
 argument-hint: [PR number / branch / diff / file]
 ---
 
