@@ -100,7 +100,7 @@ The rate-limit bars are **allocation-aware**: the color isn't a fixed percentage
 
 [Duet](https://github.com/heeseon87/duet) is a local app that puts a design canvas, a code review and a live Claude Code agent on one screen. This mod connects a terminal Claude Code session to it, so you can design in Duet and build from the terminal.
 
-- **Maps from the terminal.** `duet_map_list`, `duet_map_read`, `duet_map_update` and `duet_map_reply` read and change Duet's maps. Changes show live on the canvas and are kept as revisions, marked with the terminal they came from.
+- **Maps from the terminal.** `duet_map_list`, `duet_map_read`, `duet_map_create`, `duet_map_update` and `duet_map_reply` make, read and change Duet's maps. Changes show live on the canvas and are kept as revisions, marked with the terminal they came from. A new map is pinned when the terminal has none, and outside a Duet workspace it first opens the folder's git repository as one.
 - **Duet to the terminal.** Pick the terminal in Duet's agent panel (the 터미널 section). Canvas comments, decisions, review comments and messages typed in Duet then go into this session, and the answer comes back to the thread.
 - **A pinned map.** `/duet <map>` pins the map this terminal works from, remembered per folder; `/duet` lists the maps, `/duet off` unpins.
 - **Status line.** `Duet · 📌 <map> · rev N · 결정 a/b`, or `Duet 꺼짐` while Duet is not running.
