@@ -1,15 +1,15 @@
 # yuumi 🐱
 
-> A Claude Code plugin marketplace: a Tokyo Night statusline, a handful of workflow skills, and a live design map of what your agent is building.
+> A Claude Code plugin marketplace: a Tokyo Night statusline, a handful of workflow skills, and a terminal mod for Duet, a local design canvas and code review.
 > Your agent does the carrying. You ride along like Yuumi — slurping cup ramen, and (let's be honest) taking the credit.
 
 ## Why "yuumi"?
 
 In *League of Legends*, **Yuumi** is the cat who attaches to a teammate and rides into battle on their back. She doesn't walk the lane — she gets carried. The AD carry does the work; Yuumi tosses out a heal, a little speed, the occasional poke, and somehow finishes the game convinced *she* hard-carried. (She was eating cup ramen behind the ADC the whole time.)
 
-That's the whole idea — and in this story, **you're Yuumi.** Your coding **agent is the ADC**: it walks the lane, takes the fights, does the carrying. You attach to it, ride along, toss out the occasional buff (a prompt, a nudge, a skill), and come away having "carried." This marketplace is your Yuumi kit — a statusline to watch the lane for you, a few skills to buff the agent doing the work, and a live map of what it is building. Now sit back, eat your cup ramen, and shout it one more time: "Carry!" 😎
+That's the whole idea — and in this story, **you're Yuumi.** Your coding **agent is the ADC**: it walks the lane, takes the fights, does the carrying. You attach to it, ride along, toss out the occasional buff (a prompt, a nudge, a skill), and come away having "carried." This marketplace is your Yuumi kit — a statusline to watch the lane for you, a few skills to buff the agent doing the work, and a line to the map it is building in Duet. Now sit back, eat your cup ramen, and shout it one more time: "Carry!" 😎
 
-Claude Code only. The statusline works on **macOS, Linux, and Windows**; design-map currently runs on **macOS**.
+Claude Code only. The statusline works on **macOS, Linux, and Windows**; the duet mod needs the [Duet](https://github.com/heeseon87/duet) app running on the same machine.
 
 ---
 
@@ -20,7 +20,7 @@ Two plugins, from one marketplace:
 | Plugin | What it is | Platforms |
 |--------|------------|-----------|
 | **`yuumi`** | Tokyo Night statusline (HUD) + workflow skills: `interview`, `edit`, `explain`, `review`, plus `statusline-setup` / `statusline-doctor` | macOS · Linux · Windows |
-| **`design-map`** | A live design map: Claude keeps a class or sequence diagram of the design in sync as it works, drawn in your browser, with a firefly showing where it is looking | macOS |
+| **`duet`** | Terminal mod for [Duet](https://github.com/heeseon87/duet): read and change Duet's design maps from Claude Code, take comments and decisions sent from Duet, pin a map with `/duet <map>` | wherever Duet runs (tested on macOS) |
 
 ## Install
 
@@ -29,7 +29,7 @@ Inside Claude Code (terminal):
 ```
 /plugin marketplace add heeseon87/yuumi
 /plugin install yuumi@yuumi
-/plugin install design-map@yuumi
+/plugin install duet@yuumi
 ```
 
 Install either or both. Then turn on the statusline once:
@@ -96,68 +96,16 @@ The rate-limit bars are **allocation-aware**: the color isn't a fixed percentage
 
 ---
 
-## design-map
+## duet
 
-Claude draws a **design map** — a Mermaid class diagram (structure: boxes and relations) or sequence diagram (behavior: participants and ordered messages) — while you discuss or build a change, and keeps it true as it works. The map lives in your browser at `http://127.0.0.1:7777`, with decisions, progress and a feedback thread beside it, and what you write there reaches the Claude session.
+[Duet](https://github.com/heeseon87/duet) is a local app that puts a design canvas, a code review and a live Claude Code agent on one screen. This mod connects a terminal Claude Code session to it, so you can design in Duet and build from the terminal.
 
-### Start a map
+- **Maps from the terminal.** `duet_map_list`, `duet_map_read`, `duet_map_update` and `duet_map_reply` read and change Duet's maps. Changes show live on the canvas and are kept as revisions, marked with the terminal they came from.
+- **Duet to the terminal.** Pick the terminal in Duet's agent panel (the 터미널 section). Canvas comments, decisions, review comments and messages typed in Duet then go into this session, and the answer comes back to the thread.
+- **A pinned map.** `/duet <map>` pins the map this terminal works from, remembered per folder; `/duet` lists the maps, `/duet off` unpins.
+- **Status line.** `Duet · 📌 <map> · rev N · 결정 a/b`, or `Duet 꺼짐` while Duet is not running.
 
-Just ask Claude, in your own words:
-
-- "Draw this change as a design map" → a class map of what the change touches
-- "Map the order-creation flow as a sequence diagram" → a sequence map
-- "Open the design map for PROJ-142" → reopens (or creates) a map by name
-
-Claude opens it with `map_open`, then keeps it current with `map_update` as it analyzes, decides and implements. The browser opens on its own the first time.
-
-### Commands
-
-| Command | What it does |
-|---------|--------------|
-| `/design-map` | Reopen the last map of this folder in the browser; this session takes its feedback |
-| `/design-map <name>` | Open a map (or a saved diagram) by name |
-| `/design-map list` | List maps and diagrams |
-| `/design-map browser` | Open the current map in a new browser tab |
-| `/design-map drawer` | Open the diagram drawer: every map and saved diagram, with tags, memos and versions |
-| `/design-map export <file.md>` | Write the map (Mermaid block with legend, decisions, progress) into a Markdown file; re-running replaces only that block |
-| `/design-map close` | Close the map in this session |
-
-You can also ask Claude to keep any plain Mermaid diagram in the drawer ("put this flow in the drawer as a sequence diagram").
-
-### Reading the map
-
-- **Colors** say how much each box touches existing code: grey = unchanged · light purple = only stored values change · purple = code changes · green = new · red = removed. `«external»`, `«table»` and `«resource»` boxes are green when this change brings them in.
-- **Stamps and breathing**: a done box gets a 완료 stamp; a box whose files changed but isn't done breathes softly.
-- **The firefly** flies to the box Claude is reading (mint) or editing (peach), with a caption naming the file.
-- **Fog** settles on boxes whose code changed while the map didn't, and lifts when Claude updates the map.
-- **Rings** in the header show steps, implementation and decisions closing.
-
-### Talking to the map
-
-- Click a box, a line or the whole map, write in the side panel, and press ⌘↩ — it reaches Claude as feedback, and the answer pops up as a bubble over that box. While Claude is busy, **지금 끼어들기** delivers it into the running turn.
-- **Double-click (or long-press) a box** to write right on it. **Hold a box for a moment and pull** to another box (or ⌥-drag) to ask why they connect, or to suggest a relation.
-- **Hover a decision** to see the boxes it would change; pick an option with **이걸로 결정**.
-- 🔔 in the header turns on a soft chime and a macOS notification when Claude answers.
-
-### Getting around
-
-| Key / control | What it does |
-|---------------|--------------|
-| scroll · drag empty space | zoom · pan (`f` fit, `1` 100%) |
-| `⌘K` or `/` | Spotlight: jump to a box, member, file or decision; filters such as **새 코드만 보기** (new code only) |
-| `p` or **▶ 흐름** | Play the call flow: a pulse travels the arrows in order |
-| time-machine slider (bottom) | Scrub through revisions; `▶` replays from the first, `[` `]` step |
-| click a box | Focus: only its neighbours stay sharp, its lines flow |
-
-Zooming out far turns boxes into name pills; zooming in shows each box's files.
-
-### Settings
-
-`/config` → design-map: `port` (default 7777, bound to 127.0.0.1), `editor` for opening a box's file (`intellij`, `vscode`, `cursor`, `zed`, or `custom` with `editorCommand`), `mapsDir` (default `~/.claude/design-maps`), and `nodePath` (empty = the `node` on your PATH).
-
-Maps and their history live in `~/.claude/design-maps`, outside the plugin, so updates never touch them. More detail (feedback loop internals, sequence-map notation, files): [`plugins/design-map/README.md`](plugins/design-map/README.md) (Korean).
-
-Requires **Node 22.6+** and `npm i -g @mermaid-js/mermaid-cli` (its Mermaid bundle feeds the browser page). macOS only for now (pages open with `open`).
+Start Duet first (`duet` in the repo you want to open); the mod finds it through `~/.duet`. A terminal anywhere inside a Duet workspace, a worktree under it included, connects on its own.
 
 ---
 

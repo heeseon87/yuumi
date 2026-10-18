@@ -1,7 +1,7 @@
 {
   "name": "yuumi",
   "owner": { "name": "heeseon", "url": "https://github.com/heeseon87" },
-  "description": "Claude Code plugins by heeseon: a Tokyo Night statusline with workflow skills, and a live design map.",
+  "description": "Claude Code plugins by heeseon: a Tokyo Night statusline with workflow skills, and a terminal mod for Duet.",
   "plugins": [
     {
       "name": "yuumi",
@@ -9,9 +9,9 @@
       "description": "Tokyo Night powerline statusline + workflow skills (edit, explain, interview, review)"
     },
     {
-      "name": "design-map",
-      "source": "./plugins/design-map",
-      "description": "A live design map: Claude keeps a class or sequence diagram of the design in sync as it works, drawn in your browser (macOS)"
+      "name": "duet",
+      "source": { "source": "git-subdir", "url": "https://github.com/heeseon87/duet.git", "path": "mod" },
+      "description": "Terminal mod for Duet: read and change Duet's design maps, take comments and decisions sent from Duet, pin a map with /duet (needs the Duet app)"
     }
   ]
 }

@@ -4,10 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working in this
 
 ## Repository purpose
 
-`yuumi` is a **Claude Code plugin marketplace** (2.0). One repo, two plugins, listed in `.claude-plugin/marketplace.json` with relative sources:
+`yuumi` is a **Claude Code plugin marketplace** (2.0). Two plugins, listed in `.claude-plugin/marketplace.json`:
 
-- **`plugins/yuumi`** — the Tokyo Night statusline (`skills/statusline-setup/assets/statusline.mjs`) and six skills: `interview`, `edit`, `explain`, `review`, `statusline-setup`, `statusline-doctor`. Commands are `/yuumi:<skill>`.
-- **`plugins/design-map`** — a hooks-module mod (live design map in the browser). It has its own `README.md`, tests (`claude plugin test plugins/design-map`) and version.
+- **`plugins/yuumi`** (relative source) — the Tokyo Night statusline (`skills/statusline-setup/assets/statusline.mjs`) and six skills: `interview`, `edit`, `explain`, `review`, `statusline-setup`, `statusline-doctor`. Commands are `/yuumi:<skill>`.
+- **`duet`** (`git-subdir` source: `mod/` of [heeseon87/duet](https://github.com/heeseon87/duet)) — the terminal mod for the Duet app. Its code, tests and version live in the duet repo; this repo only lists it.
 
 Users install with `/plugin marketplace add heeseon87/yuumi` then `/plugin install <plugin>@yuumi`. Claude Code only: the 1.x `npx skills` channel (Codex, Cursor, Hermes …) was retired in 2.0, along with the `design`, `explain-detail`, `implement`, `pretty`, `teach-me` and `update` skills. The old `explain-fast` is now `explain`.
 
@@ -18,7 +18,7 @@ Publishing is "commit + push to `main`". Users update with `/plugin update <plug
 **Before every push**, bump the version of each plugin you changed:
 
 - `yuumi`: `plugins/yuumi/.claude-plugin/plugin.json` → `version`, and the `version:` frontmatter in every `plugins/yuumi/skills/<name>/SKILL.md` (all six). Keep them uniform.
-- `design-map`: `plugins/design-map/.claude-plugin/plugin.json` → `version`.
+- `duet`: released from the duet repo (`mod/.claude-plugin/plugin.json` → `version`, then push there); nothing to bump here.
 
 Supporting files for a skill live **inside that skill's directory** (`assets/`), so the skill can find them from its own base directory.
 

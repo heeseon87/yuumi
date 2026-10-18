@@ -1,3 +1,0 @@
-# Claude Code가 로드할 때마다 다시 쓰는 타입 선언
-.claude-plugin/types/
-.DS_Store
