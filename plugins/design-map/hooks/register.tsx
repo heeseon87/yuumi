@@ -11,7 +11,7 @@ import type {
   MapView,
 } from '../types'
 import { editorCommand } from './editor'
-import { DECISION_NOTES, decisionPatchOf, feedbackIdsOf, feedbackPrompt, viewPatchOf } from './feedback'
+import { DECISION_NOTES, decisionPatchOf, feedbackIdsOf, feedbackPrompt, scopePatchOf, viewPatchOf } from './feedback'
 import type { FeedbackItem } from './feedback'
 import { guideOf, TOOL, TOOLS } from './guide'
 import {
@@ -471,6 +471,27 @@ export const register: Register = (on, options) => {
             schedulePage()
             await settle(at, doc.name, item.id, { status: 'done', reply: local.reply })
           }
+          continue
+        }
+        // Where the map's territory ends: written here, and progress measured again right away.
+        if (item.action === 'scope') {
+          const current = await at.doc.get()
+          if (current === null) continue
+          const scoped = scopePatchOf(item)
+          if ('error' in scoped) {
+            await settle(at, doc.name, item.id, { status: 'failed', reply: scoped.error })
+            continue
+          }
+          const latest = (await readJson<DesignMap>(at, current.path)) ?? current.map
+          const written = applyUpdate(latest, { scope: scoped.scope })
+          if (written.errors.length > 0) {
+            await settle(at, doc.name, item.id, { status: 'failed', reply: written.errors.join('\n') })
+            continue
+          }
+          await writeMap(at, current, { ...written.map, revision: (latest.revision ?? 0) + 1 })
+          schedulePage()
+          scheduleProgress()
+          await settle(at, doc.name, item.id, { status: 'done', reply: scoped.reply })
           continue
         }
         // A leaning, a rejection reason or a blocker: written onto the map here, never forwarded.

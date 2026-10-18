@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'claude-code/testing'
 import type { TestBody } from 'claude-code/testing'
 
-import { feedbackIdsOf, feedbackPrompt } from '../hooks/feedback'
+import { feedbackIdsOf, feedbackPrompt, scopePatchOf } from '../hooks/feedback'
 import type { DesignMap } from '../hooks/model'
 import { MAPS, world } from './world'
 
@@ -42,6 +42,25 @@ describe('the prompt', () => {
     const midTurn = feedbackPrompt('demo', map, items, true)
     expect(midTurn.startsWith('[design-map 피드백 #7 · 작업 중 전달]')).toBe(true)
     expect(feedbackIdsOf(midTurn)).toEqual([7])
+  })
+
+  test('names every box a lasso caught, and asks how they fit together', () => {
+    const map = { schema: 1, title: 't', elements: [{ id: 'Api', label: '진입점' }, { id: 'Svc' }], relations: [] } as DesignMap
+    const text = feedbackPrompt('demo', map, [
+      { id: 9, at: 0, target: { kind: 'elements', ids: ['Api', 'Svc'] }, action: 'explain', text: '', status: 'working' },
+      { id: 10, at: 0, target: { kind: 'elements', ids: ['Api', 'Svc'] }, action: 'comment', text: '이 둘 합칠 수 있어?', status: 'working' },
+    ])
+    expect(text).toContain('#9 · 상자 2개: Api (진입점), Svc · 설명 요청\n이 상자들이 각각 하는 일과 서로 어떻게 엮여 있는지 설명해 줘.')
+    expect(text).toContain('#10 · 상자 2개: Api (진입점), Svc\n이 둘 합칠 수 있어?')
+  })
+
+  test('the scope sheet\'s answer: folders, none, or the whole repo', () => {
+    const item = (text: string) => ({ id: 1, at: 0, target: { kind: 'map' as const }, action: 'scope' as const, text, status: 'working' as const })
+    expect(scopePatchOf(item('["./wiki/", "scripts", "wiki"]'))).toEqual({ scope: ['wiki', 'scripts'], reply: '지도 밖 변경은 wiki/, scripts/ 안에서만 셀게.' })
+    expect(scopePatchOf(item('[]'))).toEqual({ scope: [], reply: '이 지도는 설계 전용으로 둘게. 지도 밖 변경은 세지 않아.' })
+    expect(scopePatchOf(item('null'))).toEqual({ scope: null, reply: '지도 밖 변경을 repo 전체에서 다시 셀게.' })
+    expect(scopePatchOf(item('wiki'))).toEqual({ error: '범위를 읽지 못했어.' })
+    expect(scopePatchOf(item('[1]'))).toEqual({ error: '범위는 폴더 목록이어야 해.' })
   })
 })
 
@@ -103,6 +122,17 @@ describe('the loop', () => {
     await w.clock.advance(1_000)
     expect(JSON.parse(w.files.get(`${MAPS}/demo.view.json`) ?? '{}')).toEqual({})
     expect(w.submitted.length).toBe(0)
+  })
+
+  test('a scope from the browser is written onto the map without a turn', async ($, on) => {
+    const w = await opened($, on)
+    w.leave({ target: { kind: 'map' }, action: 'scope', text: '["wiki"]' })
+    await w.clock.advance(1_000)
+    expect(JSON.parse(w.files.get(`${MAPS}/demo.json`) ?? '{}').scope).toEqual(['wiki'])
+    expect(w.submitted.length).toBe(0)
+    w.leave({ target: { kind: 'map' }, action: 'scope', text: 'null' })
+    await w.clock.advance(1_000)
+    expect(JSON.parse(w.files.get(`${MAPS}/demo.json`) ?? '{}').scope).toBeUndefined()
   })
 
   test('picking an option marks the decision chosen at once, then asks Claude to follow through', async ($, on) => {

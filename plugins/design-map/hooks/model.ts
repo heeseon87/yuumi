@@ -78,6 +78,9 @@ export function validate(map: DesignMap, view: MapView = {}): string[] {
   if (!isString(map.title) || map.title.trim() === '') errors.push('title must be a non-empty string')
   if (map.direction !== undefined && !DIRECTIONS.includes(map.direction)) errors.push(`direction must be one of ${DIRECTIONS.join(', ')}`)
   if (map.repo !== undefined && (!isString(map.repo) || !map.repo.startsWith('/'))) errors.push('repo must be an absolute path')
+  if (map.scope !== undefined && (!Array.isArray(map.scope) || map.scope.some(p => !isString(p) || p.trim() === '' || p.startsWith('/') || p.split('/').includes('..')))) {
+    errors.push('scope must be a list of repo-relative folders (no leading / and no ..); [] counts nothing outside the map')
+  }
   if (!Array.isArray(map.elements)) return [...errors, 'elements must be a list']
   if (!Array.isArray(map.relations)) return [...errors, 'relations must be a list']
 
@@ -322,6 +325,7 @@ export type MapUpdate = {
   direction?: Direction | null
   repo?: string | null
   base?: string | null
+  scope?: string[] | null
   elements?: { upsert?: ElementPatch[]; remove?: string[] }
   relations?: { add?: Relation[]; remove?: RelationRef[] }
   messages?: { upsert?: MessagePatch[]; remove?: string[] }
@@ -346,7 +350,7 @@ export function applyUpdate(map: DesignMap, update: MapUpdate): Applied {
     errors.push('messages and fragments belong to sequence maps; this is a class map')
   }
 
-  for (const key of ['title', 'context', 'direction', 'repo', 'base'] as const) {
+  for (const key of ['title', 'context', 'direction', 'repo', 'base', 'scope'] as const) {
     if (!(key in update)) continue
     const value = update[key]
     if (value === null || value === undefined) {
@@ -543,6 +547,9 @@ export function progressOf(map: DesignMap, changed: readonly string[]): { touche
   const touched = new Set<string>()
   const covered = new Set<string>()
   const norm = (p: string) => filePath(p).replace(/^\.\//, '')
+  // The map's territory: changes elsewhere in the repo are some other work, not "outside the map".
+  const folders = map.scope?.map(p => norm(p).replace(/\/+$/, ''))
+  const isMine = (c: string) => folders === undefined || folders.some(d => c === d || c.startsWith(`${d}/`))
   for (const el of [...map.elements, ...changingMessages(map)]) {
     for (const file of el.files ?? []) {
       const f = norm(file)
@@ -557,7 +564,7 @@ export function progressOf(map: DesignMap, changed: readonly string[]): { touche
       }
     }
   }
-  return { touched: [...touched], outside: changed.filter(c => !covered.has(c)) }
+  return { touched: [...touched], outside: changed.filter(c => !covered.has(c) && isMine(c)) }
 }
 
 // ---------------------------------------------------------------- render
@@ -1034,6 +1041,8 @@ export type Page = {
   title: string
   context?: string
   repo?: string
+  /** The folders whose changes count as this map's (see DesignMap.scope). */
+  scope?: string[]
   view: MapView
   revision: number
   updatedAt: number
@@ -1078,6 +1087,7 @@ export function pageOf(name: string, map: DesignMap, view: MapView, touched: rea
     title: map.title,
     ...(map.context === undefined ? {} : { context: map.context }),
     ...(map.repo === undefined ? {} : { repo: map.repo }),
+    ...(map.scope === undefined ? {} : { scope: map.scope }),
     view,
     revision: map.revision ?? 0,
     updatedAt,

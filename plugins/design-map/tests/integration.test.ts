@@ -59,7 +59,7 @@ describe('the tools, end to end beneath the plugin', () => {
     expect(page?.mermaid).toContain('direction TB')
     expect(page?.mermaid).not.toContain('namespace Legend')
     expect(page?.revision).toBe(1)
-    expect((page?.legend as { text: string }[]).map(l => l.text)).toContain('점선 · [D번호] 결정 대기')
+    expect((page?.legend as { text: string }[]).map(l => l.text)).toContain('천천히 빛남 · [D번호] 결정 대기')
 
     const before = w.files.get(`${MAPS}/demo.json`)
     const bad = await $.tool.call({ tool: 'mcp__design-map__map_update', elements: { upsert: [{ id: 'Fine' }, { id: '한글' }] } })

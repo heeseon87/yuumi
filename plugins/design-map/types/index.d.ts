@@ -145,6 +145,11 @@ export type DesignMap = {
   repo?: string
   /** The git ref progress is measured from; absent, uncommitted changes only. */
   base?: string
+  /**
+   * Repo-relative folders this map is about: changed files elsewhere are other work, not
+   * "outside the map". Absent, the whole repo; [] a design-only map that counts nothing outside.
+   */
+  scope?: string[]
   /** Bumped on every write, so two sessions never overwrite each other blindly. */
   revision?: number
   /** A sequence map's participants, left to right. */

@@ -27,11 +27,11 @@
 
 import { createServer } from 'node:http'
 import { randomBytes } from 'node:crypto'
-import { chmodSync, copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmdirSync, statSync, unlinkSync, utimesSync, watch, writeFileSync } from 'node:fs'
+import { chmodSync, copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, renameSync, rmdirSync, statSync, unlinkSync, utimesSync, watch, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { pageOf, pruneView } from '../hooks/model.ts'
+import { fileLine, filePath, pageOf, pruneView } from '../hooks/model.ts'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const ownSource = readFileSync(fileURLToPath(import.meta.url), 'utf8')
@@ -74,14 +74,14 @@ const ITEM_FILE = /^([a-z0-9][a-z0-9_-]{0,63})\.(json|mmd)$/
 const TRASH_ENTRY = /^([a-z0-9][a-z0-9_-]{0,63})~(\d{1,16})$/
 /** Every file an item has beside its history, by what follows the id. */
 const ITEM_SUFFIXES = ['.json', '.view.json', '.mmd', '.meta.json', '.feedback.json']
-const LOCAL_ACTIONS = new Set(['expand', 'collapse', 'hide', 'reset', 'decide', 'open', 'lean', 'reject', 'blocked'])
+const LOCAL_ACTIONS = new Set(['expand', 'collapse', 'hide', 'reset', 'decide', 'open', 'lean', 'reject', 'blocked', 'scope'])
 const ACTIONS = new Set([...LOCAL_ACTIONS, 'comment', 'explain', 'propose'])
 /**
  * Applied to the map or the view and then gone from the thread: folds, and the three notes a
  * person leaves while thinking (leaning toward an option, why a path was not taken, what the
  * decision is waiting on). None of them is a question, so none of them starts a Claude turn.
  */
-const VIEW_ONLY = new Set(['expand', 'collapse', 'lean', 'reject', 'blocked'])
+const VIEW_ONLY = new Set(['expand', 'collapse', 'lean', 'reject', 'blocked', 'scope'])
 const MAX_SOURCE = 200_000
 const MAX_MEMO = 100_000
 /** What "new diagram" starts from, by kind. */
@@ -118,6 +118,39 @@ const startedAt = Date.now()
 let lastActivity = Date.now()
 
 // ---------------------------------------------------------------- files
+
+/** Quick Look reads at most this much of a file, and sends at most this many lines around the one asked for. */
+const PEEK_BYTES = 2_000_000
+const PEEK_LINES = 4000
+/**
+ * One of a map's files, for Quick Look. The same fence as opening it in the editor: only a path
+ * the map lists, inside the map's repo once links are resolved. The model writes `files`, and
+ * code it read could steer that.
+ */
+function peekFile(map, entry) {
+  if (typeof map.repo !== 'string') return { error: '지도에 repo가 없어서 파일 경로를 알 수 없어.' }
+  if (![...(map.elements ?? []), ...(map.messages ?? [])].some(e => (e.files ?? []).includes(entry))) return { error: `지도에 없는 파일이야: ${entry}` }
+  const relative = filePath(entry)
+  if (relative.startsWith('/') || relative.split('/').includes('..')) return { error: `repo 밖을 가리키는 경로야: ${entry}` }
+  let repo
+  let file
+  try {
+    repo = realpathSync(map.repo).replace(/\/$/, '')
+    file = realpathSync(join(map.repo, relative))
+  } catch {
+    return { error: `파일이 없어: ${relative}` }
+  }
+  if (!file.startsWith(`${repo}/`)) return { error: `링크를 따라가면 repo 밖이야: ${relative}` }
+  const stat = statSync(file)
+  if (stat.isDirectory()) return { error: `폴더라서 미리 볼 수 없어: ${relative}` }
+  if (stat.size > PEEK_BYTES) return { error: `파일이 너무 커서 미리 볼 수 없어: ${relative}` }
+  const text = readFileSync(file, 'utf8')
+  if (text.includes('\u0000')) return { error: `텍스트 파일이 아니야: ${relative}` }
+  const lines = text.split('\n')
+  const line = fileLine(entry)
+  const from = line === undefined || lines.length <= PEEK_LINES ? 1 : Math.max(1, Math.min(line - PEEK_LINES / 2, lines.length - PEEK_LINES + 1))
+  return { file: relative, line: line ?? null, from, total: lines.length, lines: lines.slice(from - 1, from - 1 + PEEK_LINES) }
+}
 
 const pagePath = id => join(pagesDir, `${id}.page.json`)
 const mapFile = id => join(mapsDir, `${id}.json`)
@@ -204,6 +237,30 @@ function mapPage(id) {
   return { map, page: pageOf(id, map, view, [], [], statSync(mapFile(id)).mtimeMs) }
 }
 
+/** What a drawer card says about a map at a glance: decisions still open, steps done, whether Claude is on it. */
+function mapStatus(id, map, drawn) {
+  const steps = drawn.steps ?? []
+  const { isListening, isBusy } = listening(id)
+  return {
+    open: (map.decisions ?? []).filter(d => d.chosen === undefined).length,
+    steps: { done: steps.filter(s => s.state === 'done').length, total: steps.length },
+    session: isBusy ? 'busy' : isListening ? 'on' : null,
+  }
+}
+
+/** Every map's status, for the drawer to refresh in place without drawing its cards again. */
+function liveStatuses() {
+  const out = {}
+  for (const id of itemIds()) {
+    if (kindOf(id) !== 'map') continue
+    try {
+      const { map, page: drawn } = mapPage(id)
+      out[id] = mapStatus(id, map, drawn)
+    } catch {}
+  }
+  return out
+}
+
 /** One card of the drawer. A file that does not parse still shows, with its error. */
 function itemOf(id, kind) {
   const meta = metaOf(id)
@@ -219,7 +276,7 @@ function itemOf(id, kind) {
     const times = { createdAt: createdAtOf(id, kind, meta), updatedAt: Math.max(stat.mtimeMs, Number(meta.editedAt) || 0) }
     if (kind === 'map') {
       const { map, page: drawn } = mapPage(id)
-      return { ...base, ...times, type: map.diagram === 'sequence' ? 'map-sequence' : 'map', title: titleOf(meta, map.title, id), revision: map.revision ?? 0, mermaid: drawn.mermaid, text: mapWords(map) }
+      return { ...base, ...times, type: map.diagram === 'sequence' ? 'map-sequence' : 'map', title: titleOf(meta, map.title, id), revision: map.revision ?? 0, mermaid: drawn.mermaid, text: mapWords(map), status: mapStatus(id, map, drawn) }
     }
     const source = readFileSync(sourceFile(id), 'utf8')
     return { ...base, ...times, type: typeOf(source), title: titleOf(meta, undefined, id), revision: Number(meta.revision) || 1, mermaid: source, text: source }
@@ -481,6 +538,7 @@ function sourceOf(input) {
 async function handleLibrary(req, res, sub) {
   if (sub === undefined && req.method === 'GET') return json(res, 200, { items: listItems(), trashCount: trashItems().length })
   if (sub === 'tags' && req.method === 'GET') return json(res, 200, { tags: allTags() })
+  if (sub === 'live' && req.method === 'GET') return json(res, 200, { items: liveStatuses() })
   if (sub === 'trash' && req.method === 'GET') return json(res, 200, { items: trashItems() })
 
   // POST /api/_library/new: the person starts a plain diagram from a template.
@@ -713,6 +771,15 @@ async function handle(req, res) {
   }
 
   // ------------------------------------------------------------ a map's feedback and activity
+
+  // GET /api/<id>/peek?file=<entry>: one of the map's files, for Quick Look. It hands out file
+  // contents, so unlike the other reads it wants the page's token too.
+  if (sub === 'peek' && req.method === 'GET') {
+    if (req.headers['x-design-map-token'] !== token) return send(res, 403, 'text/plain', 'bad token')
+    if (kindOf(name) !== 'map') return json(res, 404, { error: 'peek is for design maps' })
+    const peeked = peekFile(readJson(mapFile(name)), String(url.searchParams.get('file') ?? ''))
+    return json(res, 'error' in peeked ? 400 : 200, peeked)
+  }
 
   // GET /api/<id>/feedback: the thread, and its owner. Open requests and folds are no
   // conversation; a fold that failed stays, so the user sees why nothing moved.

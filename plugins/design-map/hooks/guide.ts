@@ -53,6 +53,7 @@ export const TOOLS: ToolSpec[] = [
         direction: { enum: ['TB', 'LR', null] },
         repo: { type: ['string', 'null'] },
         base: { type: ['string', 'null'] },
+        scope: { type: ['array', 'null'], items: { type: 'string' }, description: 'Repo-relative folders this map is about; [] design-only; null the whole repo. The user usually sets it from the browser.' },
         elements: {
           type: 'object',
           properties: { upsert: { type: 'array', items: { type: 'object' } }, remove: ID_LIST },
@@ -155,6 +156,7 @@ The map is the user's picture of the design, shared with you. Its job is to clos
 - Set \`repo\` (the working tree, absolute) on map_open, and \`base\` (the branch it forks from) when work happens on a branch.
 - Give every element backed by code its \`files\` (repo-relative, \`path:line\` allowed). With them the user sees, live, which box you are reading or editing, can open the file in their editor from the box, and sees progress. Without them none of that works.
 - If code in the repo changes during a turn and the map does not, the user is told the map went stale, and so are you; update the map or say why it needs no change.
+- \`scope\` (repo-relative folders) says which changes are this map's: changed files elsewhere are other work and are not listed as "지도 밖 변경". \`[]\` is a design-only map. The user usually sets it from the browser; leave it alone unless asked.
 
 ## Colors (\`change\`): how much the element touches existing code
 keep = code and values unchanged (grey) · result = code unchanged, stored values change (light purple: verify results) · modify = code changes (purple) · delete = code removed (red, 🗑) · add = new code (green).

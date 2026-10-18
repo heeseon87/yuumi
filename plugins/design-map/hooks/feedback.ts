@@ -12,6 +12,8 @@ export type FeedbackTarget =
   | { kind: 'relation'; from: string; to: string; label?: string }
   /** A sequence map's message, note or fragment, by id. */
   | { kind: 'message'; id: string }
+  /** Several boxes at once: the user drew a loop around them on the map. */
+  | { kind: 'elements'; ids: string[] }
 
 /** `open` asks the session to open `text` (an element's file) in the user's editor. */
 export type FeedbackAction =
@@ -20,6 +22,8 @@ export type FeedbackAction =
   | 'lean' | 'reject' | 'blocked'
   /** Neither option works: the user says what is missing and Claude reshapes the decision. */
   | 'propose'
+  /** Where the map's territory ends (`text`: a JSON list of folders, [] or null); applied here. */
+  | 'scope'
 
 /** The three that are written onto the map here and never reach a model turn. */
 export const DECISION_NOTES = ['lean', 'reject', 'blocked'] as const
@@ -92,13 +96,36 @@ export function decisionPatchOf(map: DesignMap, item: FeedbackItem): { update: M
   return undefined
 }
 
+/**
+ * The map's territory, set from the browser: which changed files count as "outside the map".
+ * `text` is JSON: a list of repo-relative folders, [] for a design-only map, null for the whole repo.
+ */
+export function scopePatchOf(item: FeedbackItem): { scope: string[] | null; reply: string } | { error: string } {
+  let value: unknown
+  try {
+    value = JSON.parse(item.text)
+  } catch {
+    return { error: '범위를 읽지 못했어.' }
+  }
+  if (value === null) return { scope: null, reply: '지도 밖 변경을 repo 전체에서 다시 셀게.' }
+  if (!Array.isArray(value) || value.some(v => typeof v !== 'string')) return { error: '범위는 폴더 목록이어야 해.' }
+  const scope = [...new Set(value.map(v => v.trim().replace(/^\.\//, '').replace(/\/+$/, '')).filter(v => v !== ''))]
+  if (scope.length === 0) return { scope: [], reply: '이 지도는 설계 전용으로 둘게. 지도 밖 변경은 세지 않아.' }
+  return { scope, reply: `지도 밖 변경은 ${scope.map(s => `${s}/`).join(', ')} 안에서만 셀게.` }
+}
+
 function targetText(map: DesignMap, target: FeedbackTarget): string {
   if (target.kind === 'map') return '지도 전체'
   if (target.kind === 'decision') return `결정 ${target.id}`
   if (target.kind === 'relation') return `관계 ${target.from} → ${target.to}${target.label === undefined || target.label === '' ? '' : ` (${target.label})`}`
   if (target.kind === 'message') return sequenceTargetText(map, target.id)
-  const el = map.elements.find(e => e.id === target.id)
-  return el === undefined ? target.id : el.label !== undefined && el.label !== el.id ? `${el.id} (${el.label})` : el.id
+  if (target.kind === 'elements') return `상자 ${target.ids.length}개: ${target.ids.map(id => elementText(map, id)).join(', ')}`
+  return elementText(map, target.id)
+}
+
+function elementText(map: DesignMap, id: string): string {
+  const el = map.elements.find(e => e.id === id)
+  return el === undefined ? id : el.label !== undefined && el.label !== el.id ? `${el.id} (${el.label})` : el.id
 }
 
 /** A message as the user sees it: by its autonumber, which the prompt pairs with its id. */
@@ -142,6 +169,9 @@ function body(map: DesignMap, item: FeedbackItem): string {
       '이게 새로운 길이면 선택지를 하나 더 만들어서 영향까지 적고, 질문 자체가 틀렸으면 질문을 다시 세워 줘.'
         + ' 기존 선택지를 지우기 전에 왜 지우는지 한 줄로 말해 주고. 확정은 사용자가 한다.',
     ].filter(line => line !== '').join('\n')
+  }
+  if (item.action === 'explain' && target.kind === 'elements') {
+    return item.text === '' ? '이 상자들이 각각 하는 일과 서로 어떻게 엮여 있는지 설명해 줘.' : `이 상자들에 대해 설명해 줘: ${item.text}`
   }
   if (item.action === 'explain') return item.text === '' ? '이 요소가 하는 일과 왜 이렇게 생겼는지 설명해 줘.' : `설명해 줘: ${item.text}`
   return item.text

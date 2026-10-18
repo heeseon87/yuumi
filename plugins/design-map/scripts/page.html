@@ -10,10 +10,25 @@
   html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 14px/1.5 system-ui, -apple-system, "Apple SD Gothic Neo", sans-serif; }
   #app { display: grid; grid-template-columns: 1fr var(--side-w, 380px); grid-template-rows: auto auto 1fr; height: 100%; }
   header { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; padding: 8px 14px; border-bottom: 1px solid var(--line); min-width: 0; }
-  header h1 { font-size: 15px; margin: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  header .meta { color: var(--dim); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  header h1 { font-size: 15px; margin: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 0 0 auto; max-width: 44%; }
+  header .meta { color: var(--dim); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1 1 0; min-width: 0; }
   header .tools { margin-left: auto; display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
-  #activity { grid-column: 1 / -1; padding: 4px 14px; font-size: 12px; color: var(--dim); border-bottom: 1px solid var(--line); background: #fbfcfd; min-height: 26px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* What Claude is doing now lives in the island over the map; this strip only keeps the text. */
+  #activity { display: none !important; }
+  #island { position: absolute; left: 50%; top: 10px; transform: translateX(-50%); z-index: 4; display: inline-flex; align-items: center; gap: 7px; max-width: min(560px, calc(100% - 40px)); height: 30px; padding: 0 14px 0 12px; border-radius: 999px; background: rgba(26, 23, 33, .9); color: #f3f1f7; font-size: 12px; box-shadow: 0 8px 26px rgba(30, 24, 50, .24); backdrop-filter: blur(14px) saturate(1.4); -webkit-backdrop-filter: blur(14px) saturate(1.4); white-space: nowrap; overflow: hidden; }
+  #island[hidden] { display: none; }
+  #island.can-click { cursor: pointer; }
+  #island i { width: 7px; height: 7px; border-radius: 50%; background: #8a8595; flex: none; }
+  #island.on i { background: #4fd18b; }
+  #island.busy i { background: #b892ff; animation: island-dot 1.6s ease-in-out infinite; }
+  #island.off i { background: #e0a64a; }
+  #island.reply i { background: #6aa8ff; }
+  #island .what { overflow: hidden; text-overflow: ellipsis; }
+  #island .what b { font-weight: 600; color: #fff; }
+  #island .what .soft { color: #aaa4b6; }
+  @keyframes island-dot { 0%, 100% { opacity: .5; transform: scale(.85); } 50% { opacity: 1; transform: scale(1.15); } }
+  @media (prefers-reduced-motion: reduce) { #island.busy i { animation: none; } }
+  body.previewing #island { top: 54px; }
   #activity .now { color: var(--teal); font-weight: 600; }
   #activity .off { color: var(--red); font-weight: 600; }
   #activity .sep { margin: 0 8px; color: var(--line); }
@@ -80,6 +95,53 @@
   #notify.quiet { opacity: .55; }
   #canvas .node.lifted { filter: drop-shadow(0 10px 16px rgba(70, 60, 100, .28)); transition: filter .2s; }
   #canvas .node.connect-target { filter: drop-shadow(0 0 10px rgba(181, 162, 217, 1)); }
+  /* Quick Look: the code behind a box, over the map, gone with the same key that brought it. */
+  #peek { position: absolute; inset: 0; margin: auto; width: min(780px, calc(100% - 48px)); height: min(72%, 640px); display: flex; flex-direction: column; border-radius: 14px; background: rgba(255, 255, 255, .97); backdrop-filter: blur(20px) saturate(1.3); -webkit-backdrop-filter: blur(20px) saturate(1.3); box-shadow: 0 24px 70px rgba(40, 36, 60, .32), 0 0 0 1px rgba(70, 60, 100, .12); z-index: 6; overflow: hidden; }
+  #peek[hidden] { display: none; }
+  #peek .bar { display: flex; align-items: center; gap: 8px; padding: 7px 10px 7px 14px; border-bottom: 1px solid var(--line); background: #f7f7f9; font-size: 12px; min-width: 0; }
+  #peek .bar .name { font-size: 13px; font-weight: 600; white-space: nowrap; }
+  #peek .bar .where { color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; }
+  #peek .tabs { display: flex; gap: 4px; padding: 6px 10px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+  #peek .tabs[hidden] { display: none; }
+  #peek .tabs button { border-radius: 999px; white-space: nowrap; }
+  #peek .tabs button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  #peek .code { flex: 1; overflow: auto; font: 12px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; padding: 6px 0 10px; outline: none; user-select: text; -webkit-user-select: text; }
+  #peek .ln { display: flex; white-space: pre; min-width: max-content; padding-right: 16px; }
+  #peek .ln .no { flex: none; width: 54px; padding-right: 14px; text-align: right; color: #b1b5bd; user-select: none; -webkit-user-select: none; }
+  #peek .ln.hit { background: #fff4d6; }
+  #peek .ln.hit .no { color: #a4700a; font-weight: 600; }
+  #peek .say { padding: 18px; color: var(--dim); font: 13px/1.5 system-ui, -apple-system, sans-serif; }
+  #peek .tk-k { color: #8a3fb5; }
+  #peek .tk-s { color: #2f7d4a; }
+  #peek .tk-c { color: #8e95a0; font-style: italic; }
+  #peek .tk-n { color: #b5532a; }
+  #peek .tk-a { color: #a4700a; }
+  /* A sheet drops from the top of the map, as a macOS sheet drops from its window's title. */
+  #scope-sheet { position: absolute; left: 50%; top: 0; width: min(470px, calc(100% - 32px)); transform: translateX(-50%); padding: 14px 16px 12px; border-radius: 0 0 16px 16px; background: rgba(255, 255, 255, .97); backdrop-filter: blur(20px) saturate(1.3); -webkit-backdrop-filter: blur(20px) saturate(1.3); box-shadow: 0 20px 50px rgba(40, 36, 60, .26), 0 0 0 1px rgba(70, 60, 100, .1); z-index: 7; animation: sheet-down .34s cubic-bezier(.2, 1.1, .4, 1); }
+  #scope-sheet[hidden] { display: none; }
+  @keyframes sheet-down { from { transform: translate(-50%, -100%); } to { transform: translate(-50%, 0); } }
+  #scope-sheet .title { font-weight: 600; font-size: 14px; }
+  #scope-sheet .sub { font-size: 12px; color: var(--dim); margin: 3px 0 10px; }
+  #scope-sheet .choice { display: grid; grid-template-columns: 18px 1fr; gap: 1px 8px; padding: 7px 9px; border: 1px solid var(--line); border-radius: 10px; margin-bottom: 6px; cursor: pointer; }
+  #scope-sheet .choice:has(input:checked) { border-color: var(--accent); background: #faf7fe; }
+  #scope-sheet .choice input { margin: 3px 0 0; grid-row: span 2; accent-color: var(--accent); }
+  #scope-sheet .choice b { font-size: 13px; }
+  #scope-sheet .choice span { font-size: 12px; color: var(--dim); }
+  #scope-sheet .folders { grid-column: 2; display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+  #scope-sheet .folders label { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; padding: 1px 8px 1px 5px; border: 1px solid var(--line); border-radius: 999px; background: #fff; cursor: pointer; }
+  #scope-sheet .folders label:has(input:checked) { border-color: #b5a2d9; background: #f4effc; }
+  #scope-sheet .folders input { margin: 0; accent-color: var(--accent); }
+  #scope-sheet .folders .n { color: var(--dim); font-size: 11px; }
+  #scope-sheet .row { display: flex; gap: 6px; justify-content: flex-end; margin-top: 8px; }
+  .scope-line { font-size: 12px; color: var(--dim); margin-top: 10px; display: flex; gap: 6px; align-items: baseline; }
+  .scope-line b { color: var(--text); font-weight: 600; }
+  .scope-line .link { margin-left: auto; border: none; background: none; color: var(--accent); font-size: 12px; padding: 0 2px; }
+  #lasso { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+  #lasso path { fill: rgba(106, 69, 168, .07); stroke: #8f73c4; stroke-width: 1.6; stroke-dasharray: 5 4; stroke-linejoin: round; stroke-linecap: round; transition: opacity .25s; }
+  #lasso path.gone { opacity: 0; }
+  .picklist { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+  .picklist button { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 1px 9px 1px 6px; }
+  .picklist i { width: 9px; height: 9px; border-radius: 3px; border: 1px solid; display: inline-block; }
   #rubber { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; opacity: 0; transition: opacity .15s; }
   #rubber.on { opacity: 1; }
   #rubber path { fill: none; stroke: #b5a2d9; stroke-width: 2; stroke-dasharray: 6 5; stroke-linecap: round; animation: march .6s linear infinite; }
@@ -132,7 +194,16 @@
   #canvas svg.filtering g.edgePaths, #canvas svg.filtering g.edgeLabels { opacity: .3; }
   #pills, #filecaps { position: absolute; inset: 0; transition: opacity .35s; }
   #pills.off, #filecaps.off { opacity: 0; }
-  .pill { position: absolute; left: 0; top: 0; transform: translate(-50%, -50%); padding: 4px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; color: #3b3a40; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 3px 12px rgba(70, 60, 100, .12); }
+  .pill { position: absolute; left: 0; top: 0; z-index: 1; transform: translate(-50%, -50%); padding: 4px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; color: #3b3a40; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 3px 12px rgba(70, 60, 100, .12); transition: font-size .18s, padding .18s; }
+  /* A name with no room left is a dot, as on a map: it says its name under the pointer. */
+  .pill.faded { opacity: .28; transition: opacity .35s; }
+  .pill.dot { z-index: 0; width: 11px; height: 11px; padding: 0; font-size: 0; background: var(--ink, #8e889e) !important; box-shadow: 0 0 0 2px #fff, 0 2px 6px rgba(70, 60, 100, .28); pointer-events: auto; cursor: pointer; }
+  .pill.dot:hover { width: auto; height: auto; padding: 4px 12px; font-size: 13px; z-index: 5; background: var(--paper, #fff) !important; box-shadow: 0 6px 18px rgba(70, 60, 100, .22); }
+  #regions { position: absolute; inset: 0; transition: opacity .35s; }
+  #regions.off { opacity: 0; }
+  .region { position: absolute; left: 0; top: 0; transform: translate(-50%, 0); font-weight: 700; letter-spacing: .02em; color: rgba(128, 110, 84, .78); white-space: nowrap; text-shadow: 0 0 6px #fff, 0 0 2px #fff; transition: opacity .25s; }
+  .region.hush { opacity: 0; }
+  #canvas.zoom-far g.cluster-label { opacity: 0; transition: opacity .35s; }
   #canvas.zoom-far .members-group, #canvas.zoom-far .methods-group, #canvas.zoom-far .label-group, #canvas.zoom-far .annotation-group, #canvas.zoom-far g.edgeLabels { opacity: 0; transition: opacity .35s; }
   .filecap { position: absolute; left: 0; top: 0; transform: translateX(-50%); padding: 2px 8px; border-radius: 8px; background: rgba(255, 255, 255, .85); font: 11px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; color: #6b665e; white-space: nowrap; box-shadow: 0 0 0 1px rgba(200, 192, 178, .6); }
   #canvas .unfocused { opacity: .28; transition: opacity .35s; }
@@ -190,6 +261,10 @@
   .banner { border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; font-size: 13px; }
   .banner.drift { background: var(--warn-bg); border: 1px solid var(--warn-line); }
   .banner.unseen { background: #f3f6fd; border: 1px solid #c9d7f7; }
+  .digest-head { margin-bottom: 5px; }
+  .digest { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 4px; }
+  .digest > span { background: #fff; border: 1px solid #d6e0f7; border-radius: 999px; padding: 1px 9px; font-size: 12px; }
+  .digest .dim { font-size: 11px; }
   .banner .row { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
   .banner:empty { display: none; }
   .dim { color: var(--dim); font-size: 12px; }
@@ -223,6 +298,20 @@
   .fold[open] > summary::before { content: "\25BE"; }
   .fold > .body { padding: 0 8px 2px; }
   .decision:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  /* Decisions already made read as a ledger: one line each, the card one click away. */
+  .ledger-head { display: flex; align-items: center; gap: 8px; margin: 14px 2px 6px; font-size: 12px; color: var(--dim); }
+  .ledger-head::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+  .ledger-list { background: #fff; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .decision.ledger { display: flex; align-items: center; gap: 10px; padding: 8px 12px; cursor: pointer; border-bottom: 1px solid var(--line); }
+  .decision.ledger:last-child, .ledger-list > .card.decision:last-child { border-bottom: none; }
+  .decision.ledger:hover { background: #faf9fc; }
+  .ledger .lid { flex: none; width: 30px; height: 30px; border-radius: 50%; background: #eef8f1; color: #2f8a4e; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
+  .ledger .lbody { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .ledger .lq { font-size: 11.5px; color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ledger .lchoice { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ledger .lwhen { flex: none; font-size: 11px; color: var(--dim); }
+  .ledger-list > .card.decision { margin: 0; border: none; border-bottom: 1px solid var(--line); border-radius: 0; }
+  .decision .fold-up { border: none; background: none; color: var(--accent); font-size: 12px; padding: 0 2px; }
   .why-chosen { margin-top: 7px; padding-top: 6px; border-top: 1px solid var(--line); color: var(--dim); font-size: 12px; }
   .decision .q { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
   .decision .q .text { flex: 1; min-width: 0; }
@@ -268,7 +357,8 @@
   .banner .close { margin-left: auto; border: none; background: none; color: var(--dim); padding: 0 2px; }
   .banner .top { display: flex; align-items: flex-start; gap: 6px; }
   #composer .target { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; font-size: 12px; }
-  #composer .target b { font-weight: 600; }
+  #composer .target b { font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #composer .target > .dim, #composer .target button { flex: none; }
   #composer .target button { padding: 0 6px; }
   #composer textarea { width: 100%; min-height: 64px; resize: vertical; font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; }
   #composer textarea:focus { outline: none; border-color: var(--accent); }
@@ -309,9 +399,15 @@
   details.outgroup li { list-style: none; margin-top: 2px; font-size: 12px; }
   details.outgroup li code { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   #error { color: var(--red); white-space: pre-wrap; font-size: 12px; }
-  #scrubber { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; padding: 6px 14px; border-radius: 999px; background: rgba(255, 255, 255, .78); backdrop-filter: blur(14px) saturate(1.4); -webkit-backdrop-filter: blur(14px) saturate(1.4); box-shadow: 0 8px 28px rgba(70, 60, 100, .12), 0 0 0 1px rgba(70, 60, 100, .07); font-size: 12px; color: var(--dim); opacity: .6; transition: opacity .25s; z-index: 3; white-space: nowrap; }
+  #scrubber { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; padding: 6px 14px; border-radius: 999px; background: rgba(255, 255, 255, .86); backdrop-filter: blur(14px) saturate(1.4); -webkit-backdrop-filter: blur(14px) saturate(1.4); box-shadow: 0 8px 28px rgba(70, 60, 100, .12), 0 0 0 1px rgba(70, 60, 100, .07); font-size: 12px; color: var(--dim); transition: opacity .2s, transform .34s cubic-bezier(.2, 1.25, .4, 1); z-index: 3; white-space: nowrap; }
   #scrubber[hidden] { display: none; }
-  #scrubber:hover, #scrubber.playing, #scrubber:focus-within { opacity: 1; }
+  /* Like the Dock: a line at the bottom until the pointer comes near, a key asks, or it plays. */
+  #scrubber.tucked { opacity: 0; transform: translate(-50%, 16px) scale(.92); pointer-events: none; }
+  #scrub-handle { position: absolute; left: 50%; bottom: 7px; width: 76px; height: 5px; margin-left: -38px; border-radius: 999px; background: rgba(125, 106, 168, .3); z-index: 3; cursor: pointer; transition: opacity .2s, background .2s; }
+  #scrub-handle::before { content: ''; position: absolute; left: -12px; right: -12px; top: -10px; bottom: -6px; }
+  #scrub-handle:hover { background: rgba(125, 106, 168, .55); }
+  #scrub-handle.off { opacity: 0; pointer-events: none; }
+  #scrub-handle[hidden] { display: none; }
   #scrubber input[type=range] { width: 240px; accent-color: #b5a2d9; }
   #scrubber button { border: none; background: none; font-size: 13px; padding: 0 2px; color: #7d6aa8; }
   #toast { position: fixed; left: 50%; bottom: 74px; transform: translateX(-50%); background: #1d2228; color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 13px; opacity: 0; transition: opacity .2s; pointer-events: none; }
@@ -388,8 +484,6 @@
     <div class="tools">
       <span id="rings" class="map-only" hidden></span>
       <button id="notify" class="map-only quiet" title="Claude가 답하면 작은 소리와 알림으로 알려 줘">🔕</button>
-      <span class="chip off map-only" id="link">세션 확인 중</span>
-      <button id="connect" class="map-only" hidden></button>
       <button id="edit" class="diagram-only" title="e">원문 편집</button>
       <button id="filter-chip" class="map-only" hidden title="필터 풀기"></button>
       <button id="flow" class="map-only" title="호출 흐름을 순서대로 재생 (p)">▶ 흐름</button>
@@ -401,7 +495,8 @@
     </div>
   </header>
   <div id="activity" class="map-only">활동 없음</div>
-  <div id="stage"><div id="canvas"></div><div id="overlay"><svg id="rubber"><path d=""/><circle r="5"/></svg><svg id="leader"><path d=""/><circle r="4"/></svg><div id="pills"></div><div id="filecaps"></div><div id="badges"></div><div id="asks"></div><div id="firefly"><i></i></div><div id="caption"></div><div id="impact"></div><div id="pins"></div><div id="popover" class="no-pan" hidden></div><div id="decider" class="no-pan" hidden></div></div><div id="preview-bar" class="no-pan"></div><div id="legend-hud" class="no-pan map-only" hidden><div class="legend" id="legend"></div></div>
+  <div id="stage"><div id="island" class="no-pan map-only" hidden><i></i><span class="what">세션 확인 중</span></div><div id="canvas"></div><div id="overlay"><svg id="rubber"><path d=""/><circle r="5"/></svg><svg id="lasso"><path d=""/></svg><svg id="leader"><path d=""/><circle r="4"/></svg><div id="regions"></div><div id="pills"></div><div id="filecaps"></div><div id="badges"></div><div id="asks"></div><div id="firefly"><i></i></div><div id="caption"></div><div id="impact"></div><div id="pins"></div><div id="popover" class="no-pan" hidden></div><div id="decider" class="no-pan" hidden></div></div><div id="scope-sheet" class="no-pan map-only" hidden></div><div id="peek" class="no-pan" hidden><div class="bar"><span class="name"></span><span class="where"></span><button id="peek-open">편집기로 열기</button><button id="peek-close" title="스페이스 · Esc">✕</button></div><div class="tabs" hidden></div><div class="code" tabindex="-1"></div></div><div id="preview-bar" class="no-pan"></div><div id="legend-hud" class="no-pan map-only" hidden><div class="legend" id="legend"></div></div>
+    <div id="scrub-handle" class="no-pan" hidden title="타임머신 · 마우스를 아래로 가져오거나 [ ] 키"></div>
     <div id="scrubber" class="no-pan" hidden title="[ ] 키로 한 버전씩"><button id="scrub-play" title="처음부터 재생">▶</button><input id="scrub-range" type="range" min="0" max="1" step="1"><span id="scrub-label"></span></div>
   </div>
   <aside>
@@ -477,9 +572,9 @@ const TYPE_NAMES = {
   sequenceDiagram: '시퀀스', flowchart: '플로차트', graph: '플로차트', classDiagram: '클래스', stateDiagram: '상태',
   'stateDiagram-v2': '상태', erDiagram: 'ER', gantt: '간트', mindmap: '마인드맵', timeline: '타임라인', pie: '파이', journey: '여정', gitGraph: 'git',
 }
-const LOCAL = ['expand', 'collapse', 'hide', 'reset', 'decide', 'open', 'lean', 'reject', 'blocked']
+const LOCAL = ['expand', 'collapse', 'hide', 'reset', 'decide', 'open', 'lean', 'reject', 'blocked', 'scope']
 /** What the mod applies and then drops from the thread: folds, and the notes left while deciding. */
-const VIEW_ONLY = ['expand', 'collapse', 'lean', 'reject', 'blocked']
+const VIEW_ONLY = ['expand', 'collapse', 'lean', 'reject', 'blocked', 'scope']
 /** The revision shown instead of the current one, while looking back. */
 let previewRev = null
 let versions = []
@@ -507,9 +602,7 @@ async function copyText(text) {
   area.remove()
   return isCopied
 }
-$('connect').innerHTML = '<code>' + esc(CONNECT) + '</code> 복사'
-$('connect').title = 'Claude Code 세션에 붙여 넣고 실행하면 그 세션이 이 지도의 피드백을 받아'
-$('connect').onclick = async () => {
+async function copyConnect() {
   toast(await copyText(CONNECT)
     ? '복사했어. Claude Code 세션에 붙여 넣고 실행하면 그 세션이 피드백을 받아'
     : '복사하지 못했어. 직접 입력해 줘: ' + CONNECT)
@@ -535,10 +628,13 @@ function size() {
   const box = svg.viewBox.baseVal
   return { w: box.width || 1, h: box.height || 1 }
 }
+/** Room the floating bars take when shown: the status island on top, the time machine below. */
+const FIT_BOTTOM = 56
 function fit() {
   const { w, h } = size()
-  const k = Math.min((stage.clientWidth - 40) / w, (stage.clientHeight - 40) / h, 2)
-  view = { k, x: (stage.clientWidth - w * k) / 2, y: 20 }
+  const top = isMap() ? 54 : 20
+  const k = Math.min((stage.clientWidth - 40) / w, (stage.clientHeight - top - FIT_BOTTOM) / h, 2)
+  view = { k, x: (stage.clientWidth - w * k) / 2, y: top }
   apply()
 }
 function zoomAt(factor, cx, cy) {
@@ -548,10 +644,27 @@ function zoomAt(factor, cx, cy) {
   view.k = k
   apply()
 }
+/**
+ * A notched mouse wheel, as opposed to a trackpad's two fingers. Both arrive as wheel events.
+ * A wheel moves in whole steps (Chrome: 40px a notch, elsewhere 100 or 120, Firefox in lines);
+ * a trackpad streams small, often fractional pixels, sideways too. A stream stays a trackpad
+ * until it rests, so one whole-step event inside a swipe does not turn it into a zoom.
+ */
+let smoothUntil = 0
+function isWheelNotch(e) {
+  if (e.deltaMode !== 0) return true
+  const now = performance.now()
+  const y = Math.abs(e.deltaY)
+  const isStep = e.deltaX === 0 && Number.isInteger(y) && y >= 40 && (y % 40 === 0 || y % 100 === 0 || y % 120 === 0)
+  if (!isStep) { smoothUntil = now + 350; return false }
+  return now > smoothUntil
+}
+// As in Maps and Freeform: two fingers move the map, a pinch (ctrlKey) or ⌘ zooms it. A mouse
+// wheel has no second gesture to zoom with, so its notches keep zooming.
 stage.addEventListener('wheel', e => {
   e.preventDefault()
   const r = stage.getBoundingClientRect()
-  if (e.ctrlKey || e.metaKey || Math.abs(e.deltaY) > Math.abs(e.deltaX) && !e.shiftKey) {
+  if (e.ctrlKey || e.metaKey || (!e.shiftKey && isWheelNotch(e))) {
     zoomAt(Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0015)), e.clientX - r.left, e.clientY - r.top)
   } else {
     view.x -= e.deltaX; view.y -= e.deltaY; apply()
@@ -574,6 +687,8 @@ function endDrag() {
 }
 const boxUnder = (x, y) => {
   const hit = document.elementFromPoint(x, y)
+  const dot = hit && hit.closest && hit.closest('.pill[data-id]')
+  if (dot && page && page.elements[dot.dataset.id] && nodeOf(dot.dataset.id)) return { id: dot.dataset.id, node: nodeOf(dot.dataset.id) }
   const node = hit && hit.closest && hit.closest('#canvas g.node')
   const id = node ? idOf(node) : null
   return id && page && page.elements[id] ? { id, node } : null
@@ -583,6 +698,13 @@ stage.addEventListener('pointerdown', e => {
   if (e.target.closest && e.target.closest('.no-pan')) return
   if (e.button !== 0) return
   closePopover()
+  // ⇧ and drag: a loop drawn by hand, and every box inside it becomes the one thing talked about.
+  if (e.shiftKey && canConnect()) {
+    drag = { x: e.clientX, y: e.clientY, moved: false, mode: 'lasso', points: [[e.clientX, e.clientY]], timers: [] }
+    $('lasso').querySelector('path').classList.remove('gone')
+    stage.setPointerCapture(e.pointerId)
+    return
+  }
   const box = canConnect() ? boxUnder(e.clientX, e.clientY) : null
   drag = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y, moved: false, from: box && box.id, node: box && box.node, mode: box && e.altKey ? 'connect' : 'pan', timers: [] }
   if (box && drag.mode === 'pan') {
@@ -593,6 +715,13 @@ stage.addEventListener('pointerdown', e => {
 })
 stage.addEventListener('pointermove', e => {
   if (!drag) return
+  if (drag.mode === 'lasso') {
+    const [lx, ly] = drag.points[drag.points.length - 1]
+    if (Math.abs(e.clientX - lx) + Math.abs(e.clientY - ly) > 3) drag.points.push([e.clientX, e.clientY])
+    drag.moved = drag.points.length > 2
+    drawLasso(drag.points)
+    return
+  }
   const dx = e.clientX - drag.x, dy = e.clientY - drag.y
   const isFar = Math.abs(dx) + Math.abs(dy) > 4
   if (drag.mode === 'lifted' && isFar) drag.mode = 'connect'
@@ -609,6 +738,7 @@ stage.addEventListener('pointerup', e => {
   if (!drag) return
   const was = drag
   endDrag()
+  if (was.mode === 'lasso') { lassoPick(was.points); return }
   if (was.mode === 'connect' && was.moved) {
     const to = boxUnder(e.clientX, e.clientY)
     if (to && to.id !== was.from) openConnectPopover(was.from, to.id)
@@ -627,8 +757,40 @@ stage.addEventListener('pointerup', e => {
   // Pointer capture makes the stage the target; ask what is really under the pointer.
   pick(document.elementFromPoint(e.clientX, e.clientY) || stage)
 })
-stage.addEventListener('pointercancel', endDrag)
+stage.addEventListener('pointercancel', () => { endDrag(); $('lasso').querySelector('path').setAttribute('d', '') })
 let lastClick = null
+function drawLasso(points) {
+  const s = stage.getBoundingClientRect()
+  $('lasso').querySelector('path').setAttribute('d', points.map(([x, y], n) => (n === 0 ? 'M' : 'L') + (x - s.left) + ',' + (y - s.top)).join(' ') + ' Z')
+}
+/** The boxes whose centres the loop holds; the loop itself fades as they light up. */
+function lassoPick(points) {
+  const path = $('lasso').querySelector('path')
+  path.classList.add('gone')
+  setTimeout(() => { if (path.classList.contains('gone')) path.setAttribute('d', '') }, 300)
+  if (points.length < 3) return
+  const s = stage.getBoundingClientRect()
+  const poly = points.map(([x, y]) => [x - s.left, y - s.top])
+  const inside = (x, y) => {
+    let isIn = false
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const [xi, yi] = poly[i]
+      const [xj, yj] = poly[j]
+      if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) isIn = !isIn
+    }
+    return isIn
+  }
+  const ids = []
+  for (const node of canvas.querySelectorAll('g.node')) {
+    const id = idOf(node)
+    if (!id || !page.elements[id] || node.classList.contains('ghost')) continue
+    const b = screenBox(node)
+    if (inside(b.x + b.w / 2, b.y + b.h / 2)) ids.push(id)
+  }
+  if (ids.length === 0) { toast('올가미 안에 상자가 없어'); return }
+  setTarget(ids.length === 1 ? { kind: 'element', id: ids[0] } : { kind: 'elements', ids })
+  if (ids.length > 1 && !$('app').classList.contains('side-off')) $('text').focus()
+}
 $('fit').onclick = fit
 $('actual').onclick = () => { const r = stage.getBoundingClientRect(); zoomAt(1 / view.k, r.width / 2, r.height / 2) }
 addEventListener('keydown', e => {
@@ -741,6 +903,8 @@ function pick(hit) {
     if (part && page.elements[part.dataset.part]) return setTarget({ kind: 'element', id: part.dataset.part })
     return setTarget({ kind: 'map' })
   }
+  const dot = hit.closest && hit.closest('.pill[data-id]')
+  if (dot && page && page.elements[dot.dataset.id]) return setTarget({ kind: 'element', id: dot.dataset.id })
   const index = edgeIndexOf(hit)
   if (index !== undefined && page && page.edges[index]) {
     const drawn = page.edges[index]
@@ -767,6 +931,8 @@ function markTarget() {
   } else if (target.kind === 'element') {
     const node = nodeOf(target.id) || clusterOf(target.id)
     if (node) node.classList.add('picked')
+  } else if (target.kind === 'elements') {
+    for (const id of target.ids) { const node = nodeOf(id) || clusterOf(id); if (node) node.classList.add('picked') }
   }
   if (target.kind === 'relation') {
     const index = page.edges.findIndex(e => e.from === target.from && e.to === target.to)
@@ -792,6 +958,10 @@ function targetName(t) {
   if (!t || t.kind === 'map') return '지도 전체'
   if (t.kind === 'decision') return t.id + ' 결정'
   if (t.kind === 'relation') return t.from + ' → ' + t.to + (t.label ? ' (' + t.label + ')' : '')
+  if (t.kind === 'elements') {
+    const names = t.ids.map(id => (page && page.elements[id] && page.elements[id].label) || id)
+    return '상자 ' + names.length + '개 · ' + names.slice(0, 3).join(', ') + (names.length > 3 ? ' 외 ' + (names.length - 3) : '')
+  }
   if (t.kind === 'message') return seqName(t.id)
   const el = page && page.elements[t.id]
   return el ? (el.label || el.id) : t.id
@@ -876,7 +1046,7 @@ function composer() {
     if (el && el.kind === 'group' && !collapsed.has(el.id)) row.appendChild(button('접기', () => sendFeedback('collapse')))
     if (el && el.kind !== 'group' && el.parent && !collapsed.has(el.parent)) row.appendChild(button('그룹 접기', () => sendFeedback('collapse', { target: { kind: 'element', id: el.parent } })))
     row.appendChild(button('숨기기', () => sendFeedback('hide')))
-  } else if (target.kind === 'relation') {
+  } else if (target.kind === 'relation' || target.kind === 'elements') {
     row.appendChild(button('설명해 줘', () => sendFeedback('explain')))
   } else if (page && page.view && Object.keys(page.view).some(k => k === 'collapse' || k === 'hide')) {
     row.appendChild(button('보기 초기화', () => sendFeedback('reset')))
@@ -945,6 +1115,16 @@ function decisionOfTarget(item) {
 }
 function detail() {
   if (isSeq() && target.kind === 'message') return seqDetail()
+  if (target.kind === 'elements' && page) {
+    $('detail').innerHTML = '<div class="q">올가미로 고른 상자 ' + target.ids.length + '개</div>' +
+      '<div class="dim">위에 적으면 이 상자들 전부에 대한 피드백으로 가. 하나를 누르면 그 상자만 골라.</div>' +
+      '<div class="picklist">' + target.ids.map(id => {
+        const paint = swatchOf(id) || { fill: '#fff', stroke: '#8e889e' }
+        return '<button data-pick="' + esc(id) + '"><i style="background:' + paint.fill + ';border-color:' + paint.stroke + '"></i>' + esc((page.elements[id] || {}).label || id) + '</button>'
+      }).join('') + '</div>'
+    $('detail').querySelectorAll('button[data-pick]').forEach(b => { b.onclick = () => setTarget({ kind: 'element', id: b.dataset.pick }) })
+    return
+  }
   const el = target.kind === 'element' && page && page.elements[target.id]
   if (target.kind === 'relation' && page) {
     const drawn = page.edges.find(e => e.from === target.from && e.to === target.to)
@@ -978,25 +1158,14 @@ function detail() {
 }
 
 // ---------------------------------------------------------------- the thread
-const ACTION_NAMES = { comment: '', explain: '설명 요청', expand: '펼치기', collapse: '접기', hide: '숨기기', reset: '보기 초기화', decide: '결정', lean: '기울이기', reject: '기각 사유', blocked: '대기 이유', propose: '다른 길' }
+const ACTION_NAMES = { comment: '', explain: '설명 요청', expand: '펼치기', collapse: '접기', hide: '숨기기', reset: '보기 초기화', decide: '결정', lean: '기울이기', reject: '기각 사유', blocked: '대기 이유', propose: '다른 길', scope: '범위' }
 function statusOf(item) {
   if (item.status === 'sent') return thread.isListening ? (thread.isBusy && !item.urgent ? '작업 끝나면 전달' : '전달 중') : '받을 세션 기다리는 중'
   if (item.status === 'working') return LOCAL.includes(item.action) && item.action !== 'decide' ? '반영 중' : 'Claude 작업 중'
   return { answered: '답변', done: '반영됨', failed: '실패' }[item.status] || item.status
 }
 function renderThread() {
-  const link = $('link')
-  const who = thread.owner ? thread.owner.label : ''
-  // With nobody listening, the last owner's name would read as where feedback goes: say who waits instead.
-  const waiting = thread.items.filter(i => i.status === 'sent').length
-  link.className = 'chip ' + (thread.isBusy ? 'busy' : thread.isListening ? 'on' : 'off')
-  link.textContent = thread.isBusy ? '● Claude 작업 중 · ' + who
-    : thread.isListening ? '● Claude 연결됨 · ' + who
-    : '○ 받을 세션 없음' + (waiting ? ' · 대기 ' + waiting : '')
-  link.title = thread.isListening
-    ? '피드백을 받는 세션: ' + who
-    : '이 지도를 열어 둔 Claude 세션이 없어. Claude Code에서 ' + CONNECT + ' 명령을 실행하면 그 세션이 피드백을 받고, 기다리던 피드백도 그때 전달돼.'
-  $('connect').hidden = thread.isListening
+  renderIsland()
   const items = [...thread.items].reverse()
   const openCount = thread.items.filter(i => i.status === 'sent' || i.status === 'working').length
   setTabCount('thread', openCount, openCount ? '진행 중 ' + openCount : '')
@@ -1026,6 +1195,8 @@ function renderThread() {
       if (item && item.target && (item.target.kind === 'element' || item.target.kind === 'relation' || item.target.kind === 'message')) {
         flyCard(div, item.target)
         setTarget(item.target)
+      } else if (item && item.target && item.target.kind === 'elements') {
+        setTarget(item.target)
       }
     }
   })
@@ -1046,6 +1217,9 @@ async function loadThread() {
   })
   freshIds = new Set(landed.map(i => i.id))
   renderThread()
+  // The digest counts answers: the first thread to arrive, and every answer after, can change it.
+  if (landed.length || !isThreadLoaded) renderUnseen()
+  isThreadLoaded = true
   for (const item of landed) {
     if (item.target && (item.target.kind === 'element' || item.target.kind === 'message')) {
       for (const node of nodesOf(item.target.id)) { node.classList.remove('flash-reply'); void node.getBBox(); node.classList.add('flash-reply') }
@@ -1053,10 +1227,12 @@ async function loadThread() {
   }
   refreshDecisionCards()
   const answered = landed.filter(i => i.status === 'answered' && i.reply)
+  if (answered.length) islandSays(answered[answered.length - 1])
   for (const item of answered) replyBubble(item)
   if (answered.length) notifyAnswer(answered[answered.length - 1])
   else if (landed.length) toast('지도에 반영했어')
 }
+let isThreadLoaded = false
 let toastTimer = null
 function toast(text) {
   const t = $('toast')
@@ -1104,6 +1280,7 @@ function renderActivity() {
   const focusId = looking ? looking.current.ids.find(id => nodesOf(id).length > 0) : null
   moveFirefly(focusId, looking ? looking.current : null)
   $('activity').innerHTML = lines.length ? lines.join('<span class="sep">|</span>') : '<span class="dim">Claude가 지금 이 지도와 관련된 파일을 보고 있지 않아</span>'
+  renderIsland()
   renderDrift(drift)
   applyFog(drift)
 }
@@ -1124,48 +1301,147 @@ function renderDrift(drift) {
   })
 }
 
+// ---------------------------------------------------------------- the island: what Claude is doing, in one place
+/**
+ * The connection chip and the activity strip said the same session twice and pushed the title
+ * out. One pill over the map says it once: a dot when idle, wide while Claude reads or edits,
+ * a line of the answer when one lands. It changes shape only when what it says changes.
+ */
+let islandSaid = ''
+let islandReply = null
+let islandTimer = null
+function islandSays(item) {
+  const first = String(item.reply).split('\n').find(l => l.trim() !== '') || ''
+  islandReply = { id: item.id, text: first.length > 70 ? first.slice(0, 69) + '…' : first, until: performance.now() + 6500 }
+  renderIsland()
+  clearTimeout(islandTimer)
+  islandTimer = setTimeout(renderIsland, 6600)
+}
+const nameOfId = id => page && page.elements[id] ? (page.elements[id].label || id) : isSeq() ? seqName(id) : id
+function islandState() {
+  const who = thread.owner ? thread.owner.label : ''
+  const lines = activity.sessions.map(s => s.label + (s.isOwner ? '' : ' (다른 세션)') + ' · ' +
+    (s.isRunning ? (s.current ? (KIND_NAMES[s.current.kind] || s.current.kind) + ' ' + (s.current.path || s.current.pattern || '') : '생각하는 중') : '쉬는 중'))
+  const title = (thread.isListening ? '피드백을 받는 세션: ' + who : '이 지도를 열어 둔 Claude 세션이 없어. 눌러서 ' + CONNECT + ' 명령을 복사한 다음 Claude Code 세션에서 실행하면, 그 세션이 피드백을 받고 기다리던 피드백도 그때 전달돼.') +
+    (lines.length ? '\n' + lines.join('\n') : '')
+  if (islandReply !== null && performance.now() < islandReply.until) {
+    const id = islandReply.id
+    return { kind: 'reply', html: '<b>Claude</b> ' + esc(islandReply.text), title: '눌러서 대화에서 보기', click: () => { islandReply = null; showThreadItem(id); renderIsland() } }
+  }
+  if (!thread.isListening) {
+    const waiting = thread.items.filter(i => i.status === 'sent').length
+    return { kind: 'off', html: '받을 세션 없음' + (waiting ? ' · 대기 ' + waiting : '') + ' <span class="soft">· 눌러서 명령 복사</span>', title, click: copyConnect }
+  }
+  const running = activity.sessions.filter(s => s.isRunning)
+  const lead = running.find(s => s.isOwner) || running[0]
+  const more = running.length > 1 ? ' <span class="soft">+' + (running.length - 1) + '</span>' : ''
+  const c = lead && lead.current
+  if (c) {
+    const ids = (c.ids || []).filter(id => nodesOf(id).length > 0)
+    const names = (c.ids || []).map(nameOfId)
+    const where = names.length ? names[0] + (names.length > 1 ? ' 외 ' + (names.length - 1) : '') : c.outside ? '지도 밖' : ''
+    return { kind: 'busy', html: '<b>' + esc(KIND_NAMES[c.kind] || c.kind) + '</b>' + (where ? ' · ' + esc(where) : '') +
+      ' <span class="soft">· ' + esc(baseName(c.path || c.pattern || '')) + '</span>' + more, title,
+      click: ids.length ? () => flyTo(ids[0]) : null }
+  }
+  if (lead || thread.isBusy) return { kind: 'busy', html: '<b>생각하는 중</b>' + more, title, click: null }
+  return { kind: 'on', html: '연결됨', title, click: null }
+}
+function renderIsland() {
+  const island = $('island')
+  island.hidden = !isMap()
+  if (island.hidden) return
+  const s = islandState()
+  island.title = s.title
+  island.onclick = s.click
+  island.className = 'no-pan map-only ' + s.kind + (s.click ? ' can-click' : '')
+  const said = s.kind + '|' + s.html
+  if (said === islandSaid) return
+  islandSaid = said
+  const before = island.getBoundingClientRect().width
+  island.querySelector('.what').innerHTML = s.html
+  const after = island.getBoundingClientRect().width
+  if (!REDUCED.matches && before > 0 && Math.abs(after - before) > 2) {
+    island.animate([{ width: before + 'px' }, { width: after + 'px' }], { duration: 380, easing: 'cubic-bezier(.3, 1.35, .5, 1)' })
+  }
+}
+
 // ---------------------------------------------------------------- since you last looked
 const seenKey = 'design-map-seen-' + NAME
 function facts(p) {
   const elements = {}
   for (const [id, el] of Object.entries(Object.assign({}, p.elements, p.messages || {}, p.fragments || {}))) {
-    const { working, number, ...fact } = el
-    elements[id] = JSON.stringify(fact)
+    elements[id] = designFact(el)
   }
-  return { revision: p.revision, elements, relations: p.relations.map(r => r.from + '>' + r.to + ':' + (r.kind || '') + ':' + (r.label || '')) }
+  return {
+    revision: p.revision,
+    elements,
+    relations: p.relations.map(r => r.from + '>' + r.to + ':' + (r.kind || '') + ':' + (r.label || '')),
+    decisions: Object.fromEntries((p.decisions || []).map(d => [d.id, d.chosen || ''])),
+  }
+}
+/**
+ * Only a change in the design counts as news. Progress (steps, done, files) moves on every
+ * implementation turn; counting it lit every box blue the moment the order was written down.
+ */
+function designFact(el) {
+  const { working, number, steps, done, files, ...fact } = el
+  if (fact.members) fact.members = fact.members.map(({ done, ...m }) => m)
+  return JSON.stringify(fact)
 }
 function readSeen() {
-  try { return JSON.parse(localStorage.getItem(seenKey) || 'null') } catch { return null }
+  try {
+    const seen = JSON.parse(localStorage.getItem(seenKey) || 'null')
+    // Baselines saved before progress was left out still carry it: strip it the same way.
+    if (seen) for (const id in seen.elements) seen.elements[id] = designFact(JSON.parse(seen.elements[id]))
+    return seen
+  } catch { return null }
 }
 function markSeen() {
-  try { localStorage.setItem(seenKey, JSON.stringify(facts(page))) } catch {}
+  // When it was seen, too: an answer that lands after that is news, one from before is not.
+  try { localStorage.setItem(seenKey, JSON.stringify({ ...facts(page), at: Date.now() })) } catch {}
   renderUnseen()
 }
 function renderUnseen() {
   canvas.querySelectorAll('.unseen').forEach(n => n.classList.remove('unseen'))
   const seen = readSeen()
   if (!page) return
-  if (!seen) { markSeen(); return }
+  // A map first seen empty (opened before its first update) has nothing to compare against:
+  // everything drawn after would read as new. Start the baseline at the first real picture.
+  if (!seen || Object.keys(seen.elements).length === 0) { markSeen(); return }
   const now = facts(page)
   const changed = Object.keys(now.elements).filter(id => seen.elements[id] !== undefined && seen.elements[id] !== now.elements[id])
   const added = Object.keys(now.elements).filter(id => seen.elements[id] === undefined)
   const removed = Object.keys(seen.elements).filter(id => now.elements[id] === undefined)
   const relAdded = now.relations.filter(r => !seen.relations.includes(r)).length
   const relRemoved = seen.relations.filter(r => !now.relations.includes(r)).length
-  if (changed.length + added.length + removed.length + relAdded + relRemoved === 0) { $('unseen').innerHTML = ''; return }
+  // What was decided and answered meanwhile, not only which boxes moved: that is what you missed.
+  const before = seen.decisions
+  const made = before === undefined ? [] : page.decisions.filter(d => d.chosen && (before[d.id] ?? '') !== d.chosen).map(d => d.id)
+  const asked = before === undefined ? [] : page.decisions.filter(d => !d.chosen && before[d.id] === undefined).map(d => d.id)
+  const isGap = seen.revision !== page.revision
+  const answers = !isGap || seen.at === undefined ? [] : thread.items.filter(i => i.reply && (i.repliedAt || 0) > seen.at)
+  if (changed.length + added.length + removed.length + relAdded + relRemoved + made.length + asked.length === 0) { $('unseen').innerHTML = ''; return }
   for (const id of [...changed, ...added]) {
     for (const node of nodesOf(id)) node.classList.add('unseen')
   }
   const parts = []
   const noun = isSeq() ? '항목' : '상자'
+  if (made.length) parts.push('결정 확정 ' + made.length + ' <span class="dim">' + made.map(esc).join(' ') + '</span>')
+  if (asked.length) parts.push('새 결정 ' + asked.length + ' <span class="dim">' + asked.map(esc).join(' ') + '</span>')
+  if (answers.length) parts.push('답변 ' + answers.length)
   if (changed.length) parts.push('바뀐 ' + noun + ' ' + changed.length)
   if (added.length) parts.push('새 ' + noun + ' ' + added.length)
-  if (removed.length) parts.push('지운 ' + noun + ' ' + removed.length + ' (' + removed.map(esc).join(', ') + ')')
+  if (removed.length) parts.push('지운 ' + noun + ' ' + removed.length + ' <span class="dim">' + removed.map(esc).join(', ') + '</span>')
   if (relAdded) parts.push('새 관계 ' + relAdded)
   if (relRemoved) parts.push('지운 관계 ' + relRemoved)
-  $('unseen').innerHTML = '마지막으로 확인한 rev ' + seen.revision + ' 뒤로 바뀐 것: ' + parts.join(' · ') + (isSeq() ? ' (파랗게 빛나는 항목)' : ' (파란 점선 상자)') +
-    '<div class="row"><button id="seen-ok">확인했어</button></div>'
+  const canPlay = isGap && ascending().some(v => v.revision === seen.revision)
+  $('unseen').innerHTML = '<div class="digest-head">' + (isGap ? '<b>rev ' + seen.revision + ' → ' + page.revision + '</b> 사이에 바뀐 것' : '지난번 본 뒤로 바뀐 것') + '</div>' +
+    '<div class="digest">' + parts.map(p => '<span>' + p + '</span>').join('') + '</div>' +
+    (changed.length + added.length ? '<div class="dim">' + (isSeq() ? '파랗게 빛나는 항목' : '파란 점선 상자') + '가 바뀐 곳이야.' + (canPlay ? ' M을 누르고 있으면 rev ' + seen.revision + ' 모습이 보여.' : '') + '</div>' : '') +
+    '<div class="row">' + (canPlay ? '<button id="seen-play">▶ 그사이 바뀐 것만 다시 보기</button>' : '') + '<button id="seen-ok">확인했어</button></div>'
   $('seen-ok').onclick = markSeen
+  if (canPlay) $('seen-play').onclick = () => playSince(seen.revision)
 }
 
 // ---------------------------------------------------------------- overlay: drawn over the map at screen size
@@ -1192,6 +1468,13 @@ function anchorOf(t) {
   if (t && (t.kind === 'element' || t.kind === 'message')) {
     const node = nodesOf(t.id)[0] || (t.kind === 'element' && clusterOf(t.id))
     if (node) { const b = screenBox(node); return { x: b.x + b.w / 2, y: b.y } }
+  }
+  if (t && t.kind === 'elements') {
+    const boxes = t.ids.map(id => nodeOf(id)).filter(Boolean).map(screenBox)
+    if (boxes.length) {
+      const left = Math.min(...boxes.map(b => b.x)), right = Math.max(...boxes.map(b => b.x + b.w))
+      return { x: (left + right) / 2, y: Math.min(...boxes.map(b => b.y)) }
+    }
   }
   if (t && t.kind === 'relation' && page && page.edges) {
     const index = page.edges.findIndex(e => e.from === t.from && e.to === t.to)
@@ -1309,7 +1592,9 @@ function askingBoxes() {
     for (const d of page.decisions) {
       if (d.chosen !== undefined) continue
       for (const place of placesOf(d.id)) {
-        if (!open.has(place.node)) open.set(place.node, { id: d.id, question: d.question, leaning: d.leaning, node: place.node })
+        // Leaning, the badge says which way in the option's own words.
+        const lean = d.leaning ? (d.options || []).find(o => o.id === d.leaning) : undefined
+        if (!open.has(place.node)) open.set(place.node, { id: d.id, question: d.question, toward: lean ? lean.text : undefined, node: place.node })
       }
     }
   }
@@ -2105,6 +2390,116 @@ addEventListener('keydown', e => {
   if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(e.target.tagName)) { e.preventDefault(); openSpot() }
 })
 
+// ---------------------------------------------------------------- Quick Look: space shows the code behind the picked box
+/** The files of what is picked; Quick Look pages through them with ← →. */
+function peekFiles() {
+  const item = target.kind === 'element' ? page.elements[target.id] : target.kind === 'message' ? (page.messages || {})[target.id] : null
+  return item ? (item.files || []) : []
+}
+const PEEK_WORDS = new Set(('fun val var class interface object data sealed enum return if else when for while do try catch finally throw import package ' +
+  'private public protected internal override suspend const let function async await export default new this def self in is as typealias companion ' +
+  'abstract open lateinit static void true false null None True False select from where and or not join on group by order insert update delete set values').split(' '))
+const PEEK_HASH = /\.(py|sh|bash|zsh|ya?ml|toml|rb|conf|properties|ini|env)$/i
+const PEEK_DASH = /\.sql$/i
+/** A light coloring that never has to be right: comments, strings, numbers, keywords, annotations. */
+function peekLine(text, file) {
+  const comment = PEEK_HASH.test(file) ? '#.*$' : PEEK_DASH.test(file) ? '--.*$' : '\\/\\/.*$'
+  const re = new RegExp('(' + comment + '|\\/\\*.*?\\*\\/)|("(?:[^"\\\\]|\\\\.)*"|\'(?:[^\'\\\\]|\\\\.)*\'|`(?:[^`\\\\]|\\\\.)*`)|(\\b\\d+(?:\\.\\d+)?\\b)|(@[A-Za-z_]\\w*)|([A-Za-z_]\\w*)', 'g')
+  let out = ''
+  let at = 0
+  for (const m of text.matchAll(re)) {
+    out += esc(text.slice(at, m.index))
+    const [all, c, s, n, a, w] = m
+    out += c ? '<span class="tk-c">' + esc(c) + '</span>' : s ? '<span class="tk-s">' + esc(s) + '</span>' : n ? '<span class="tk-n">' + esc(n) + '</span>'
+      : a ? '<span class="tk-a">' + esc(a) + '</span>' : PEEK_WORDS.has(w) ? '<span class="tk-k">' + esc(w) + '</span>' : esc(all)
+    at = m.index + all.length
+  }
+  return out + esc(text.slice(at))
+}
+let peek = null
+async function openPeek(index, from) {
+  const files = peekFiles()
+  if (files.length === 0) return
+  const at = (index + files.length) % files.length
+  const entry = files[at]
+  const isNew = peek === null
+  peek = { files, index: at, entry }
+  const sheet = $('peek')
+  sheet.hidden = false
+  sheet.querySelector('.name').textContent = baseName(entry.replace(/:\d+$/, ''))
+  sheet.querySelector('.where').textContent = entry
+  const tabs = sheet.querySelector('.tabs')
+  tabs.hidden = files.length < 2
+  tabs.innerHTML = files.map((f, n) => '<button data-n="' + n + '"' + (n === at ? ' class="on"' : '') + ' title="' + esc(f) + '">' + esc(baseName(f.replace(/:\d+$/, ''))) + '</button>').join('')
+  tabs.querySelectorAll('button').forEach(b => { b.onclick = () => openPeek(Number(b.dataset.n)) })
+  $('peek-open').disabled = !thread.isListening
+  $('peek-open').title = thread.isListening ? '설정한 편집기로 이 파일 열기' : '지도를 연 Claude 세션이 연결돼야 열 수 있어'
+  const code = sheet.querySelector('.code')
+  code.innerHTML = '<div class="say">읽는 중…</div>'
+  // It grows out of the box it belongs to, as Quick Look grows out of the file's icon.
+  if (isNew && from && !REDUCED.matches) {
+    const r = sheet.getBoundingClientRect()
+    const s = stage.getBoundingClientRect()
+    const dx = from.x + from.w / 2 - (r.left - s.left + r.width / 2)
+    const dy = from.y + from.h / 2 - (r.top - s.top + r.height / 2)
+    sheet.animate([{ transform: 'translate(' + dx + 'px,' + dy + 'px) scale(' + Math.max(0.05, from.w / r.width) + ')', opacity: 0.2 }, { transform: 'none', opacity: 1 }], { duration: 300, easing: EASE })
+  }
+  try {
+    const res = await fetch('/api/' + NAME + '/peek?file=' + encodeURIComponent(entry), { headers: { 'x-design-map-token': TOKEN }, cache: 'no-store' })
+    const got = await res.json().catch(() => ({ error: '읽지 못했어' }))
+    if (peek === null || peek.entry !== entry) return
+    if (got.error) { code.innerHTML = '<div class="say">' + esc(got.error) + '</div>'; return }
+    code.innerHTML = got.lines.map((line, n) => {
+      const no = got.from + n
+      return '<div class="ln' + (no === got.line ? ' hit' : '') + '"><span class="no">' + no + '</span><span>' + peekLine(line, got.file) + '</span></div>'
+    }).join('') + (got.from + got.lines.length - 1 < got.total ? '<div class="say">… ' + got.total + '줄 중 여기까지</div>' : '')
+    const hit = code.querySelector('.ln.hit')
+    code.scrollTop = hit ? hit.offsetTop - code.clientHeight / 3 : 0
+    code.focus({ preventScroll: true })
+  } catch (error) {
+    if (peek !== null && peek.entry === entry) code.innerHTML = '<div class="say">읽지 못했어: ' + esc(error.message) + '</div>'
+  }
+}
+function closePeek() {
+  if (peek === null) return
+  peek = null
+  $('peek').hidden = true
+}
+$('peek-close').onclick = closePeek
+$('peek-open').onclick = async () => {
+  if (peek === null) return
+  try {
+    await post('/api/' + NAME + '/feedback', { action: 'open', text: peek.entry, target })
+    toast('편집기로 여는 중')
+  } catch (error) {
+    toast('열지 못했어: ' + error.message)
+  }
+}
+// Captured first: while the sheet is up, Esc and the arrows are its own.
+addEventListener('keydown', e => {
+  if (peek !== null && (e.key === 'Escape' || (e.code === 'Space' && !['INPUT', 'TEXTAREA'].includes(e.target.tagName)))) {
+    e.preventDefault()
+    e.stopImmediatePropagation()
+    closePeek()
+    return
+  }
+  if (peek !== null && (e.key === 'ArrowLeft' || e.key === 'ArrowRight') && peek.files.length > 1) {
+    e.preventDefault()
+    e.stopImmediatePropagation()
+    openPeek(peek.index + (e.key === 'ArrowRight' ? 1 : -1))
+    return
+  }
+  if (e.code !== 'Space' || e.repeat || e.metaKey || e.ctrlKey || e.altKey || !isMap() || previewRev !== null) return
+  if (['INPUT', 'TEXTAREA', 'BUTTON', 'SELECT', 'A'].includes(e.target.tagName)) return
+  e.preventDefault()
+  if (peekFiles().length === 0) {
+    toast(target.kind === 'element' || target.kind === 'message' ? '여기엔 붙은 파일이 없어' : '상자를 하나 고른 다음 스페이스를 눌러 봐')
+    return
+  }
+  const node = nodesOf(target.id)[0]
+  openPeek(0, node ? screenBox(node) : null)
+}, true)
+
 // ---------------------------------------------------------------- semantic zoom: far, names; near, files
 /**
  * Below this scale the boxes' text is too small to read: names float as pills at reading size.
@@ -2113,25 +2508,123 @@ addEventListener('keydown', e => {
 const FAR = 0.35
 /** Above this the boxes have room to spare: their files show under them. */
 const NEAR = 1.55
+/** A label's width at the pills' type, measured once. */
+const labelWidths = new Map()
+let measurer = null
+function labelWidth(text) {
+  if (!labelWidths.has(text)) {
+    measurer = measurer || document.createElement('canvas').getContext('2d')
+    measurer.font = '600 13px system-ui, -apple-system, "Apple SD Gothic Neo", sans-serif'
+    labelWidths.set(text, measurer.measureText(text).width)
+  }
+  return labelWidths.get(text)
+}
+/** What claims room first: the pick, a box waiting on a decision, work in progress, a change, the rest. */
+function pillRank(id, node, b) {
+  const el = page.elements[id] || {}
+  return (target.kind === 'element' && target.id === id ? 10000 : 0) +
+    (target.kind === 'elements' && target.ids.includes(id) ? 10000 : 0) +
+    (node.classList.contains('asking') ? 1000 : 0) +
+    (page.states && page.states[id] && page.states[id].isWorking ? 500 : 0) +
+    (node.classList.contains('unseen') ? 300 : 0) +
+    ((el.change || 'keep') !== 'keep' ? 100 : 0) +
+    // Size breaks ties, measured on the canvas: on screen it grows with every frame of a zoom.
+    Math.min(99, (b.w * b.h) / (view.k * view.k) / 4000)
+}
+const overlaps = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h
+/**
+ * Which far names keep their room. The important ones go first; one that would land on a name
+ * already placed shrinks to a dot. Decided when the zoom comes to rest, not on each frame of
+ * it, so names do not blink while the wheel turns. Panning moves them all alike and never
+ * changes the answer.
+ */
+let declutter = { k: 0, sig: '', dots: new Set() }
+let declutterTimer = null
+function placePills(items) {
+  const placed = []
+  const dots = new Set()
+  for (const item of [...items].sort((a, b) => b.rank - a.rank)) {
+    const r = { x: item.cx - item.w / 2 - 3, y: item.cy - 16, w: item.w + 6, h: 32 }
+    if (placed.some(p => overlaps(p, r))) dots.add(item.id)
+    else placed.push(r)
+  }
+  return { dots }
+}
 overlayHooks.push(() => {
   const isClassMap = isMap() && !isSeq() && previewRev === null
   const isFar = isClassMap && view.k < FAR
   const isNear = isClassMap && view.k > NEAR
   canvas.classList.toggle('zoom-far', isFar)
   $('pills').classList.toggle('off', !isFar)
+  $('regions').classList.toggle('off', !isFar)
   $('filecaps').classList.toggle('off', !isNear)
   if (isFar) {
-    const html = []
+    const items = []
     for (const node of canvas.querySelectorAll('g.node')) {
       const id = idOf(node)
       const el = id && page.elements[id]
       if (!el) continue
       const b = screenBox(node)
-      const shape = node.querySelector('path')
-      const fill = shape ? getComputedStyle(shape).fill : '#fff'
-      html.push('<div class="pill" style="left:' + (b.x + b.w / 2) + 'px;top:' + (b.y + b.h / 2) + 'px;max-width:' + Math.max(110, b.w + 24) + 'px;background:' + fill + '" title="' + esc(el.label || el.id) + '">' + esc(el.label || el.id) + '</div>')
+      const label = el.label || el.id
+      items.push({ id, node, label, cx: b.x + b.w / 2, cy: b.y + b.h / 2, w: Math.min(labelWidth(label) + 24, Math.max(110, b.w + 24)), max: Math.max(110, b.w + 24), rank: pillRank(id, node, b) })
     }
-    $('pills').innerHTML = html.join('')
+    const sig = renderCount + '|' + JSON.stringify(target) + '|' + items.map(i => i.id + ':' + Math.round(i.rank)).join(',')
+    if (sig !== declutter.sig) {
+      declutter = { k: view.k, sig, ...placePills(items) }
+    } else if (Math.abs(view.k - declutter.k) > 1e-4) {
+      clearTimeout(declutterTimer)
+      declutterTimer = setTimeout(() => { declutter.sig = ''; layoutOverlay() }, 160)
+    }
+    // Kept elements, moved in place: a dot under the pointer must stay the same dot to open.
+    const host = $('pills')
+    const keep = new Set()
+    for (const item of items) {
+      keep.add(item.id)
+      let pill = host.querySelector('[data-id="' + CSS.escape(item.id) + '"]')
+      if (pill === null) {
+        pill = document.createElement('div')
+        pill.className = 'pill'
+        pill.dataset.id = item.id
+        host.appendChild(pill)
+      }
+      if (pill.textContent !== item.label) { pill.textContent = item.label; pill.title = item.label }
+      const shape = item.node.querySelector('path')
+      const paint = shape ? getComputedStyle(shape) : null
+      pill.style.background = paint ? paint.fill : '#fff'
+      pill.style.setProperty('--paper', paint ? paint.fill : '#fff')
+      pill.style.setProperty('--ink', paint && paint.stroke !== 'none' ? paint.stroke : '#8e889e')
+      pill.style.left = item.cx + 'px'
+      pill.style.top = item.cy + 'px'
+      pill.style.maxWidth = item.max + 'px'
+      pill.classList.toggle('dot', declutter.dots.has(item.id))
+      // Focus, filters and decision previews fade boxes; their names fade with them.
+      pill.classList.toggle('faded', item.node.matches('.unfocused, .dimmed, .hush'))
+    }
+    for (const pill of [...host.children]) if (!keep.has(pill.dataset.id)) pill.remove()
+    const named = items.filter(i => !declutter.dots.has(i.id)).map(i => ({ x: i.cx - i.w / 2, y: i.cy - 13, w: i.w, h: 26 }))
+    // Groups read like regions on a map: big, faint, along their top, and never over a name.
+    const regions = []
+    for (const cluster of canvas.querySelectorAll('g.cluster')) {
+      const gid = groupIdOf(cluster)
+      const rect = cluster.querySelector('rect')
+      const el = gid && page.elements[gid]
+      if (!el || !rect) continue
+      const b = screenBox(rect)
+      const text = el.label || el.id
+      // Big for a wide group, smaller for a long name, gone when even small does not fit.
+      const size = Math.min(24, Math.max(14, b.w / 10), (b.w - 16) * 13 / Math.max(1, labelWidth(text)))
+      const w = labelWidth(text) * size / 13
+      // Over the group's top edge like a folder's tab; inside it when that spot is taken.
+      const h = size * 1.3
+      const spots = [b.y - h - 2, b.y + 4].map(y => ({ x: b.x + b.w / 2 - w / 2, y, w, h }))
+      const spot = size >= 11 ? spots.find(r => r.y >= 0 && !named.some(p => overlaps(p, r))) : undefined
+      regions.push('<div class="region' + (spot ? '' : ' hush') + '" style="left:' + (b.x + b.w / 2) + 'px;top:' + (spot ? spot.y : b.y) + 'px;font-size:' + size.toFixed(1) + 'px">' + esc(text) + '</div>')
+    }
+    $('regions').innerHTML = regions.join('')
+  } else if ($('pills').childElementCount > 0) {
+    $('pills').innerHTML = ''
+    $('regions').innerHTML = ''
+    declutter.sig = ''
   }
   if (isNear) {
     const html = []
@@ -2155,7 +2648,17 @@ function edgesOfBox(id) {
 function applyFocus() {
   canvas.querySelectorAll('.unfocused').forEach(n => n.classList.remove('unfocused'))
   canvas.querySelectorAll('path.relation.flowing').forEach(n => n.classList.remove('flowing'))
-  if (!isMap() || isSeq() || previewRev !== null || target.kind !== 'element') return
+  if (!isMap() || isSeq() || previewRev !== null) return
+  if (target.kind === 'elements') {
+    const held = new Set(target.ids)
+    for (const node of canvas.querySelectorAll('g.node')) if (!held.has(idOf(node))) node.classList.add('unfocused')
+    ;(page.edges || []).forEach((e, index) => {
+      const path = canvas.querySelector('path.relation[data-edge="' + index + '"]')
+      if (path) path.classList.add(held.has(e.from) && held.has(e.to) ? 'flowing' : 'unfocused')
+    })
+    return
+  }
+  if (target.kind !== 'element') return
   const id = target.id
   if (!nodeOf(id)) return
   const touching = edgesOfBox(id)
@@ -2426,7 +2929,13 @@ try { showPane(localStorage.getItem('design-map-pane-' + NAME) || 'thread') } ca
 
 // ---------------------------------------------------------------- scope: the panes follow what is picked
 /** With a box, a message or a line picked, every pane shows only what is about it. */
-function scopeOn() { return isMap() && page !== null && ['element', 'message', 'relation'].includes(target.kind) }
+function scopeOn() { return isMap() && page !== null && ['element', 'elements', 'message', 'relation'].includes(target.kind) }
+/** The ids the pick stands for: one box or message, a lasso's boxes, or none. */
+function pickedIds() {
+  if (target.kind === 'element' || target.kind === 'message') return [target.id]
+  if (target.kind === 'elements') return target.ids
+  return []
+}
 /** The boxes and messages a decision is tagged on: the map lights them, the panes narrow by them. */
 function elementsOfDecision(id) {
   return [...Object.values(page.elements), ...Object.values(page.messages || {}), ...Object.values(page.fragments || {})]
@@ -2436,9 +2945,11 @@ function scopeKeeps(t) {
   if (!scopeOn()) return true
   if (!t) return false
   if (target.kind === 'relation') return t.kind === 'relation' && t.from === target.from && t.to === target.to
-  if (t.kind === 'element' || t.kind === 'message') return t.id === target.id
-  if (t.kind === 'relation') return t.from === target.id || t.to === target.id
-  if (t.kind === 'decision') return elementsOfDecision(t.id).includes(target.id)
+  const ids = pickedIds()
+  if (t.kind === 'element' || t.kind === 'message') return ids.includes(t.id)
+  if (t.kind === 'elements') return t.ids.some(id => ids.includes(id))
+  if (t.kind === 'relation') return ids.includes(t.from) || ids.includes(t.to)
+  if (t.kind === 'decision') return elementsOfDecision(t.id).some(id => ids.includes(id))
   return false
 }
 function renderScope() {
@@ -2460,7 +2971,7 @@ function renderPanes() {
   renderProgress()
   renderThread()
 }
-const scopeNoun = () => isSeq() ? '항목' : '상자'
+const scopeNoun = () => isSeq() ? '항목' : target.kind === 'elements' ? '상자들' : '상자'
 
 // ---------------------------------------------------------------- decisions
 /**
@@ -2506,7 +3017,7 @@ function decisionCard(d) {
   const head = '<div class="q" title="눌러서 이 결정이 걸린 곳을 지도에서 보기"><span class="text">' + esc(d.id) + ' ' + esc(d.question) + '</span>' +
     '<span class="go">⤢ 지도에서</span>' +
     (d.oneWay ? '<span class="oneway">되돌리기 어려움</span>' : '') +
-    (d.chosen ? '<span class="chosen">확정</span>' : '') + '</div>'
+    (d.chosen ? '<span class="chosen">확정</span><button class="fold-up" data-fold="' + esc(d.id) + '" title="한 줄로 접기">접기</button>' : '') + '</div>'
   const blocked = d.chosen ? '' :
     '<div class="blocked"><span class="what">' + (d.blocked ? '⏳ 이걸 알면 정할 수 있어: ' + esc(d.blocked) : '<span class="dim">무엇을 알면 정할 수 있어?</span>') +
     '</span><button class="link" data-blocked="' + esc(d.id) + '">' + (d.blocked ? '고치기' : '적기') + '</button></div>'
@@ -2553,23 +3064,54 @@ function inspectorDecisionId() {
   const d = page.decisions.find(x => x.id === id)
   return d && !d.chosen ? id : undefined
 }
+/** Made decisions the person opened back into cards; the rest stay one line in the ledger. */
+const unfolded = new Set()
+function ledgerRow(d) {
+  const o = (d.options || []).find(x => x.id === d.chosen)
+  return '<div class="decision ledger" tabindex="-1" data-decision="' + esc(d.id) + '" title="눌러서 펼치기">' +
+    '<span class="lid">' + esc(d.id) + '</span>' +
+    '<span class="lbody"><span class="lq">' + esc(d.question) + '</span><span class="lchoice">' + esc(o ? o.text : d.chosen) + '</span></span>' +
+    '<span class="lwhen" data-when="' + esc(d.id) + '"></span></div>'
+}
 function renderDecisions() {
   const open = page.decisions.filter(d => !d.chosen)
   setTabCount('decisions', open.length, open.length ? '열린 결정 ' + open.length : '')
-  const shown = scopeOn() ? page.decisions.filter(d => elementsOfDecision(d.id).includes(target.id)) : page.decisions
+  const shown = scopeOn() ? page.decisions.filter(d => elementsOfDecision(d.id).some(id => pickedIds().includes(id))) : page.decisions
   const list = shown.filter(d => decisionHome(d.id) === 'pane')
   const moved = shown.filter(d => decisionHome(d.id) !== 'pane')
   const empty = moved.length > 0 ? '' : '<div class="dim">' + (scopeOn() ? '이 ' + scopeNoun() + '에 붙은 결정이 없어.' : '없음') + '</div>'
-  $('decisions').innerHTML = (list.length === 0 ? empty : list.map(decisionCard).join('')) +
+  // What is still open gets the room; what is made is a line, unless opened by hand.
+  const asking = list.filter(d => !d.chosen)
+  const made = list.filter(d => d.chosen)
+  $('decisions').innerHTML = (list.length === 0 ? empty : asking.map(decisionCard).join('') +
+    (made.length === 0 ? '' : '<div class="ledger-head">확정 ' + made.length + '</div><div class="ledger-list">' +
+      made.map(d => unfolded.has(d.id) ? decisionCard(d) : ledgerRow(d)).join('') + '</div>')) +
     moved.map(d => elsewhereLine(d.id, decisionHome(d.id))).join('')
   wireDecisions()
   renderTrails()
+}
+/** Opens a ledger line into its card, or folds the card back, keeping the keyboard on it. */
+function unfoldDecision(id, isOpen) {
+  if (isOpen) unfolded.add(id)
+  else unfolded.delete(id)
+  renderDecisions()
+  const card = [...$('decisions').querySelectorAll('.decision')].find(c => c.dataset.decision === id)
+  if (card) { rove(card); card.focus({ preventScroll: true }) }
 }
 function wireDecisions(root) {
   root = root || $('decisions')
   const cards = [...root.querySelectorAll('.decision')]
   cards.forEach((card, n) => {
     if (n === 0) card.tabIndex = 0
+    if (card.classList.contains('ledger')) {
+      card.onfocus = () => { rove(card); previewDecision(card.dataset.decision, null) }
+      card.onblur = clearDecisionPreview
+      card.onkeydown = onDecisionKey
+      card.onmouseenter = () => previewDecision(card.dataset.decision, null)
+      card.onmouseleave = clearDecisionPreview
+      card.onclick = () => unfoldDecision(card.dataset.decision, true)
+      return
+    }
     card.onfocus = () => { rove(card); previewDecision(card.dataset.decision, null) }
     card.onblur = clearDecisionPreview
     card.onkeydown = onDecisionKey
@@ -2605,6 +3147,9 @@ function wireDecisions(root) {
   }
   for (const b of root.querySelectorAll('button[data-otherfull]')) {
     b.onclick = () => { studyDecision(b.dataset.otherfull); askOther(b.dataset.otherfull) }
+  }
+  for (const b of root.querySelectorAll('button[data-fold]')) {
+    b.onclick = e => { e.stopPropagation(); unfoldDecision(b.dataset.fold, false) }
   }
   for (const b of root.querySelectorAll('button[data-find]')) {
     b.onclick = () => showDecisionOnMap(b.dataset.find)
@@ -2646,7 +3191,8 @@ const stepsOf = (before, after) => {
 /** Fills every visible card's trail line, newest revision last. */
 async function renderTrails(root) {
   const hosts = [...(root || document).querySelectorAll('[data-trail]')]
-  if (hosts.length === 0 || versions.length === 0) return
+  const whens = [...(root || document).querySelectorAll('[data-when]')]
+  if (hosts.length + whens.length === 0 || versions.length === 0) return
   const mine = ++trailRuns
   const revisions = [...versions].map(v => v.revision).sort((a, b) => a - b)
   const marks = new Map()
@@ -2671,7 +3217,15 @@ async function renderTrails(root) {
       shown.map(m => '<button class="link" data-goto="' + m.revision + '">rev ' + m.revision + '</button> ' + esc(m.what)).join(' → ')
     host.querySelectorAll('button[data-goto]').forEach(b => { b.onclick = () => preview(Number(b.dataset.goto)) })
   }
+  // A ledger line's date is the day it was made, read off the same trail.
+  for (const host of whens) {
+    const made = (marks.get(host.dataset.when) || []).filter(m => m.what.endsWith('로 확정')).pop()
+    const v = made && versions.find(x => x.revision === made.revision)
+    host.textContent = v ? dayOf(v.at) : ''
+    host.title = made ? 'rev ' + made.revision + '에서 확정' : ''
+  }
 }
+const dayOf = t => new Date(t).toDateString() === new Date().toDateString() ? '오늘' : (new Date(t).getMonth() + 1) + '/' + new Date(t).getDate()
 
 /** The decision's card wherever it is on screen: the pane, or the inspector beside the box. */
 function openCardOf(id) {
@@ -2736,7 +3290,8 @@ function proposalsOf(id) {
 function troublesOf(id) {
   return thread.items.filter(i => i.status === 'failed' && i.target && i.target.kind === 'decision' && i.target.id === id)
 }
-const troubleHtml = id => troublesOf(id).map(i =>
+// Once made, what failed on the way there is history: only a failed note after the choice still matters.
+const troubleHtml = id => troublesOf(id).filter(i => !(page.decisions.find(d => d.id === id) || {}).chosen || i.action === 'reject').map(i =>
   '<div class="trouble"><span class="what">' + esc(ACTION_NAMES[i.action] || i.action) + ' 실패' +
   (i.reply ? ': ' + esc(i.reply) : '') + '</span></div>').join('')
 /**
@@ -2811,6 +3366,11 @@ function onDecisionKey(e) {
     if (to) to.focus()
     return
   }
+  if (e.code === 'Enter' && e.target === e.currentTarget && e.currentTarget.classList.contains('ledger')) {
+    e.preventDefault()
+    unfoldDecision(e.currentTarget.dataset.decision, true)
+    return
+  }
   // Enter steps into the options instead of deciding: a decision is never one keypress away.
   if (e.code === 'Enter' && e.target === e.currentTarget) {
     const first = e.currentTarget.querySelector('button[data-option]')
@@ -2844,7 +3404,7 @@ function renderProgress() {
   const mark = { done: '✅', working: '\ud83d\udd27', todo: '⬜' }
   const all = page.steps || []
   const rows = !scopeOn() ? all : all
-    .map(s => ({ step: s.step, items: s.items.filter(i => i.id === target.id) }))
+    .map(s => ({ step: s.step, items: s.items.filter(i => pickedIds().includes(i.id)) }))
     .filter(s => s.items.length > 0)
     .map(s => ({ ...s, state: s.items.every(i => i.state === 'done') ? 'done' : s.items.some(i => i.state !== 'todo') ? 'working' : 'todo' }))
   const doneCount = rows.filter(s => s.state === 'done').length
@@ -2853,8 +3413,16 @@ function renderProgress() {
   const empty = scopeOn() ? '이 ' + scopeNoun() + '에 붙은 스텝이 없어.' : '스텝 없음'
   $('progress').innerHTML = (steps ? '<ul class="steps">' + steps + '</ul>' : '<div class="dim">' + empty + '</div>') +
     (page.repo ? '' : '<div class="dim">repo가 없어서 파일 변경, Claude 시선, 편집기 열기가 동작하지 않아.</div>') +
-    (scopeOn() ? '' : outsideHtml())
+    (scopeOn() || !page.repo ? '' : scopeLine() + outsideHtml())
   wireOutside()
+}
+/** Where the map's territory ends, said once above what lies outside it. */
+function scopeLine() {
+  const what = page.scope === undefined ? null
+    : page.scope.length === 0 ? '<b>설계 전용</b> · 지도 밖 변경은 세지 않아'
+    : '<b>' + page.scope.map(s => esc(s) + '/').join(', ') + '</b> 안의 변경만 세'
+  if (what === null) return ''
+  return '<div class="scope-line"><span>범위: ' + what + '</span><button class="link" id="scope-change">바꾸기</button></div>'
 }
 /** Changed files no box owns, by their top folder: hundreds of them must not flood the pane. */
 function outsideGroups(files) {
@@ -2876,7 +3444,7 @@ function outsideHtml() {
     return '<details class="outgroup"><summary><code>' + esc(dir) + '</code><span class="count">' + list.length + '</span></summary><ul>' + shown + more + '</ul></details>'
   }).join('')
   return '<div class="outside"><div class="outhead">지도 밖 변경 <b>' + files.length + '</b><span class="dim"> · 어느 상자에도 안 붙은 파일</span></div>' +
-    rows + '<div class="row" style="margin-top:6px"><button id="out-ask">지도에 넣어 달라고 하기</button><button id="out-untrack">설계 전용으로 두기</button></div></div>'
+    rows + '<div class="row" style="margin-top:6px"><button id="out-ask">지도에 넣어 달라고 하기</button><button id="out-scope">범위 정하기…</button></div></div>'
 }
 function wireOutside() {
   const ask = $('out-ask')
@@ -2884,11 +3452,66 @@ function wireOutside() {
     const top = outsideGroups(page.outside).slice(0, 6).map(([dir, list]) => dir + ' ' + list.length + '개').join(', ')
     sendFeedback('comment', null, { target: { kind: 'map' }, text: '지도 밖 변경이 ' + page.outside.length + '개야 (' + top + '). 지도에 넣을 것과 그냥 둘 것을 정리해 줘.' })
   }
-  const untrack = $('out-untrack')
-  if (untrack) untrack.onclick = () => {
-    sendFeedback('comment', null, { target: { kind: 'map' }, text: '이 지도는 아직 구현 전인 설계 전용 지도야. repo를 비워서 파일 변경 추적을 꺼 줘.' })
+  for (const id of ['out-scope', 'scope-change']) if ($(id)) $(id).onclick = openScopeSheet
+}
+
+// ---------------------------------------------------------------- the map's territory: which changes are "outside" it
+/** Files the boxes own, for "how much of this repo is the map about". */
+const mappedFiles = () => [...Object.values(page.elements), ...Object.values(page.messages || {})].flatMap(x => x.files || [])
+const topOf = f => { const cut = f.indexOf('/'); return cut < 0 ? null : f.slice(0, cut) }
+const scopeLaterKey = 'design-map-scope-later-' + NAME
+let isScopeOffered = false
+/**
+ * Hundreds of changes "outside the map" usually means the repo holds other work, not that the
+ * map is missing boxes. Asked once, the first time it looks like that; the progress tab keeps
+ * the way back to it.
+ */
+function offerScope() {
+  if (isScopeOffered || !isMap() || !page.repo || page.scope !== undefined || previewRev !== null) return
+  const outside = page.outside || []
+  if (outside.length < 30 || outside.length < 3 * Math.max(1, mappedFiles().length)) return
+  try { if (localStorage.getItem(scopeLaterKey)) return } catch {}
+  isScopeOffered = true
+  openScopeSheet()
+}
+function openScopeSheet() {
+  const outside = page.outside || []
+  const mine = [...new Set(mappedFiles().map(f => topOf(f.replace(/:\d+$/, ''))).filter(Boolean))]
+  const counts = new Map(outsideGroups(outside).map(([dir, list]) => [dir.replace(/\/$/, ''), list.length]))
+  const folders = [...new Set([...(page.scope || []), ...mine, ...[...counts.keys()].filter(d => d !== '(루트 파일)').slice(0, 10)])]
+  const picked = new Set(page.scope && page.scope.length ? page.scope : mine)
+  const now = page.scope === undefined ? 'all' : page.scope.length === 0 ? 'none' : 'some'
+  const sheet = $('scope-sheet')
+  sheet.innerHTML = '<div class="title">' + (page.scope === undefined ? '지도 밖 변경이 ' + outside.length + '개야' : '이 지도의 범위') + '</div>' +
+    '<div class="sub">' + (page.scope === undefined ? '상자에 붙은 파일은 ' + mappedFiles().length + '개뿐이라, repo의 다른 작업까지 전부 "지도 밖"으로 잡히고 있어. ' : '') + '어디까지를 이 지도로 볼까?</div>' +
+    '<label class="choice"><input type="radio" name="scope-how" value="none"' + (now === 'none' ? ' checked' : '') + '><b>설계 전용</b><span>지도 밖 변경을 세지 않아. 상자에 붙은 파일의 진행은 그대로 보여.</span></label>' +
+    '<label class="choice"><input type="radio" name="scope-how" value="some"' + (now === 'some' ? ' checked' : '') + '><b>이 폴더만 보기</b><span>고른 폴더 안의 변경만 지도 밖으로 세.</span>' +
+      '<div class="folders">' + folders.map(d => '<label><input type="checkbox" value="' + esc(d) + '"' + (picked.has(d) ? ' checked' : '') + '>' + esc(d) + '/' +
+        (counts.has(d) ? ' <span class="n">' + counts.get(d) + '</span>' : '') + '</label>').join('') + '</div></label>' +
+    '<label class="choice"><input type="radio" name="scope-how" value="all"' + (now === 'all' ? ' checked' : '') + '><b>repo 전체</b><span>지금처럼 다 세.</span></label>' +
+    '<div class="row"><button id="scope-later">나중에</button><button class="primary" id="scope-apply">적용</button></div>'
+  sheet.hidden = false
+  // Ticking a folder means "these folders": the choice follows the hand.
+  for (const box of sheet.querySelectorAll('.folders input')) box.onchange = () => { sheet.querySelector('input[value="some"]').checked = true }
+  $('scope-later').onclick = () => {
+    try { localStorage.setItem(scopeLaterKey, '1') } catch {}
+    sheet.hidden = true
+  }
+  $('scope-apply').onclick = async () => {
+    const how = (sheet.querySelector('input[name="scope-how"]:checked') || {}).value
+    const chosen = [...sheet.querySelectorAll('.folders input:checked')].map(i => i.value)
+    if (how === undefined) return
+    if (how === 'some' && chosen.length === 0) { toast('볼 폴더를 하나 이상 골라 줘'); return }
+    const value = how === 'all' ? null : how === 'none' ? [] : chosen
+    $('scope-apply').disabled = true
+    const isSent = await sendFeedback('scope', null, { target: { kind: 'map' }, text: JSON.stringify(value) })
+    $('scope-apply').disabled = false
+    if (!isSent) return
+    sheet.hidden = true
+    toast(thread.isListening ? '범위를 바꿨어. 지도 밖 숫자가 곧 다시 세져' : '범위는 세션이 연결되면 반영돼')
   }
 }
+addEventListener('keydown', e => { if (e.key === 'Escape' && !$('scope-sheet').hidden) $('scope-sheet').hidden = true })
 
 // ---------------------------------------------------------------- the diagram
 /**
@@ -3091,6 +3714,10 @@ async function load() {
       }
     }
     if (target.kind === 'element' && !page.elements[target.id]) target = { kind: 'map' }
+    if (target.kind === 'elements') {
+      const ids = target.ids.filter(id => page.elements[id])
+      target = ids.length > 1 ? { kind: 'elements', ids } : ids.length === 1 ? { kind: 'element', id: ids[0] } : { kind: 'map' }
+    }
     if (target.kind === 'message' && !(page.messages && page.messages[target.id]) && !(page.fragments && page.fragments[target.id])) target = { kind: 'map' }
     if (target.kind === 'relation' && !page.edges.some(e => e.from === target.from && e.to === target.to)) target = { kind: 'map' }
     setTarget(target)
@@ -3099,6 +3726,7 @@ async function load() {
     breathe()
     applyFilter()
     stampDone(page.states, before && before.kind === 'map' ? before.states || {} : null)
+    offerScope()
   }
   settleOverlay()
   loadVersions()
@@ -3290,6 +3918,7 @@ function renderScrubber() {
   const list = ascending()
   const bar = $('scrubber')
   bar.hidden = !page || list.length < 2 || editing
+  dockScrubber()
   if (bar.hidden) return
   const shown = previewRev ?? page.revision
   const index = Math.max(0, list.findIndex(v => v.revision === shown))
@@ -3300,7 +3929,36 @@ function renderScrubber() {
   $('scrub-label').textContent = 'rev ' + at.revision + (at.revision === page.revision ? ' · 지금' : ' · ' + stamp(at.at))
   $('scrub-play').textContent = isPlaying ? '❚❚' : '▶'
   bar.classList.toggle('playing', isPlaying)
+  dockScrubber()
 }
+/** How near the stage's bottom edge, and how near its middle, the pointer brings the bar up. */
+const DOCK_REACH = 72
+const DOCK_SPAN = 300
+let isDockNear = false
+let dockUntil = 0
+let dockTimer = null
+function dockScrubber() {
+  const bar = $('scrubber')
+  const isUp = !bar.hidden && (isDockNear || isPlaying || previewRev !== null || performance.now() < dockUntil || bar.matches(':hover, :focus-within'))
+  bar.classList.toggle('tucked', !isUp)
+  $('scrub-handle').hidden = bar.hidden
+  $('scrub-handle').classList.toggle('off', isUp)
+}
+/** Brings the bar up for a moment: a key moved it, or its line was clicked. */
+function raiseDock(ms) {
+  dockUntil = performance.now() + ms
+  dockScrubber()
+  clearTimeout(dockTimer)
+  dockTimer = setTimeout(dockScrubber, ms + 20)
+}
+stage.addEventListener('pointermove', e => {
+  const r = stage.getBoundingClientRect()
+  const isNear = r.bottom - e.clientY < DOCK_REACH && Math.abs(e.clientX - (r.left + r.width / 2)) < DOCK_SPAN
+  if (isNear !== isDockNear) { isDockNear = isNear; dockScrubber() }
+})
+stage.addEventListener('pointerleave', () => { if (isDockNear) { isDockNear = false; dockScrubber() } })
+$('scrubber').addEventListener('focusout', () => setTimeout(dockScrubber, 0))
+$('scrub-handle').onclick = () => raiseDock(3000)
 /** Shows the revision at `index`; a later call wins over one still loading. */
 async function scrubTo(index) {
   const mine = ++scrubSeq
@@ -3334,9 +3992,68 @@ $('scrub-range').addEventListener('input', () => {
   scrubTimer = setTimeout(() => scrubTo(Number($('scrub-range').value)), 90)
 })
 $('scrub-play').onclick = play
+/**
+ * Replays from the revision you last saw to now, stopping only where the map shows something
+ * new: a revision that only re-saved, or only noted a leaning, is no frame.
+ */
+async function playSince(fromRev) {
+  if (isPlaying) { isPlaying = false; renderScrubber(); return }
+  const list = ascending().filter(v => v.revision >= fromRev)
+  const frames = []
+  let last = null
+  for (const v of list) {
+    const p = v.revision === page.revision ? page : await historyPage(v.revision)
+    if (!p) continue
+    const f = facts(p)
+    const sig = JSON.stringify([f.elements, f.relations, f.decisions])
+    if (sig !== last) { frames.push(v.revision); last = sig }
+  }
+  if (frames[frames.length - 1] !== page.revision) frames.push(page.revision)
+  isPlaying = true
+  renderScrubber()
+  for (let i = 0; i < frames.length && isPlaying; i++) {
+    if (frames[i] === page.revision) exitPreview()
+    else await preview(frames[i])
+    renderScrubber()
+    await new Promise(r => setTimeout(r, i === frames.length - 1 ? 0 : 1300))
+  }
+  isPlaying = false
+  renderScrubber()
+}
+/** Hold M: the map as you last saw it, gone the moment you let go (Photos' compare-to-original). */
+let peekRev = null
+function peekBase() {
+  const seen = readSeen()
+  const older = ascending().map(v => v.revision).filter(r => r < page.revision)
+  if (seen && seen.revision < page.revision && older.includes(seen.revision)) return seen.revision
+  return older.length ? older[older.length - 1] : null
+}
+function endPeek() {
+  const back = peekTarget
+  peekRev = null
+  peekTarget = null
+  if (previewRev === null) return
+  leavePreview()
+  // Peeking had to drop the pick (an old map may not have that box); letting go gives it back.
+  load().then(() => { if (back && back.kind !== 'map' && page) setTarget(back) })
+}
+let peekTarget = null
+addEventListener('keydown', e => {
+  if (e.code !== 'KeyM' || e.repeat || e.metaKey || e.ctrlKey || e.altKey || !isMap() || editing) return
+  if (['INPUT', 'TEXTAREA'].includes(e.target.tagName) || previewRev !== null || isPlaying) return
+  const rev = peekBase()
+  e.preventDefault()
+  if (rev === null) { toast('비교할 예전 버전이 없어'); return }
+  peekRev = rev
+  peekTarget = target
+  void preview(rev, true)
+})
+addEventListener('keyup', e => { if (e.code === 'KeyM' && peekRev !== null) endPeek() })
+addEventListener('blur', () => { if (peekRev !== null) endPeek() })
 addEventListener('keydown', e => {
   if (['INPUT', 'TEXTAREA'].includes(e.target.tagName) || $('scrubber').hidden) return
   if (e.key !== '[' && e.key !== ']') return
+  raiseDock(2500)
   const list = ascending()
   const now = Math.max(0, list.findIndex(v => v.revision === (previewRev ?? page.revision)))
   scrubTo(now + (e.key === ']' ? 1 : -1))
@@ -3351,10 +4068,12 @@ async function historyPage(rev) {
   }
   return historyCache.get(rev)
 }
-async function preview(rev) {
+async function preview(rev, isPeek = false) {
   if (editing && dirty) { toast('저장하지 않은 편집이 있어. 저장하거나 닫은 다음에 봐 줘'); return }
   stopEdit(false)
   const old = await historyPage(rev)
+  // M let go before the old drawing arrived: nothing to show any more.
+  if (isPeek && peekRev !== rev) return
   if (!old) { toast('그 버전을 못 읽었어'); return }
   previewRev = rev
   document.body.classList.add('previewing')
@@ -3366,11 +4085,16 @@ async function preview(rev) {
   stampDone(old.states, null)
   renderRings()
   settleOverlay()
-  $('preview-bar').innerHTML = '<span>rev ' + rev + ' · ' + esc(stamp(old.at)) + ' 버전을 보는 중</span><button class="primary" id="restore">이 버전으로 되돌리기</button><button id="preview-exit">현재로</button>'
+  if (isPeek) {
+    $('preview-bar').innerHTML = '<span>rev ' + rev + ' · ' + (rev === (readSeen() || {}).revision ? '마지막으로 본 모습' : '바로 전 버전') + ' · M을 떼면 지금으로</span>'
+  } else {
+    $('preview-bar').innerHTML = '<span>rev ' + rev + ' · ' + esc(stamp(old.at)) + ' 버전을 보는 중</span><button class="primary" id="restore">이 버전으로 되돌리기</button><button id="preview-exit">현재로</button>'
+    $('restore').onclick = () => restore(rev)
+    $('preview-exit').onclick = exitPreview
+  }
   $('preview-bar').classList.add('show')
-  $('restore').onclick = () => restore(rev)
-  $('preview-exit').onclick = exitPreview
   renderVersions()
+  if (isPeek && peekRev !== rev) exitPreview()
 }
 function leavePreview() {
   previewRev = null

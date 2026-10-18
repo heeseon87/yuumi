@@ -74,6 +74,16 @@ describe('view and progress', () => {
     expect(progressOf(BASE, ['module/src/A.kt']).touched).toEqual(['A'])
   })
 
+  test('scope keeps other work in the repo out of "outside the map"; [] counts nothing outside', () => {
+    const changed = ['src/A.kt', 'wiki/a.md', 'wiki/b/c.md', 'scripts/x.sh', 'wikis.md']
+    expect(progressOf({ ...BASE, scope: ['wiki/'] }, changed)).toEqual({ touched: ['A'], outside: ['wiki/a.md', 'wiki/b/c.md'] })
+    expect(progressOf({ ...BASE, scope: ['./wiki', 'scripts'] }, changed).outside).toEqual(['wiki/a.md', 'wiki/b/c.md', 'scripts/x.sh'])
+    expect(progressOf({ ...BASE, scope: [] }, changed)).toEqual({ touched: ['A'], outside: [] })
+    expect(applyUpdate({ ...BASE, scope: ['wiki'] }, { scope: null }).map.scope).toBeUndefined()
+    expect(applyUpdate(BASE, { scope: ['../etc'] }).errors.join()).toContain('scope must be a list of repo-relative folders')
+    expect(applyUpdate(BASE, { scope: ['/abs'] }).errors.join()).toContain('scope must be a list of repo-relative folders')
+  })
+
   test('stepRows orders by step and says what is done or under way', () => {
     const map = applyUpdate(BASE, { elements: { upsert: [{ id: 'A', steps: [2] }, { id: 'B', steps: [1], done: true }] } }).map
     expect(stepRows(map, ['A']).map(r => `${r.step}:${r.id}:${r.state}`)).toEqual(['1:B:done', '2:A:working'])
