@@ -20,7 +20,7 @@ Two plugins, from one marketplace:
 | Plugin | What it is | Platforms |
 |--------|------------|-----------|
 | **`yuumi`** | Tokyo Night statusline (HUD) + workflow skills: `interview`, `edit`, `explain`, `review`, plus `statusline-setup` / `statusline-doctor` | macOS · Linux · Windows |
-| **`duet`** | Terminal mod for [Duet](https://github.com/heeseon87/duet): read and change Duet's design maps from Claude Code, take comments and decisions sent from Duet, pin a map with `/duet <map>` | wherever Duet runs (tested on macOS) |
+| **`duet`** | Terminal mod for [Duet](https://github.com/heeseon87/duet): read and change Duet's design maps from Claude Code, take comments and decisions sent from Duet, connect and pin a map with `/duet <map>` | wherever Duet runs (tested on macOS) |
 
 ## Install
 
@@ -102,10 +102,10 @@ The rate-limit bars are **allocation-aware**: the color isn't a fixed percentage
 
 - **Maps from the terminal.** `duet_map_list`, `duet_map_read`, `duet_map_create`, `duet_map_update` and `duet_map_reply` make, read and change Duet's maps. Changes show live on the canvas and are kept as revisions, marked with the terminal they came from. A new map is pinned when the terminal has none, and outside a Duet workspace it first opens the folder's git repository as one.
 - **Duet to the terminal.** Pick the terminal in Duet's agent panel (the 터미널 section). Canvas comments, decisions, review comments and messages typed in Duet then go into this session, and the answer comes back to the thread.
-- **A pinned map.** `/duet <map>` pins the map this terminal works from, remembered per folder; `/duet` lists the maps, `/duet off` unpins.
+- **Connecting.** A session starts off Duet: no polling, no `duet_map_*` tools, no status line. `/duet` connects it and lists the maps, `/duet <map>` connects it and pins the map this terminal works from (for this session only), and `/duet off` unpins and disconnects.
 - **Status line.** `Duet · 📌 <map> · rev N · 결정 a/b`, or `Duet 꺼짐` while Duet is not running.
 
-Start Duet first (`duet` in the repo you want to open); the mod finds it through `~/.duet`. A terminal anywhere inside a Duet workspace, a worktree under it included, connects on its own.
+Start Duet first (`duet` in the repo you want to open); the mod finds it through `~/.duet`. Then run `/duet` in a terminal anywhere inside a Duet workspace, a worktree under it included.
 
 ---
 
