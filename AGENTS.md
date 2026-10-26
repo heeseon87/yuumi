@@ -18,7 +18,7 @@ Publishing is "commit + push to `main`". Users update with `/plugin update <plug
 **Before every push**, bump the version of each plugin you changed:
 
 - `yuumi`: `plugins/yuumi/.claude-plugin/plugin.json` → `version`, and the `version:` frontmatter in every `plugins/yuumi/skills/<name>/SKILL.md` (all six). Keep them uniform.
-- `duet`: released from the duet repo (`mod/.claude-plugin/plugin.json` → `version`, then push there); nothing to bump here.
+- `duet`: released from the duet repo (`mod/.claude-plugin/plugin.json` → `version`, then push there). Users get the commit `.claude-plugin/marketplace.json` pins by `sha`, so every mod release also moves that `sha` here to the duet commit that bumped the version, then pushes. A stale `sha` keeps installing the old mod.
 
 Supporting files for a skill live **inside that skill's directory** (`assets/`), so the skill can find them from its own base directory.
 

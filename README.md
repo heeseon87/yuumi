@@ -101,11 +101,12 @@ The rate-limit bars are **allocation-aware**: the color isn't a fixed percentage
 [Duet](https://github.com/heeseon87/duet) is a local app that puts a design canvas, a code review and a live Claude Code agent on one screen. This mod connects a terminal Claude Code session to it, so you can design in Duet and build from the terminal.
 
 - **Maps from the terminal.** `duet_map_list`, `duet_map_read`, `duet_map_create`, `duet_map_update` and `duet_map_reply` make, read and change Duet's maps. Changes show live on the canvas and are kept as revisions, marked with the terminal they came from. A new map is pinned when the terminal has none, and outside a Duet workspace it first opens the folder's git repository as one.
+- **Maps tied to code.** A new map covers the code from the commit it was made at to the working tree, so the canvas and Duet's review show the same changes. `duet_map_create` can tie it to a PR, branch or commit range instead (`code`), or to another repository or worktree than the terminal's folder (`repo`).
 - **Duet to the terminal.** Pick the terminal in Duet's agent panel (the 터미널 section). Canvas comments, decisions, review comments and messages typed in Duet then go into this session, and the answer comes back to the thread.
-- **Connecting.** A session starts off Duet: no polling, no `duet_map_*` tools, no status line. `/duet` connects it and lists the maps, `/duet <map>` connects it and pins the map this terminal works from (for this session only), and `/duet off` unpins and disconnects.
-- **Status line.** `Duet · 📌 <map> · rev N · 결정 a/b`, or `Duet 꺼짐` while Duet is not running.
+- **Connecting.** A session starts off Duet: no polling, no `duet_map_*` tools, no status line. `/duet` connects it and lists the maps, `/duet <map>` connects it and pins the map this terminal works from (for this session only), `/duet new <name> [title]` makes an empty map without a model turn and pins it, and `/duet off` unpins and disconnects.
+- **Status line.** `Duet · 📌 <map> · rev N · 결정 a/b` at the end of the hint line under the prompt, or `Duet 꺼짐` while Duet is not running.
 
-Start Duet first (`duet` in the repo you want to open); the mod finds it through `~/.duet`. Then run `/duet` in a terminal anywhere inside a Duet workspace, a worktree under it included.
+Install Duet first ([install](https://github.com/heeseon87/duet#설치)), then start it (`duet` in the repo you want to open); the mod finds it through `~/.duet`. Then run `/duet` in a terminal anywhere inside a Duet workspace, a worktree under it included.
 
 ---
 
