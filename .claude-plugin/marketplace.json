@@ -10,7 +10,7 @@
     },
     {
       "name": "duet",
-      "source": { "source": "git-subdir", "url": "https://github.com/heeseon87/duet.git", "path": "mod", "sha": "44eb286f0f6cee7db4dcc943775f84e01ddd3280" },
+      "source": { "source": "git-subdir", "url": "https://github.com/heeseon87/duet.git", "path": "mod", "sha": "8dbcd27ff4bba79bf2f2e8fa52e655949649c7ad" },
       "description": "Terminal mod for Duet: read and change Duet's design maps, take comments and decisions sent from Duet, connect and pin a map with /duet (needs the Duet app)"
     }
   ]
