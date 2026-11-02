@@ -107,7 +107,7 @@ The rate-limit bars are **allocation-aware**: the color isn't a fixed percentage
 - **Connecting.** A session starts off Duet: no polling, no `duet_map_*` tools, no status line. `/duet` connects it and lists the maps, `/duet <map>` connects it and pins the map this terminal works from (for this session only), `/duet new <name> [title]` makes an empty map without a model turn and pins it, and `/duet off` unpins and disconnects.
 - **Status line.** `Duet · 📌 <map> · rev N · 결정 a/b` at the end of the hint line under the prompt, or `Duet 꺼짐` while Duet is not running.
 
-Install Duet first ([install](https://github.com/heeseon87/duet#설치)), then start it (`duet` in the repo you want to open); the mod finds it through `~/.duet`. Then run `/duet` in a terminal anywhere inside a Duet workspace, a worktree under it included.
+Install Duet first ([install](https://github.com/heeseon87/duet#설치)), then start it (`duet` in the repo you want to open); the mod finds it through `~/.duet` (`%USERPROFILE%\.duet` on Windows). Then run `/duet` in a terminal anywhere inside a Duet workspace, a worktree under it included.
 
 ---
 
