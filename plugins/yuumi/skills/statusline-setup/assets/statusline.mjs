@@ -460,19 +460,19 @@ const bg = (r, g, b) => `\x1b[48;2;${r};${g};${b}m`;
 // 채도 ~40-50%, 명도 ~65-70% 범위로 조정 — 라이트/다크 양쪽 터미널에서
 // 눈부심 없이 가독성 유지. 어두운 글자(dark.fg) 대비 모두 AA 통과(~6.5:1+).
 const TN = {
-  blue:    { fg: fg(110, 154, 207), bg: bg(110, 154, 207), sfg: fg(179, 202, 230), sbg: bg(179, 202, 230) },  // #6e9acf -> pill #b3cae6
-  green:   { fg: fg(162, 207, 110), bg: bg(162, 207, 110), sfg: fg(206, 230, 179), sbg: bg(206, 230, 179) },  // #a2cf6e -> pill #cee6b3
-  purple:  { fg: fg(132, 110, 207), bg: bg(132, 110, 207), sfg: fg(191, 179, 230), sbg: bg(191, 179, 230) },  // #846ecf -> pill #bfb3e6
-  cyan:    { fg: fg(110, 184, 207), bg: bg(110, 184, 207), sfg: fg(179, 218, 230), sbg: bg(179, 218, 230) },    // #6eb8cf -> pill #b3dae6
-  amber:   { fg: fg(207, 168, 110), bg: bg(207, 168, 110), sfg: fg(230, 209, 179), sbg: bg(230, 209, 179) },  // #cfa86e -> pill #e6d1b3
-  coral:   { fg: fg(207, 110, 126), bg: bg(207, 110, 126), sfg: fg(230, 179, 188), sbg: bg(230, 179, 188) },  // #cf6e7e -> pill #e6b3bc
-  teal:    { fg: fg(110, 207, 182), bg: bg(110, 207, 182), sfg: fg(179, 230, 204), sbg: bg(179, 230, 204) },  // #6ecfb6 -> pill #b3e6cc
-  lavender:{ fg: fg(110, 137, 207), bg: bg(110, 137, 207), sfg: fg(179, 193, 230), sbg: bg(179, 193, 230) },  // #6e89cf -> pill #b3c1e6
+  blue:    { fg: fg(83, 135, 198), bg: bg(83, 135, 198), sfg: fg(179, 202, 230), sbg: bg(179, 202, 230) },  // #5387c6 -> pill #b3cae6
+  green:   { fg: fg(144, 198, 83), bg: bg(144, 198, 83), sfg: fg(206, 230, 179), sbg: bg(206, 230, 179) },  // #90c653 -> pill #cee6b3
+  purple:  { fg: fg(109, 83, 198), bg: bg(109, 83, 198), sfg: fg(191, 179, 230), sbg: bg(191, 179, 230) },  // #6d53c6 -> pill #bfb3e6
+  cyan:    { fg: fg(83, 170, 198), bg: bg(83, 170, 198), sfg: fg(179, 218, 230), sbg: bg(179, 218, 230) },    // #53aac6 -> pill #b3dae6
+  amber:   { fg: fg(198, 151, 83), bg: bg(198, 151, 83), sfg: fg(230, 209, 179), sbg: bg(230, 209, 179) },  // #c69753 -> pill #e6d1b3
+  coral:   { fg: fg(198, 83, 102), bg: bg(198, 83, 102), sfg: fg(230, 179, 188), sbg: bg(230, 179, 188) },  // #c65366 -> pill #e6b3bc
+  teal:    { fg: fg(83, 198, 168), bg: bg(83, 198, 168), sfg: fg(179, 230, 204), sbg: bg(179, 230, 204) },  // #53c6a8 -> pill #b3e6cc
+  lavender:{ fg: fg(83, 115, 198), bg: bg(83, 115, 198), sfg: fg(179, 193, 230), sbg: bg(179, 193, 230) },  // #5373c6 -> pill #b3c1e6
   // Pill-only colors (segments read sfg/sbg). claude is the Claude logo orange #d97757.
-  claude:  { fg: fg(207, 134, 110), bg: bg(207, 134, 110), sfg: fg(230, 191, 179), sbg: bg(230, 191, 179) },  // #cf866e -> pill #e6bfb3
-  yellow:  { fg: fg(207, 193, 110), bg: bg(207, 193, 110), sfg: fg(230, 226, 179), sbg: bg(230, 226, 179) },  // #cfc16e -> pill #e6e2b3
-  indigo:  { fg: fg(110, 119, 207), bg: bg(110, 119, 207), sfg: fg(179, 183, 230), sbg: bg(179, 183, 230) },  // #6e77cf -> pill #b3b7e6
-  violet:  { fg: fg(174, 110, 207), bg: bg(174, 110, 207), sfg: fg(217, 179, 230), sbg: bg(217, 179, 230) },  // #ae6ecf -> pill #d9b3e6
+  claude:  { fg: fg(198, 111, 83), bg: bg(198, 111, 83), sfg: fg(230, 191, 179), sbg: bg(230, 191, 179) },  // #c66f53 -> pill #e6bfb3
+  yellow:  { fg: fg(198, 181, 83), bg: bg(198, 181, 83), sfg: fg(230, 226, 179), sbg: bg(230, 226, 179) },  // #c6b553 -> pill #e6e2b3
+  indigo:  { fg: fg(83, 94, 198), bg: bg(83, 94, 198), sfg: fg(179, 183, 230), sbg: bg(179, 183, 230) },  // #535ec6 -> pill #b3b7e6
+  violet:  { fg: fg(159, 83, 198), bg: bg(159, 83, 198), sfg: fg(217, 179, 230), sbg: bg(217, 179, 230) },  // #9f53c6 -> pill #d9b3e6
   dark:    { fg: fg(26, 27, 38) },                              // #1a1b26
 };
 
