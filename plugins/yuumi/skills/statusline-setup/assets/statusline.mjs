@@ -460,24 +460,29 @@ const bg = (r, g, b) => `\x1b[48;2;${r};${g};${b}m`;
 // 채도 ~40-50%, 명도 ~65-70% 범위로 조정 — 라이트/다크 양쪽 터미널에서
 // 눈부심 없이 가독성 유지. 어두운 글자(dark.fg) 대비 모두 AA 통과(~6.5:1+).
 const TN = {
-  blue:    { fg: fg(135, 165, 200), bg: bg(135, 165, 200) },  // #87a5c8
-  green:   { fg: fg(165, 195, 130), bg: bg(165, 195, 130) },  // #a5c382
-  purple:  { fg: fg(170, 158, 210), bg: bg(170, 158, 210) },  // #aa9ed2
-  cyan:    { fg: fg(95, 160, 180), bg: bg(95, 160, 180) },    // #5fa0b4
-  amber:   { fg: fg(210, 170, 110), bg: bg(210, 170, 110) },  // #d2aa6e
-  coral:   { fg: fg(220, 145, 158), bg: bg(220, 145, 158) },  // #dc919e
-  teal:    { fg: fg(135, 195, 180), bg: bg(135, 195, 180) },  // #87c3b4
-  lavender:{ fg: fg(170, 180, 205), bg: bg(170, 180, 205) },  // #aab4cd
+  blue:    { fg: fg(135, 165, 200), bg: bg(135, 165, 200), sfg: fg(179, 202, 230), sbg: bg(179, 202, 230) },  // #87a5c8 -> pill #b3cae6
+  green:   { fg: fg(165, 195, 130), bg: bg(165, 195, 130), sfg: fg(206, 230, 179), sbg: bg(206, 230, 179) },  // #a5c382 -> pill #cee6b3
+  purple:  { fg: fg(170, 158, 210), bg: bg(170, 158, 210), sfg: fg(191, 179, 230), sbg: bg(191, 179, 230) },  // #aa9ed2 -> pill #bfb3e6
+  cyan:    { fg: fg(95, 160, 180), bg: bg(95, 160, 180), sfg: fg(179, 218, 230), sbg: bg(179, 218, 230) },    // #5fa0b4 -> pill #b3dae6
+  amber:   { fg: fg(210, 170, 110), bg: bg(210, 170, 110), sfg: fg(230, 209, 179), sbg: bg(230, 209, 179) },  // #d2aa6e -> pill #e6d1b3
+  coral:   { fg: fg(220, 145, 158), bg: bg(220, 145, 158), sfg: fg(230, 179, 188), sbg: bg(230, 179, 188) },  // #dc919e -> pill #e6b3bc
+  teal:    { fg: fg(135, 195, 180), bg: bg(135, 195, 180), sfg: fg(179, 230, 204), sbg: bg(179, 230, 204) },  // #87c3b4 -> pill #b3e6cc
+  lavender:{ fg: fg(170, 180, 205), bg: bg(170, 180, 205), sfg: fg(179, 193, 230), sbg: bg(179, 193, 230) },  // #aab4cd -> pill #b3c1e6
+  // Pill-only colors (segments read sfg/sbg). claude is the Claude logo orange #d97757.
+  claude:  { fg: fg(217, 119, 87), bg: bg(217, 119, 87), sfg: fg(230, 191, 179), sbg: bg(230, 191, 179) },  // pill #e6bfb3
+  yellow:  { fg: fg(230, 215, 120), bg: bg(230, 215, 120), sfg: fg(230, 226, 179), sbg: bg(230, 226, 179) },  // pill #e6e2b3
+  indigo:  { fg: fg(150, 156, 210), bg: bg(150, 156, 210), sfg: fg(179, 183, 230), sbg: bg(179, 183, 230) },  // pill #b3b7e6
+  violet:  { fg: fg(190, 150, 210), bg: bg(190, 150, 210), sfg: fg(217, 179, 230), sbg: bg(217, 179, 230) },  // pill #d9b3e6
   dark:    { fg: fg(26, 27, 38) },                              // #1a1b26
 };
 
 // Effort 단계별 색상/라벨 (낮음 → 높음 순으로 차분한 색에서 강조색으로)
 const EFFORT_STYLE = {
-  low:    TN.lavender,
+  low:    TN.teal,
   medium: TN.cyan,
-  high:   TN.teal,
-  xhigh:  TN.amber,
-  max:    TN.coral,
+  high:   TN.blue,
+  xhigh:  TN.indigo,
+  max:    TN.violet,
 };
 
 const EFFORT_LABEL = {
@@ -501,14 +506,14 @@ function joinSegments(segments) {
   for (let i = 0; i < segments.length; i++) {
     const { text, color } = segments[i];
     // 세그먼트 본체: 컬러 배경 + 어두운 bold 글자
-    out += `${color.bg}${TN.dark.fg}${BOLD} ${text} ${RST}`;
+    out += `${color.sbg}${TN.dark.fg}${BOLD} ${text} ${RST}`;
     // 전환 화살표: 현재 색을 fg로, 다음 세그먼트 색을 bg로
     if (i < segments.length - 1) {
       const next = segments[i + 1].color;
-      out += `${color.fg}${next.bg}${PL}${RST}`;
+      out += `${color.sfg}${next.sbg}${PL}${RST}`;
     } else {
       // 마지막: 현재 색 fg로 화살표만 (배경 없음)
-      out += `${color.fg}${PL}${RST}`;
+      out += `${color.sfg}${PL}${RST}`;
     }
   }
   return out;
@@ -620,14 +625,14 @@ async function main() {
     const latest = getLatestVersion();
     const outdated = isOutdated(version, latest);
     const versionText = outdated ? `${version} \u21E1` : version;  // ⇡ 업데이트 있음
-    segments.push({ text: versionText, color: outdated ? TN.amber : TN.lavender });
+    segments.push({ text: versionText, color: outdated ? TN.yellow : TN.lavender });
 
     const modelName = getModelName(stdin);
     const ctxSize = stdin.context_window?.context_window_size;
     const ctxLabel = ctxSize
       ? (ctxSize >= 1000000 ? `${Math.floor(ctxSize / 1000000)}M` : `${Math.floor(ctxSize / 1000)}k`)
       : '';
-    segments.push({ text: `\uF2DB ${modelName}${ctxLabel ? `(${ctxLabel})` : ''}`, color: TN.blue });
+    segments.push({ text: `\uF2DB ${modelName}${ctxLabel ? `(${ctxLabel})` : ''}`, color: TN.claude });
 
     const effortLevel = getEffortLevel(stdin);
     if (effortLevel) {
