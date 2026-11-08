@@ -1,7 +1,7 @@
 ---
 name: statusline-doctor
 description: Diagnose and fix the Claude Code Tokyo Night statusline from the yuumi plugin (missing copy, permissions, settings.json path, npx-era leftovers)
-version: 2.0.6
+version: 2.0.7
 ---
 
 # Yuumi Statusline Doctor

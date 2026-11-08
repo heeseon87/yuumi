@@ -19,7 +19,7 @@ Two plugins, from one marketplace:
 
 | Plugin | What it is | Platforms |
 |--------|------------|-----------|
-| **`yuumi`** | Tokyo Night statusline (HUD) + workflow skills: `interview`, `edit`, `explain`, `review`, plus `statusline-setup` / `statusline-doctor` | macOS · Linux · Windows |
+| **`yuumi`** | Tokyo Night statusline (HUD) + workflow skills: `interview`, `edit`, `explain`, `review`, plus `statusline-setup` / `statusline-doctor` and the `crayon-theme-setup` terminal theme | macOS · Linux · Windows |
 | **`duet`** | Terminal mod for [Duet](https://github.com/heeseon87/duet): read and change Duet's design maps from Claude Code, take comments and decisions sent from Duet, connect and pin a map with `/duet <map>` | wherever Duet runs (tested on macOS) |
 
 ## Install
@@ -82,6 +82,11 @@ Copies the Tokyo Night statusline shipped in the plugin to `~/.claude/hud/status
 #### `/yuumi:statusline-doctor` — diagnose & auto-fix the statusline
 Runs an OS-aware checklist (node, the installed copy, executable bit, `settings.json` path, leftovers from the old `npx skills` install) and **fixes anything fixable**, then prints a pass/fail report.
 - **Use it when** the statusline is blank, stale, or misbehaving.
+
+### Terminal theme
+
+#### `/yuumi:crayon-theme-setup` — crayon paper terminal theme
+Puts the terminal on warm crayon paper, after [Duet](https://github.com/heeseon87/duet)'s crayon look: a paper palette and grain shader for Ghostty / cmux, a matching Claude Code theme (pick it in `/theme`), agnoster prompt chips and herdr colors. It installs only the pieces your machine has, backs up every file it changes, and `--remove` takes it all back out. Needs Ghostty 1.3.1+ or cmux for the shader.
 
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: explain
 description: Explain a topic like I'm one year into its field, right in the chat, with big ASCII diagrams and margin notes. Use when the user types /yuumi:explain <topic> or wants a quick explainer in the terminal.
-version: 2.0.6
+version: 2.0.7
 argument-hint: [topic]
 ---
 

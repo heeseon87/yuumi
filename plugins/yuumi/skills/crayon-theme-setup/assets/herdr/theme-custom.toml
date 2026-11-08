@@ -1,0 +1,24 @@
+# Crayon paper chrome to match the Crayon Pastel 66 terminal theme; best on a light base theme such as one-light.
+# herdr draws text on the accent in panel_bg, so panel_bg is the paper and the accent is the theme's dark crayon blue (4.58:1).
+[theme.custom]
+accent = "#415c7c"
+panel_bg = "#dad2bf"
+sidebar_bg = "reset"
+active_row_bg = "#c0c2c7"
+selection_bg = "#acb9c4"
+# surface0 fills the inactive tabs. #d1c9b6 sat only 1.10:1 off the paper and the tabs read as terminal; #bcb5a2
+# (1.36:1) is the old Claude Code user-input band, kept apart from the white input lines on purpose.
+surface0 = "#bcb5a2"
+surface1 = "#c7bfac"
+surface_dim = "#c0b8a6"
+overlay0 = "#8b8372"
+overlay1 = "#64584c"
+text = "#2a2520"
+subtext0 = "#64584c"
+mauve = "#5e5281"
+green = "#486123"
+yellow = "#775311"
+red = "#894653"
+blue = "#415c7c"
+teal = "#1d6274"
+peach = "#896427"

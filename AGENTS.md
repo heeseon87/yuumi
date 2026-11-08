@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working in this
 
 `yuumi` is a **Claude Code plugin marketplace** (2.0). Two plugins, listed in `.claude-plugin/marketplace.json`:
 
-- **`plugins/yuumi`** (relative source) — the Tokyo Night statusline (`skills/statusline-setup/assets/statusline.mjs`) and six skills: `interview`, `edit`, `explain`, `review`, `statusline-setup`, `statusline-doctor`. Commands are `/yuumi:<skill>`.
+- **`plugins/yuumi`** (relative source) — the Tokyo Night statusline (`skills/statusline-setup/assets/statusline.mjs`) and seven skills: `interview`, `edit`, `explain`, `review`, `statusline-setup`, `statusline-doctor`, `crayon-theme-setup`. Commands are `/yuumi:<skill>`.
 - **`duet`** (`git-subdir` source: `mod/` of [heeseon87/duet](https://github.com/heeseon87/duet)) — the terminal mod for the Duet app. Its code, tests and version live in the duet repo; this repo only lists it.
 
 Users install with `/plugin marketplace add heeseon87/yuumi` then `/plugin install <plugin>@yuumi`. Claude Code only: the 1.x `npx skills` channel (Codex, Cursor, Hermes …) was retired in 2.0, along with the `design`, `explain-detail`, `implement`, `pretty`, `teach-me` and `update` skills. The old `explain-fast` is now `explain`.
@@ -17,7 +17,7 @@ Publishing is "commit + push to `main`". Users update with `/plugin update <plug
 
 **Before every push**, bump the version of each plugin you changed:
 
-- `yuumi`: `plugins/yuumi/.claude-plugin/plugin.json` → `version`, and the `version:` frontmatter in every `plugins/yuumi/skills/<name>/SKILL.md` (all six). Keep them uniform.
+- `yuumi`: `plugins/yuumi/.claude-plugin/plugin.json` → `version`, and the `version:` frontmatter in every `plugins/yuumi/skills/<name>/SKILL.md` (all seven). Keep them uniform.
 - `duet`: released from the duet repo (`mod/.claude-plugin/plugin.json` → `version`, then push there). Users get the commit `.claude-plugin/marketplace.json` pins by `sha`, so every mod release also moves that `sha` here to the duet commit that bumped the version, then pushes. A stale `sha` keeps installing the old mod.
 
 Supporting files for a skill live **inside that skill's directory** (`assets/`), so the skill can find them from its own base directory.
@@ -56,6 +56,15 @@ The plugin is installed into a versioned cache folder that changes on every `/pl
 
 - **`setup.mjs`** (run by `/yuumi:statusline-setup`): copies `statusline.mjs` to the fixed path `~/.claude/hud/statusline.mjs` (backing up a different file to `~/.claude/hud/backup/`), sets the exec bit, points `settings.json` `statusLine` at the copy (Windows: absolute `node.exe` + path), and drops old yuumi `SessionStart` hooks from `settings.json`. Every other key and hook is preserved.
 - **`sync.mjs`** (the plugin's `SessionStart` hook, `plugins/yuumi/hooks/hooks.json`): refreshes the copy when it differs from the plugin's. It only touches a copy that is already there **and** is yuumi's own (header `yuumi statusline`, or `Heeseon's Statusline` on old copies), so users who never ran setup, and other tools' statuslines at that path, are left alone. It is silent and always exits 0: a session must never fail because of it.
+
+## Crayon theme setup (`plugins/yuumi/skills/crayon-theme-setup/assets/`)
+
+`setup.mjs` installs a table of pieces (`ghostty`, `claude`, `zsh`, `herdr`), each a list of `copy` and `block` actions, with `--check`, `--remove` and `--only=`.
+
+- **Idempotent both ways.** A second install changes nothing; `--remove` leaves every config byte-identical to before install (except unmarked crayon shader lines from an older hand install, which install folds into the block). A block is `\n# crayon-theme start (yuumi)\n…# crayon-theme end (yuumi)\n` appended to the file, and removal strips exactly that string, so keep the leading `\n` and the marker text stable.
+- **Hands off what the user owns.** A piece is skipped when the user already set those colors themselves (`AGNOSTER_DIR_BG` in `~/.zshrc`, a `[theme.custom]` in herdr), and a copied file edited after install survives `--remove`.
+- **No app reloads.** The script prints `cmux themes set`, `/theme`, `exec zsh` and `herdr server reload-config` as next steps and runs none of them. Claude Code's theme choice is per session, so the script never writes `theme` into `settings.json`.
+- The shader ships with wax off (`WAX_MAX_LIFT = 0.0`) and `PX = 2.0` for Retina; its `custom-shader` line goes last so the paper covers cursor-trail shaders.
 
 ## Skills structure
 

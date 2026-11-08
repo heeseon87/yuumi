@@ -6,7 +6,7 @@
     {
       "name": "yuumi",
       "source": "./plugins/yuumi",
-      "description": "Tokyo Night powerline statusline + workflow skills (edit, explain, interview, review)"
+      "description": "Tokyo Night powerline statusline, a crayon paper terminal theme, and workflow skills (edit, explain, interview, review)"
     },
     {
       "name": "duet",

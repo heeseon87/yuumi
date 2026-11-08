@@ -1,0 +1,5 @@
+theme = Crayon Pastel 66
+# The shader converts the paper color into display-p3, so the window must use it too.
+window-colorspace = display-p3
+# Last custom-shader line, so the paper also covers any cursor-trail shader above it.
+custom-shader = shaders/crayon_paper.glsl
