@@ -467,7 +467,7 @@ const TN = {
   amber:   { fg: fg(198, 151, 83), bg: bg(198, 151, 83), sfg: fg(200, 173, 135), sbg: bg(200, 173, 135) },  // #c69753 -> pill #c8ad87
   coral:   { fg: fg(198, 83, 102), bg: bg(198, 83, 102), sfg: fg(200, 135, 146), sbg: bg(200, 135, 146) },  // #c65366 -> pill #c88792
   teal:    { fg: fg(83, 198, 168), bg: bg(83, 198, 168), sfg: fg(135, 200, 167), sbg: bg(135, 200, 167) },  // #53c6a8 -> pill #87c8a7
-  lavender:{ fg: fg(83, 115, 198), bg: bg(83, 115, 198), sfg: fg(135, 153, 200), sbg: bg(135, 153, 200) },  // #5373c6 -> pill #8799c8
+  lavender:{ fg: fg(83, 115, 198), bg: bg(83, 115, 198), sfg: fg(153, 167, 203), sbg: bg(153, 167, 203) },  // #5373c6 -> pill #99a7cb
   // Pill-only colors (segments read sfg/sbg). claude is the Claude logo orange #d97757.
   claude:  { fg: fg(198, 111, 83), bg: bg(198, 111, 83), sfg: fg(200, 150, 135), sbg: bg(200, 150, 135) },  // #c66f53 -> pill #c89687
   yellow:  { fg: fg(198, 181, 83), bg: bg(198, 181, 83), sfg: fg(200, 195, 135), sbg: bg(200, 195, 135) },  // #c6b553 -> pill #c8c387
