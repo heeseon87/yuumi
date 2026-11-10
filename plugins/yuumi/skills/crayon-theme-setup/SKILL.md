@@ -1,7 +1,7 @@
 ---
 name: crayon-theme-setup
 description: Install the crayon paper terminal theme (after Duet's crayon look) for Ghostty / cmux, Claude Code, the zsh agnoster prompt and herdr, or take it back out
-version: 2.0.7
+version: 2.0.8
 # Setup edits terminal and shell config files: only the user starts it.
 disable-model-invocation: true
 ---
