@@ -27,9 +27,6 @@ const vec3  LIGHT = vec3(-0.35355, 0.35355, 0.86603);
 // past the device Nyquist and the Sobel all but drops it (fitted weight .02).
 const float SOBEL_W0 = 1.775;
 const float SOBEL_W1 = 0.8;
-const float BLOTCH_FREQ = 0.005;
-const float BLOTCH_K1 = 0.05;               // feComposite arithmetic: shade * (k1 * blotch + k2)
-const float BLOTCH_K2 = 0.975;
 const vec2  WAX_FREQ = vec2(0.12, 0.8);     // Duet --wax: long streaks across, short down
 const vec3  WAX_RGB = vec3(1.0, 0.996, 0.978);
 const float WAX_GAIN = 2.6;                 // Duet --wax: alpha = 2.6 * noise - 1.45
@@ -49,45 +46,6 @@ vec2 hash2(vec2 p) {
     q += dot(q, q.yzx + 33.33);
     vec2 g = fract((q.xx + q.yz) * q.zy) * 2.0 - 1.0;
     return g / max(length(g), 1e-4);    // unit gradients, as in the SVG turbulence reference code
-}
-
-// One of eight unit gradients, picked by an integer hash of the lattice point: the same unit-length, evenly spread
-// gradients as hash2 gives (so the same variance and spectrum), without its three fracts, dots and a normalize.
-// Only the blotches use it. On a 6016x3384 screen the three blotch octaves through hash2 took 7 of the shader's 18 ms
-// a frame (11 ms with this), and a blotch is hundreds of pixels wide, so which gradients it is built from does not
-// show: the lit paper's sd and neighbour correlation stay at 5.7 and .79/.42 (5.7, .78/.41 before). The grain and
-// the wax keep hash2, so every bump is where it was.
-const vec2 DIRS[8] = vec2[8](vec2(1.0, 0.0), vec2(0.70710678, 0.70710678), vec2(0.0, 1.0), vec2(-0.70710678, 0.70710678),
-                             vec2(-1.0, 0.0), vec2(-0.70710678, -0.70710678), vec2(0.0, -1.0), vec2(0.70710678, -0.70710678));
-vec2 fastGrad(vec2 p) {
-    uvec2 q = uvec2(ivec2(p));
-    uint h = q.x * 1597334677u ^ q.y * 3812015801u;
-    h *= 1597334677u;
-    h ^= h >> 16;
-    return DIRS[h >> 29];
-}
-
-float blotchNoise(vec2 p) {
-    vec2 i = floor(p);
-    vec2 f = fract(p);
-    vec2 u = f * f * (3.0 - 2.0 * f);
-    float a = dot(fastGrad(i), f);
-    float b = dot(fastGrad(i + vec2(1.0, 0.0)), f - vec2(1.0, 0.0));
-    float c = dot(fastGrad(i + vec2(0.0, 1.0)), f - vec2(0.0, 1.0));
-    float d = dot(fastGrad(i + vec2(1.0, 1.0)), f - vec2(1.0, 1.0));
-    return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
-}
-
-// fractalNoise below, over blotchNoise.
-float blotchFractal(vec2 p) {
-    float sum = 0.0;
-    float amp = 1.0;
-    for (int i = 0; i < 3; i++) {
-        sum += amp * blotchNoise(p);
-        p *= 2.0;
-        amp *= 0.5;
-    }
-    return clamp(sum * 0.5 + 0.5, 0.0, 1.0);
 }
 
 float gradientNoise(vec2 p) {
@@ -129,7 +87,9 @@ vec2 gradientNoiseSlope(vec2 p) {
          + du * (u.yx * k + vec2(b, c) - a);
 }
 
-// feDiffuseLighting over the turbulence, then the blotches. Returns the grey grain value, 0.5 where the paper is flat.
+// feDiffuseLighting over the turbulence, with no blotches: they moved the mid grey, so in a light one the grain went flat
+// and white on light colours (Duet and jiral dropped them too, 2026-11-12). Their mean factor was 1.0, so the tone
+// holds. Returns the grey grain value, 0.5 where the paper is flat.
 float paperGrain(vec2 fc) {
     // Each octave of fractalNoise adds amp * noise / 2 to the height, and its slope per device pixel is that times its
     // frequency, so both octaves come out as 0.5 * PAPER_FREQ / PX times their noise's own slope.
@@ -137,8 +97,7 @@ float paperGrain(vec2 fc) {
     vec2 slope = 0.5 * PAPER_FREQ / PX * (SOBEL_W0 * gradientNoiseSlope(p) + SOBEL_W1 * gradientNoiseSlope(2.0 * p));
     vec3 normal = normalize(vec3(-PAPER_SCALE * slope, 1.0));
     float lit = PAPER_KD * max(dot(normal, LIGHT), 0.0);
-    float blotch = clamp(2.0 * blotchFractal(fc / PX * BLOTCH_FREQ + 41.0) - 0.5, 0.0, 1.0);
-    return PAPER_GREY * lit * (BLOTCH_K1 * blotch + BLOTCH_K2);
+    return PAPER_GREY * lit;
 }
 
 vec3 srgbToDisplayP3(vec3 c) {
